@@ -25,6 +25,7 @@ flutter:
   assets:
     - assets/images/logo.png
     - assets/images/logo1.png
+    - assets/images/logo2.png
     - assets/images/hpvoca.png
     - assets/images/logoawal.png
     - assets/images/splash.png

@@ -1,5 +1,6 @@
 // halaman_awal.dart
 import 'package:flutter/material.dart';
+import 'login_screen.dart';
 
 class HalamanAwal extends StatelessWidget {
   const HalamanAwal({super.key});
@@ -123,7 +124,7 @@ class _HalamanAwal5State extends State<HalamanAwal5> {
                         onTapCancel: () => setState(() => isPressed = false),
                         onTap: () {
                           print('Tombol Mulai ditekan');
-                          // Navigator.push(context, MaterialPageRoute(builder: (context) => NextPage()));
+                              Navigator.push(context,MaterialPageRoute(builder: (context) => LoginScreen()),);
                         },
                         child: AnimatedScale(
                           scale: isPressed ? 0.95 : 1.0,
