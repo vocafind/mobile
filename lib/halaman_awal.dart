@@ -92,7 +92,7 @@ class _HalamanAwal5State extends State<HalamanAwal5> {
                         style: TextStyle(
                           color: Colors.grey[600], // Warna abu-abu seperti gambar
                           fontSize: screenWidth * 0.045,
-                          fontFamily: 'SFPro',
+                          fontFamily: 'SFProDisplay',
                           fontWeight: FontWeight.w700, // Medium weight
                           height: 1.4,
                         ),
@@ -107,8 +107,8 @@ class _HalamanAwal5State extends State<HalamanAwal5> {
                         style: TextStyle(
                           color: Color(0xFF1747A2), // Biru seperti di gambar
                           fontSize: screenWidth * 0.075,
-                          fontFamily: 'SFPro',
-                          fontWeight: FontWeight.w800, // Bold
+                          fontFamily: 'SFProDisplay',
+                          fontWeight:FontWeight.w900,
                           height: 1.2,
                         ),
                       ),
