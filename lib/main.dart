@@ -1,8 +1,20 @@
 import 'package:flutter/material.dart';
-// import 'splash_screen.dart';
-import 'halaman_awal.dart';
+import 'package:flutter/services.dart';
+import 'splash_screen.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Set warna status bar dan navigation bar agar match dengan splash screen
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Color(0xFF87CEEB),
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ),
+  );
+  
   runApp(const FigmaToCodeApp());
 }
 
@@ -13,10 +25,13 @@ class FigmaToCodeApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Job Search App',
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color.fromARGB(255, 18, 32, 47),
+      theme: ThemeData(
+        // Gunakan theme light dengan warna yang match splash screen
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: const Color(0xFF87CEEB), // Sky blue dari splash
+        primaryColor: const Color(0xFF1747A2),
       ),
-      home: const HalamanAwal(),
+      home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
     );
   }

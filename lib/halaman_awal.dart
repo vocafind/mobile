@@ -12,8 +12,15 @@ class HalamanAwal extends StatelessWidget {
   }
 }
 
-class HalamanAwal5 extends StatelessWidget {
+class HalamanAwal5 extends StatefulWidget {
   const HalamanAwal5({super.key});
+
+  @override
+  State<HalamanAwal5> createState() => _HalamanAwal5State();
+}
+
+class _HalamanAwal5State extends State<HalamanAwal5> {
+  bool isPressed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -33,10 +40,10 @@ class HalamanAwal5 extends StatelessWidget {
             top: 0,
             child: Container(
               width: screenWidth,
-              height: screenHeight * 0.47, // 47% dari tinggi layar
+              height: screenHeight * 0.50, // 47% dari tinggi layar
               decoration: const BoxDecoration(
                 image: DecorationImage(
-                  image: AssetImage("assets/images/hpvoca.png"),
+                  image: AssetImage("assets/images/logoawal.png"),
                   // Alternatif placeholder:
                   // image: NetworkImage("https://placehold.co/375x375"),
                   fit: BoxFit.cover,
@@ -50,7 +57,7 @@ class HalamanAwal5 extends StatelessWidget {
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      Colors.white.withOpacity(0.1),
+                      Colors.white.withValues(alpha:0.1),
                     ],
                   ),
                 ),
@@ -79,9 +86,8 @@ class HalamanAwal5 extends StatelessWidget {
                       // Spacer untuk positioning yang fleksibel
                       SizedBox(height: screenHeight * 0.04), // Dikurangi dari 0.08
                       
-                      // Text: "Siap Menjelajah Karir?"
                       Text(
-                        'Siap Menjelajah Karir?',
+                        'Siap temukan peluang karir terbaik?',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Colors.grey[600], // Warna abu-abu seperti gambar
@@ -96,7 +102,7 @@ class HalamanAwal5 extends StatelessWidget {
                       
                       // Text: "Temukan Loker Pilihanmu!"
                       Text(
-                        'Temukan Loker\nPilihanmu!',
+                        'Loker Rekomendasi Pintar!',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Color(0xFF1747A2), // Biru seperti di gambar
@@ -110,46 +116,56 @@ class HalamanAwal5 extends StatelessWidget {
                       // Spacer fleksibel
                       SizedBox(height: screenHeight * 0.04), // Dikurangi dari 0.06
                       
-                      // Tombol "Mulai" - Responsif
+                      // Tombol "Mulai" - Responsif dengan hover effect
                       GestureDetector(
+                        onTapDown: (_) => setState(() => isPressed = true),
+                        onTapUp: (_) => setState(() => isPressed = false),
+                        onTapCancel: () => setState(() => isPressed = false),
                         onTap: () {
-                          // TODO: Navigasi ke halaman berikutnya
                           print('Tombol Mulai ditekan');
                           // Navigator.push(context, MaterialPageRoute(builder: (context) => NextPage()));
                         },
-                        child: Container(
-                          width: screenWidth * 0.768, // ~77% lebar layar
-                          height: screenHeight * 0.065, // Dikurangi dari 0.059
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                              colors: [
-                                Colors.indigo[800]!,
-                                Colors.cyan[400]!,
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(
-                              screenWidth * 0.027, // Radius responsif
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.indigo[800]!.withOpacity(0.3),
-                                blurRadius: 12,
-                                offset: const Offset(0, 6),
-                                spreadRadius: 2,
+                        child: AnimatedScale(
+                          scale: isPressed ? 0.95 : 1.0,
+                          duration: const Duration(milliseconds: 100),
+                          child: AnimatedOpacity(
+                            opacity: isPressed ? 0.8 : 1.0,
+                            duration: const Duration(milliseconds: 100),
+                            child: Container(
+                              width: screenWidth * 0.768, // ~77% lebar layar
+                              height: screenHeight * 0.065, // Dikurangi dari 0.059
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                  colors: [
+                                    Colors.indigo[800]!,
+                                    Colors.cyan[400]!,
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(
+                                  screenWidth * 0.027, // Radius responsif
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.indigo[800]!.withValues(alpha:0.3),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 6),
+                                    spreadRadius: 2,
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                          child: Center(
-                            child: Text(
-                              'Mulai',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.95),
-                                fontSize: screenWidth * 0.048, // Dikurangi dari 0.053
-                                fontFamily: 'SFProText',
-                                fontWeight: FontWeight.w800,
-                                height: 1.2,
+                              child: Center(
+                                child: Text(
+                                  'Mulai',
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha:0.95),
+                                    fontSize: screenWidth * 0.048, // Dikurangi dari 0.053
+                                    fontFamily: 'SFProText',
+                                    fontWeight: FontWeight.w800,
+                                    height: 1.2,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
