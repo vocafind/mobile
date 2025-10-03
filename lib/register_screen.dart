@@ -2,28 +2,23 @@ import 'package:flutter/material.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
-
+  
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
+  
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   String? _selectedGender;
   String? _selectedFileName;
+  String? selectedGender;
+  
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 22),
@@ -32,8 +27,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Tombol back custom
+                IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.black),
+                  onPressed: () => Navigator.pop(context),
+                ),
+
                 const SizedBox(height: 20),
-                
+
                 // Logo
                 Center(
                   child: Image.asset(
@@ -70,58 +71,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Nama
+                // Input fields
                 _buildInputField(
                   label: "Nama",
                   hint: "Masukkan nama lengkap",
                 ),
-
-                // Jenis Kelamin Dropdown
                 _buildLabel("Jenis Kelamin"),
                 _buildGenderDropdown(),
-                const SizedBox(height: 12),
 
-                // Usia
                 _buildInputField(
                   label: "Usia",
                   hint: "Masukkan usia anda",
                   keyboardType: TextInputType.number,
                 ),
-
-                // Email
                 _buildInputField(
                   label: "Email",
                   hint: "Masukkan email anda",
                   keyboardType: TextInputType.emailAddress,
                 ),
-
-                // Nomor Whatsapp
                 _buildInputField(
                   label: "Nomor Whatsapp",
                   hint: "Masukkan nomor anda",
                   keyboardType: TextInputType.phone,
                 ),
-
-                // NIK
                 _buildInputField(
                   label: "NIK",
                   hint: "Masukkan NIK sesuai KTP",
                   keyboardType: TextInputType.number,
                 ),
-
-                // Upload KTP
-                _buildLabel("Upload Scan KTP"),
-                _buildFileUpload(),
-                const SizedBox(height: 12),
-
-                // Password
                 _buildInputField(
                   label: "Password",
                   hint: "Masukkan password",
                   isPassword: true,
                 ),
-
-                // Konfirmasi Password
                 _buildInputField(
                   label: "Konfirmasi Password",
                   hint: "Masukkan konfirmasi password",
@@ -130,19 +112,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 const SizedBox(height: 24),
 
-                // Tombol Daftar
+                // Tombol daftar
                 _buildRegisterButton(),
-                
+
                 const SizedBox(height: 24),
 
                 // Divider "Atau"
                 Row(
                   children: const [
                     Expanded(
-                      child: Divider(
-                        thickness: 1,
-                        color: Color(0xFFCCCCCC),
-                      ),
+                      child: Divider(thickness: 1, color: Color(0xFFCCCCCC)),
                     ),
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 12),
@@ -157,17 +136,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
                     Expanded(
-                      child: Divider(
-                        thickness: 1,
-                        color: Color(0xFFCCCCCC),
-                      ),
+                      child: Divider(thickness: 1, color: Color(0xFFCCCCCC)),
                     ),
                   ],
                 ),
 
                 const SizedBox(height: 20),
 
-                // Footer Login
+                // Footer login
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
