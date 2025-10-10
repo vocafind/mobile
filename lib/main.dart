@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'splash_screen.dart';
+import 'screens/splash_screen.dart';
+
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   
+  // Muat file .env
+  // await dotenv.load(fileName: ".env");
+
   // Set warna status bar dan navigation bar agar match dengan splash screen
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
