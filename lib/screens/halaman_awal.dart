@@ -123,7 +123,7 @@ class _HalamanAwal5State extends State<HalamanAwal5> {
                         onTapUp: (_) => setState(() => isPressed = false),
                         onTapCancel: () => setState(() => isPressed = false),
                         onTap: () {
-                          print('Tombol Mulai ditekan');
+                          debugPrint('Tombol Mulai ditekan');
                               Navigator.push(context,MaterialPageRoute(builder: (context) => LoginScreen()),);
                         },
                         child: AnimatedScale(
