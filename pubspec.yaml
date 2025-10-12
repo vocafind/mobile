@@ -40,6 +40,9 @@ flutter:
   - assets/icons/lamaran.svg
   - assets/icons/profile.svg
   - assets/icons/search.svg
+  - assets/icons/filter.svg
+  - assets/icons/kotak.svg
+  - assets/icons/pesan.png
 
 
   fonts:

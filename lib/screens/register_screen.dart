@@ -444,7 +444,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              "Choose File",
+              "Pilih File",
               style: TextStyle(
                 fontFamily: "SFProDisplay",
                 fontSize: 15,
@@ -454,7 +454,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             Expanded(
               child: Text(
-                _selectedFileName ?? "No file chosen",
+                _selectedFileName ?? "Tidak ada file dipilih",
                 textAlign: TextAlign.right,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
