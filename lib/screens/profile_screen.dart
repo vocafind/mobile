@@ -7,6 +7,7 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFFFAFAFA),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -27,359 +28,371 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
             
-            // Profile Content
+            // Profile Content with Avatar
             Transform.translate(
               offset: Offset(0, -40),
-              child: Column(
+              child: Stack(
+                clipBehavior: Clip.none,
                 children: [
-                  // Profile Card
-                  Container(
-                    margin: EdgeInsets.symmetric(horizontal: 28),
-                    padding: EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      children: [
-                        SizedBox(height: 60),
-                        Text(
-                          'John Doe',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF191919),
-                          ),
+                  Column(
+                    children: [
+                      // Profile Card
+                      Container(
+                        margin: EdgeInsets.symmetric(horizontal: 28),
+                        padding: EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Senior UI/UX Designer',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF64748B),
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                        child: Column(
                           children: [
-                            Icon(Icons.location_on, size: 13, color: Color(0xFF94A3B8)),
-                            SizedBox(width: 4),
+                            SizedBox(height: 60),
                             Text(
-                              'Jakarta, Indonesia',
+                              'John Doe',
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: 20,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF94A3B8),
+                                color: Color(0xFF191919),
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Senior UI/UX Designer',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.location_on, size: 13, color: Color(0xFF94A3B8)),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Jakarta, Indonesia',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF94A3B8),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 20),
+                            // Stats
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                              decoration: BoxDecoration(
+                                color: Color(0xFFF8FAFC),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                children: [
+                                  Column(
+                                    children: [
+                                      Text(
+                                        '3',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFF191919),
+                                        ),
+                                      ),
+                                      Text(
+                                        'Lamaran',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: Color(0xFF64748B),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Column(
+                                    children: [
+                                      Text(
+                                        '89%',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFF191919),
+                                        ),
+                                      ),
+                                      Text(
+                                        'Profil selesai',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: Color(0xFF64748B),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
-                        SizedBox(height: 20),
-                        // Stats
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      ),
+                      
+                      SizedBox(height: 16),
+                      
+                      // Data Diri Section
+                      _buildSection(
+                        title: 'Data Diri',
+                        child: Container(
+                          padding: EdgeInsets.all(18),
                           decoration: BoxDecoration(
                             color: Color(0xFFF8FAFC),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          child: Column(
                             children: [
-                              Column(
-                                children: [
-                                  Text(
-                                    '3',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xFF191919),
-                                    ),
-                                  ),
-                                  Text(
-                                    'Lamaran',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Color(0xFF64748B),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Column(
-                                children: [
-                                  Text(
-                                    '89%',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xFF191919),
-                                    ),
-                                  ),
-                                  Text(
-                                    'Profil selesai',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Color(0xFF64748B),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                              _buildInfoRow('NIK', '1234567812345678'),
+                              _buildDivider(),
+                              _buildInfoRow('Tanggal Lahir', '19/01/1978'),
+                              _buildDivider(),
+                              _buildInfoRow('Jenis Kelamin', 'Laki-laki'),
+                              _buildDivider(),
+                              _buildInfoRow('Preferensi Gaji', 'Rp 20.000.000'),
+                              _buildDivider(),
+                              _buildInfoRow('Lokasi Kerja Diinginkan', 'Batam'),
+                              _buildDivider(),
+                              _buildInfoRow('Status Pekerjaan Saat Ini', 'Status Pekerjaan Saat Ini'),
+                              _buildDivider(),
+                              _buildInfoRow('Preferensi Jam Kerja', '09:00 - 22:00'),
+                              _buildDivider(),
+                              _buildInfoRow('Preferensi Perjalanan Dinas', 'Ya'),
+                              _buildDivider(),
+                              _buildInfoRow('Nomor Telepon', '08232099965'),
+                              _buildDivider(),
+                              _buildInfoRow('Provinsi', 'KEPULAUAN RIAU'),
+                              _buildDivider(),
+                              _buildInfoRow('Kabupaten Kota', 'KOTA B A T A M'),
+                              _buildDivider(),
+                              _buildInfoRow('Alamat', 'Batam Center'),
                             ],
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                      
+                      SizedBox(height: 16),
+                      
+                      // Sosial Media Section
+                      _buildSection(
+                        title: 'Sosial Media',
+                        child: Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: [
+                            _buildSocialChip('Username', 'Instagram'),
+                            _buildSocialChip('Username', 'Facebook'),
+                            _buildSocialChip('Username', 'X'),
+                            _buildSocialChip('Username', 'YouTube'),
+                          ],
+                        ),
+                      ),
+                      
+                      SizedBox(height: 16),
+                      
+                      // Riwayat Pendidikan Section
+                      _buildSection(
+                        title: 'Riwayat Pendidikan',
+                        child: Column(
+                          children: [
+                            _buildEducationItem(
+                              'S1 Informatika',
+                              'Universitas Indonesia',
+                              '2013 - 2017',
+                              'IPK: 4.00',
+                            ),
+                            SizedBox(height: 16),
+                            _buildEducationItem(
+                              'S1 Informatika',
+                              'Universitas Indonesia',
+                              '2013 - 2017',
+                              'IPK: 4.00',
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      SizedBox(height: 16),
+                      
+                      // Kemahiran Berbahasa Section
+                      _buildSection(
+                        title: 'Kemahiran Berbahasa',
+                        child: Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: [
+                            _buildLanguageChip('Japan', 'EXPERT | Skor 99', true),
+                            _buildLanguageChip('English', 'EXPERT | Skor 99', false),
+                            _buildLanguageChip('Japan', 'EXPERT | Skor 99', true),
+                            _buildLanguageChip('English', 'EXPERT | Skor 99', false),
+                          ],
+                        ),
+                      ),
+                      
+                      SizedBox(height: 16),
+                      
+                      // Penghargaan Section
+                      _buildSection(
+                        title: 'Penghargaan',
+                        child: Column(
+                          children: [
+                            _buildAwardItem(
+                              'Google UX Design Certificate',
+                              'Google Career Certificates',
+                              '2023',
+                              true,
+                            ),
+                            SizedBox(height: 12),
+                            _buildAwardItem(
+                              'Google UX Design Certificate',
+                              'Google Career Certificates',
+                              '2023',
+                              false,
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      SizedBox(height: 16),
+                      
+                      // Sertifikasi Section
+                      _buildSection(
+                        title: 'Sertifikasi',
+                        child: Column(
+                          children: [
+                            _buildAwardItem(
+                              'Google UX Design Certificate',
+                              'Google Career Certificates',
+                              '2023',
+                              false,
+                            ),
+                            SizedBox(height: 12),
+                            _buildAwardItem(
+                              'Google UX Design Certificate',
+                              'Google Career Certificates',
+                              '2023',
+                              false,
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      SizedBox(height: 16),
+                      
+                      // Soft Skill Section
+                      _buildSection(
+                        title: 'Soft Skill',
+                        child: Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: [
+                            _buildSkillChip('Leadership', 'EXPERT', true),
+                            _buildSkillChip('Komunikasi', 'ADVANCED', false),
+                            _buildSkillChip('Thinking', 'ADVANCED', false),
+                          ],
+                        ),
+                      ),
+                      
+                      SizedBox(height: 16),
+                      
+                      // Riwayat Pekerjaan Section
+                      _buildSection(
+                        title: 'Riwayat Pekerjaan',
+                        child: Column(
+                          children: [
+                            _buildWorkItem(
+                              'Senior UI/UX Designer',
+                              'Gojek Indonesia',
+                              'Jan 2022 - Present',
+                              'Memimpin desain untuk fitur-fitur utama aplikasi Gojek yang digunakan oleh 50+ juta users. Berkolaborasi dengan product manager dan engineering team untuk mengoptimalkan user experience.',
+                            ),
+                            Divider(thickness: 2, color: Color(0xFFE2E8F0)),
+                            _buildWorkItem(
+                              'Senior UI/UX Designer',
+                              'Gojek Indonesia',
+                              'Jan 2022 - Present',
+                              'Memimpin desain untuk fitur-fitur utama aplikasi Gojek yang digunakan oleh 50+ juta users. Berkolaborasi dengan product manager dan engineering team untuk mengoptimalkan user experience.',
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      SizedBox(height: 16),
+                      
+                      // Pengalaman Pekerjaan Section
+                      _buildSection(
+                        title: 'Pengalaman Pekerjaan',
+                        child: Column(
+                          children: [
+                            _buildExperienceItem(
+                              'Senior UI/UX Designer',
+                              'Gojek Indonesia',
+                              'Jan 2022 - Present',
+                              '• Mengembangkan aplikasi mobile dengan Flutter & Laravel\n• Meningkatkan user experience aplikasi internal perusahaan\n• Mendesain antarmuka aplikasi mobile dengan Figma & Adobe XD',
+                            ),
+                            Divider(thickness: 2, color: Color(0xFFE2E8F0)),
+                            _buildExperienceItem(
+                              'Senior UI/UX Designer',
+                              'PT Maju Jaya',
+                              'Jan 2022 - Present',
+                              '• Mengembangkan aplikasi mobile dengan Flutter & Laravel\n• Meningkatkan user experience aplikasi internal perusahaan\n• Mendesain antarmuka aplikasi mobile dengan Figma & Adobe XD',
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      SizedBox(height: 100),
+                    ],
                   ),
                   
-                  // Avatar positioned absolutely
+                  // Avatar positioned on top of the profile card
                   Positioned(
                     top: -40,
-                    child: Container(
-                      width: 81,
-                      height: 81,
-                      decoration: BoxDecoration(
-                        color: Color(0xFF0987BB),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 3),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color(0xFF81D5FF).withOpacity(0.25),
-                            blurRadius: 10,
-                            spreadRadius: 10,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Container(
+                        width: 81,
+                        height: 81,
+                        decoration: BoxDecoration(
+                          color: Color(0xFF0987BB),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 3),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Color(0xFF81D5FF).withOpacity(0.25),
+                              blurRadius: 10,
+                              spreadRadius: 10,
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            'D',
+                            style: TextStyle(
+                              fontSize: 40,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                            ),
                           ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Text(
-                          'D',
-                          style: TextStyle(
-                            fontSize: 40,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                          ),
                         ),
                       ),
                     ),
                   ),
-                  
-                  SizedBox(height: 16),
-                  
-                  // Data Diri Section
-                  _buildSection(
-                    title: 'Data Diri',
-                    child: Container(
-                      padding: EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        color: Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        children: [
-                          _buildInfoRow('NIK', '1234567812345678'),
-                          _buildDivider(),
-                          _buildInfoRow('Tanggal Lahir', '19/01/1978'),
-                          _buildDivider(),
-                          _buildInfoRow('Jenis Kelamin', 'Laki-laki'),
-                          _buildDivider(),
-                          _buildInfoRow('Preferensi Gaji', 'Rp 20.000.000'),
-                          _buildDivider(),
-                          _buildInfoRow('Lokasi Kerja Diinginkan', 'Batam'),
-                          _buildDivider(),
-                          _buildInfoRow('Status Pekerjaan Saat Ini', 'Status Pekerjaan Saat Ini'),
-                          _buildDivider(),
-                          _buildInfoRow('Preferensi Jam Kerja', '09:00 - 22:00'),
-                          _buildDivider(),
-                          _buildInfoRow('Preferensi Perjalanan Dinas', 'Ya'),
-                          _buildDivider(),
-                          _buildInfoRow('Nomor Telepon', '08232099965'),
-                          _buildDivider(),
-                          _buildInfoRow('Provinsi', 'KEPULAUAN RIAU'),
-                          _buildDivider(),
-                          _buildInfoRow('Kabupaten Kota', 'KOTA B A T A M'),
-                          _buildDivider(),
-                          _buildInfoRow('Alamat', 'Batam Center'),
-                        ],
-                      ),
-                    ),
-                  ),
-                  
-                  SizedBox(height: 16),
-                  
-                  // Sosial Media Section
-                  _buildSection(
-                    title: 'Sosial Media',
-                    child: Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: [
-                        _buildSocialChip('Username', 'Instagram'),
-                        _buildSocialChip('Username', 'Facebook'),
-                        _buildSocialChip('Username', 'X'),
-                        _buildSocialChip('Username', 'YouTube'),
-                      ],
-                    ),
-                  ),
-                  
-                  SizedBox(height: 16),
-                  
-                  // Riwayat Pendidikan Section
-                  _buildSection(
-                    title: 'Riwayat Pendidikan',
-                    child: Column(
-                      children: [
-                        _buildEducationItem(
-                          'S1 Informatika',
-                          'Universitas Indonesia',
-                          '2013 - 2017',
-                          'IPK: 4.00',
-                        ),
-                        SizedBox(height: 16),
-                        _buildEducationItem(
-                          'S1 Informatika',
-                          'Universitas Indonesia',
-                          '2013 - 2017',
-                          'IPK: 4.00',
-                        ),
-                      ],
-                    ),
-                  ),
-                  
-                  SizedBox(height: 16),
-                  
-                  // Kemahiran Berbahasa Section
-                  _buildSection(
-                    title: 'Kemahiran Berbahasa',
-                    child: Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: [
-                        _buildLanguageChip('Japan', 'EXPERT | Skor 99', true),
-                        _buildLanguageChip('English', 'EXPERT | Skor 99', false),
-                        _buildLanguageChip('Japan', 'EXPERT | Skor 99', true),
-                        _buildLanguageChip('English', 'EXPERT | Skor 99', false),
-                      ],
-                    ),
-                  ),
-                  
-                  SizedBox(height: 16),
-                  
-                  // Penghargaan Section
-                  _buildSection(
-                    title: 'Penghargaan',
-                    child: Column(
-                      children: [
-                        _buildAwardItem(
-                          'Google UX Design Certificate',
-                          'Google Career Certificates',
-                          '2023',
-                          true,
-                        ),
-                        SizedBox(height: 12),
-                        _buildAwardItem(
-                          'Google UX Design Certificate',
-                          'Google Career Certificates',
-                          '2023',
-                          false,
-                        ),
-                      ],
-                    ),
-                  ),
-                  
-                  SizedBox(height: 16),
-                  
-                  // Sertifikasi Section
-                  _buildSection(
-                    title: 'Sertifikasi',
-                    child: Column(
-                      children: [
-                        _buildAwardItem(
-                          'Google UX Design Certificate',
-                          'Google Career Certificates',
-                          '2023',
-                          false,
-                        ),
-                        SizedBox(height: 12),
-                        _buildAwardItem(
-                          'Google UX Design Certificate',
-                          'Google Career Certificates',
-                          '2023',
-                          false,
-                        ),
-                      ],
-                    ),
-                  ),
-                  
-                  SizedBox(height: 16),
-                  
-                  // Soft Skill Section
-                  _buildSection(
-                    title: 'Soft Skill',
-                    child: Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: [
-                        _buildSkillChip('Leadership', 'EXPERT', true),
-                        _buildSkillChip('Komunikasi', 'ADVANCED', false),
-                        _buildSkillChip('Thinking', 'ADVANCED', false),
-                      ],
-                    ),
-                  ),
-                  
-                  SizedBox(height: 16),
-                  
-                  // Riwayat Pekerjaan Section
-                  _buildSection(
-                    title: 'Riwayat Pekerjaan',
-                    child: Column(
-                      children: [
-                        _buildWorkItem(
-                          'Senior UI/UX Designer',
-                          'Gojek Indonesia',
-                          'Jan 2022 - Present',
-                          'Memimpin desain untuk fitur-fitur utama aplikasi Gojek yang digunakan oleh 50+ juta users. Berkolaborasi dengan product manager dan engineering team untuk mengoptimalkan user experience.',
-                        ),
-                        Divider(thickness: 2, color: Color(0xFFE2E8F0)),
-                        _buildWorkItem(
-                          'Senior UI/UX Designer',
-                          'Gojek Indonesia',
-                          'Jan 2022 - Present',
-                          'Memimpin desain untuk fitur-fitur utama aplikasi Gojek yang digunakan oleh 50+ juta users. Berkolaborasi dengan product manager dan engineering team untuk mengoptimalkan user experience.',
-                        ),
-                      ],
-                    ),
-                  ),
-                  
-                  SizedBox(height: 16),
-                  
-                  // Pengalaman Pekerjaan Section
-                  _buildSection(
-                    title: 'Pengalaman Pekerjaan',
-                    child: Column(
-                      children: [
-                        _buildExperienceItem(
-                          'Senior UI/UX Designer',
-                          'Gojek Indonesia',
-                          'Jan 2022 - Present',
-                          '• Mengembangkan aplikasi mobile dengan Flutter & Laravel\n• Meningkatkan user experience aplikasi internal perusahaan\n• Mendesain antarmuka aplikasi mobile dengan Figma & Adobe XD',
-                        ),
-                        Divider(thickness: 2, color: Color(0xFFE2E8F0)),
-                        _buildExperienceItem(
-                          'Senior UI/UX Designer',
-                          'PT Maju Jaya',
-                          'Jan 2022 - Present',
-                          '• Mengembangkan aplikasi mobile dengan Flutter & Laravel\n• Meningkatkan user experience aplikasi internal perusahaan\n• Mendesain antarmuka aplikasi mobile dengan Figma & Adobe XD',
-                        ),
-                      ],
-                    ),
-                  ),
-                  
-                  SizedBox(height: 100),
                 ],
               ),
             ),
           ],
         ),
+      ),
+      bottomNavigationBar: const BottomNavBar(
+        currentIndex: 4, // Job Fair page
       ),
     );
   }

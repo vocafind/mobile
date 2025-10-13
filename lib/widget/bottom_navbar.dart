@@ -3,7 +3,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '/screens/home_screen.dart';
 import '/screens/search_screen.dart';
 import '/screens/jobfair_screen.dart';
-import '/screens/profile_screen.dart'; // TAMBAHKAN INI
+import '/screens/profile_screen.dart';
+import '/screens/lamaran_screen.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -31,15 +32,7 @@ class BottomNavBar extends StatelessWidget {
         break;
       case 3:
         // Lamaran Screen (placeholder)
-        screen = const Scaffold(
-          body: Center(
-            child: Text(
-              'Lamaran Screen\n(Coming Soon)',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 20),
-            ),
-          ),
-        );
+        screen = const ApplicationScreen();
         break;
       case 4:
         screen = const ProfileScreen(); 
