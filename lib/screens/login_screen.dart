@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jobfair/api/api_service.dart';
 import 'register_screen.dart';
 import 'home_screen.dart'; // ✅ Fixed typo
 
@@ -10,6 +11,8 @@ class LoginScreen extends StatefulWidget { // ✅ Changed to StatefulWidget
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final apiService = ApiService();
+
   // ✅ Added controllers
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -109,7 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   // ✅ Added login handler
-  void _handleLogin() {
+  void _handleLogin() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
@@ -123,14 +126,29 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    // TODO: Add actual authentication logic here
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const HomeScreen(),
-      ),
-    );
+     // 🔥 Panggil API Login
+    final result = await ApiService().loginTalent(email, password);
+
+    print(result); // 
+
+    if (result['token'] != null) {
+      // ✅ Login Berhasil
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['message'] ?? 'Login berhasil')),
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+    } else {
+      // ❌ Login Gagal
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['message'] ?? 'Login gagal')),
+      );
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {

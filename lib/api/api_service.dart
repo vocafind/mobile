@@ -1,5 +1,7 @@
 import 'package:http/http.dart' as http;
 import 'endpoints.dart';
+import 'dart:convert';
+
 
 class ApiService {
 
@@ -18,6 +20,42 @@ class ApiService {
 
     return await request.send();
   }
+
+
+  // ================== LOGIN TALENT ==================
+  Future<Map<String, dynamic>> loginTalent(String email, String password) async {
+    var url = Uri.parse(ApiConfig.loginTalent);
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: {
+          "Email": email,     // Gunakan huruf besar "E" karena DTO pakai Email
+          "Password": password
+        },
+      );
+
+      print("STATUS: ${response.statusCode}");
+      print("RESPONSE: ${response.body}");
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body); // { message, token, talentId }
+      } else {
+        return jsonDecode(response.body); // { message: ... }
+      }
+    } catch (e) {
+      return {"message": "Gagal terhubung ke server"};
+    }
+  }
+
+
+
+
+
+
 
 
 
