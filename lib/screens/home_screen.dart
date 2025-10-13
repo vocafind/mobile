@@ -1,9 +1,48 @@
 import 'package:flutter/material.dart';
+import 'package:jobfair/api/api_service.dart';
+import 'package:jobfair/models/loker_umum_model.dart';
 import '/widget/header.dart';
 import '/widget/bottom_navbar.dart';
 
-class HomeScreen extends StatelessWidget {
+
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final ApiService _apiService = ApiService(); // Sesuaikan dengan nama service Anda
+  List<LokerUmum> _lokerList = [];
+  bool _isLoading = true;
+  String _errorMessage = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLokerData();
+  }
+
+  Future<void> _loadLokerData() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
+    try {
+      final lokerData = await _apiService.getAllLokerUmum();
+      setState(() {
+        _lokerList = lokerData;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Gagal memuat data';
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,59 +56,62 @@ class HomeScreen extends StatelessWidget {
             
             // Scrollable Content
             Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 20),
-                    
-                    // Kategori Populer Section
-                    _buildSectionTitle("Kategori Populer"),
-                    const SizedBox(height: 16),
-                    _buildCategoryGrid(),
-                    
-                    const SizedBox(height: 32),
-                    
-                    // Terbaru Section
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 15),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            "Terbaru",
-                            style: TextStyle(
-                              fontFamily: "SF Pro",
-                              fontSize: 25,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF1A1A1A),
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () {},
-                            child: const Text(
-                              "Lihat semua",
+              child: RefreshIndicator(
+                onRefresh: _loadLokerData,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 20),
+                      
+                      // Kategori Populer Section
+                      _buildSectionTitle("Kategori Populer"),
+                      const SizedBox(height: 16),
+                      _buildCategoryGrid(),
+                      
+                      const SizedBox(height: 32),
+                      
+                      // Terbaru Section
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 15),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              "Terbaru",
                               style: TextStyle(
                                 fontFamily: "SF Pro",
-                                fontSize: 13,
+                                fontSize: 25,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF64748B),
+                                color: Color(0xFF1A1A1A),
                               ),
                             ),
-                          ),
-                        ],
+                            GestureDetector(
+                              onTap: () {
+                                // Navigate ke halaman semua loker
+                              },
+                              child: const Text(
+                                "Lihat semua",
+                                style: TextStyle(
+                                  fontFamily: "SF Pro",
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    
-                    // Job Cards
-                    _buildJobCard(),
-                    const SizedBox(height: 16),
-                    _buildJobCard(),
-                    const SizedBox(height: 16),
-                    _buildJobCard(),
-                    const SizedBox(height: 20),
-                  ],
+                      const SizedBox(height: 16),
+                      
+                      // Job Cards from API
+                      _buildJobList(),
+                      
+                      const SizedBox(height: 20),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -77,7 +119,7 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: BottomNavBar(
-        currentIndex: 0, // Halaman Home
+        currentIndex: 0,
       ),
     );
   }
@@ -210,7 +252,73 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildJobCard() {
+  Widget _buildJobList() {
+    if (_isLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32.0),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (_errorMessage.isNotEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            children: [
+              Text(
+                _errorMessage,
+                style: const TextStyle(
+                  fontFamily: "SF Pro",
+                  fontSize: 14,
+                  color: Color(0xFF7D7D7D),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _loadLokerData,
+                child: const Text('Coba Lagi'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_lokerList.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32.0),
+          child: Text(
+            'Belum ada lowongan tersedia',
+            style: TextStyle(
+              fontFamily: "SF Pro",
+              fontSize: 14,
+              color: Color(0xFF7D7D7D),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Tampilkan maksimal 3 loker terbaru
+    final displayedLoker = _lokerList.take(3).toList();
+
+    return Column(
+      children: displayedLoker.map((loker) {
+        return Column(
+          children: [
+            _buildJobCard(loker),
+            const SizedBox(height: 16),
+          ],
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildJobCard(LokerUmum loker) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 15),
       padding: const EdgeInsets.all(18),
@@ -256,20 +364,20 @@ class HomeScreen extends StatelessWidget {
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     Text(
-                      "Senior UI/UX Designer",
-                      style: TextStyle(
+                      loker.posisi,
+                      style: const TextStyle(
                         fontFamily: "SF Pro",
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                         color: Colors.black,
                       ),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
-                      "Gojek Indonesia",
-                      style: TextStyle(
+                      loker.companyName,
+                      style: const TextStyle(
                         fontFamily: "SF Pro",
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -284,9 +392,11 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(height: 16),
           
           // Description
-          const Text(
-            "Lead design initiatives for next-gen mobile experiences",
-            style: TextStyle(
+          Text(
+            loker.deskripsiPekerjaan,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
               fontFamily: "SF Pro",
               fontSize: 11,
               fontWeight: FontWeight.w500,
@@ -299,15 +409,20 @@ class HomeScreen extends StatelessWidget {
           // Tags & Time
           Row(
             children: [
-              _buildTag("Batam"),
-              const SizedBox(width: 6),
-              _buildTag("Remote"),
-              const SizedBox(width: 6),
-              _buildTag("Senior"),
+              if (loker.lokasi != null) ...[
+                _buildTag(loker.lokasi),
+                const SizedBox(width: 6),
+              ],
+              if (loker.jenisPekerjaan != null) ...[
+                _buildTag(loker.jenisPekerjaan),
+                const SizedBox(width: 6),
+              ],
+              // if (loker.tingkatPengalaman != null)
+              //   _buildTag(loker.tingkatPengalaman!),
               const Spacer(),
-              const Text(
-                "1 hari lalu",
-                style: TextStyle(
+              Text(
+                waktuLalu(loker.tanggalPosting),
+                style: const TextStyle(
                   fontFamily: "SF Pro",
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
@@ -343,4 +458,24 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+
+  String waktuLalu(DateTime date) {
+    final now = DateTime.now();
+    final diff = now.difference(date);
+
+    if (diff.inDays >= 30) {
+      return "${(diff.inDays / 30).floor()} bulan lalu";
+    } else if (diff.inDays >= 7) {
+      return "${(diff.inDays / 7).floor()} minggu lalu";
+    } else if (diff.inDays >= 1) {
+      return "${diff.inDays} hari lalu";
+    } else if (diff.inHours >= 1) {
+      return "${diff.inHours} jam lalu";
+    } else if (diff.inMinutes >= 1) {
+      return "${diff.inMinutes} menit lalu";
+    } else {
+      return "Baru saja";
+    }
+  }
+
 }

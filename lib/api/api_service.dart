@@ -1,4 +1,5 @@
 import 'package:http/http.dart' as http;
+import 'package:jobfair/models/loker_umum_model.dart';
 import 'endpoints.dart';
 import 'dart:convert';
 
@@ -59,5 +60,25 @@ class ApiService {
 
 
 
+
+  // --------------------------------------------------------------------------LOKER UMUM-----------------------------------------------------------
+
+// ================== GET ALL LOKER UMUM ==================
+Future<List<LokerUmum>> getAllLokerUmum() async {
+  var url = Uri.parse(ApiConfig.allLokerUmum);
+
+  try {
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => LokerUmum.fromJson(json)).toList();
+    } else {
+      return [];
+    }
+  } catch (e) {
+    return [];
+  }
+}
 
 }
