@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:jobfair/models/loker_umum_model.dart';
 
 class JobDetailScreen extends StatelessWidget {
-  const JobDetailScreen({super.key});
+  final LokerUmum loker;
+  const JobDetailScreen({super.key, required this.loker});
 
   @override
   Widget build(BuildContext context) {

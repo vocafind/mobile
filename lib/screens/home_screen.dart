@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:jobfair/api/api_service.dart';
 import 'package:jobfair/models/loker_umum_model.dart';
+import 'package:jobfair/screens/job_detail_screen.dart';
 import '/widget/header.dart';
 import '/widget/bottom_navbar.dart';
 
@@ -319,122 +320,131 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildJobCard(LokerUmum loker) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 15),
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.25),
-            blurRadius: 2,
-            offset: const Offset(0, 2),
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => JobDetailScreen(loker: loker),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Company Logo & Title
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0987BB),
-                  borderRadius: BorderRadius.circular(9),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.25),
-                      blurRadius: 4,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.business,
-                  color: Colors.white,
-                  size: 28,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      loker.posisi,
-                      style: const TextStyle(
-                        fontFamily: "SF Pro",
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      loker.companyName,
-                      style: const TextStyle(
-                        fontFamily: "SF Pro",
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF7D7D7D),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          
-          // Description
-          Text(
-            loker.deskripsiPekerjaan,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontFamily: "SF Pro",
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF7D7D7D),
-              height: 1.6,
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 15),
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.25),
+              blurRadius: 2,
+              offset: const Offset(0, 2),
             ),
-          ),
-          const SizedBox(height: 16),
-          
-          // Tags & Time
-          Row(
-            children: [
-              if (loker.lokasi != null) ...[
-                _buildTag(loker.lokasi),
-                const SizedBox(width: 6),
-              ],
-              if (loker.jenisPekerjaan != null) ...[
-                _buildTag(loker.jenisPekerjaan),
-                const SizedBox(width: 6),
-              ],
-              // if (loker.tingkatPengalaman != null)
-              //   _buildTag(loker.tingkatPengalaman!),
-              const Spacer(),
-              Text(
-                waktuLalu(loker.tanggalPosting),
-                style: const TextStyle(
-                  fontFamily: "SF Pro",
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF94A3B8),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Company Logo & Title
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0987BB),
+                    borderRadius: BorderRadius.circular(9),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.25),
+                        blurRadius: 4,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.business,
+                    color: Colors.white,
+                    size: 28,
+                  ),
                 ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        loker.posisi,
+                        style: const TextStyle(
+                          fontFamily: "SF Pro",
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        loker.companyName,
+                        style: const TextStyle(
+                          fontFamily: "SF Pro",
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF7D7D7D),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            
+            // Description
+            Text(
+              loker.deskripsiPekerjaan,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontFamily: "SF Pro",
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF7D7D7D),
+                height: 1.6,
               ),
-            ],
-          ),
-        ],
+            ),
+            const SizedBox(height: 16),
+            
+            // Tags & Time
+            Row(
+              children: [
+                if (loker.lokasi != null) ...[
+                  _buildTag(loker.lokasi),
+                  const SizedBox(width: 6),
+                ],
+                if (loker.jenisPekerjaan != null) ...[
+                  _buildTag(loker.jenisPekerjaan),
+                  const SizedBox(width: 6),
+                ],
+                const Spacer(),
+                Text(
+                  waktuLalu(loker.tanggalPosting),
+                  style: const TextStyle(
+                    fontFamily: "SF Pro",
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF94A3B8),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
+
 
   Widget _buildTag(String text) {
     return Container(
