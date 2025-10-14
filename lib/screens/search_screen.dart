@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:jobfair/api/api_service.dart';
+import 'package:jobfair/models/loker_umum_model.dart';
 import '/widget/header.dart';
 import '/widget/bottom_navbar.dart';
 import 'job_detail_screen.dart';
@@ -12,6 +14,14 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
+
+  final ApiService _apiService = ApiService();
+  List<LokerUmum> _lokerList = [];
+  bool _isLoadingLoker = true;
+  String _loadError = '';
+
+
+
   // Page controller for tabs
   late PageController _pageController;
   int _currentTab = 0;
@@ -26,108 +36,34 @@ class _SearchScreenState extends State<SearchScreen> {
   List<String> selectedJobTypes = ["Full time"];
   List<String> selectedWorkModes = ["Remote"];
 
-  // Sample job data
-  final List<Map<String, dynamic>> _allJobs = [
-    // Page 1
-    {
-      "title": "Senior UI/UX Designer",
-      "company": "Gojek Indonesia",
-      "description": "Lead design initiatives for next-gen mobile experiences",
-      "location": "Batam",
-      "workMode": "Remote",
-      "level": "Senior",
-      "timeAgo": "1 hari lalu",
-      "isClosed": false,
-    },
-    {
-      "title": "Frontend Developer",
-      "company": "Tokopedia",
-      "description": "Build scalable web applications using React and TypeScript",
-      "location": "Jakarta",
-      "workMode": "Hybrid",
-      "level": "Mid",
-      "timeAgo": "2 hari lalu",
-      "isClosed": false,
-    },
-    {
-      "title": "Product Manager",
-      "company": "Shopee Indonesia",
-      "description": "Drive product strategy and roadmap for e-commerce platform",
-      "location": "Jakarta",
-      "workMode": "On-site",
-      "level": "Senior",
-      "timeAgo": "3 hari lalu",
-      "isClosed": false,
-    },
-    // Page 2
-    {
-      "title": "Backend Engineer",
-      "company": "Bukalapak",
-      "description": "Develop and maintain microservices architecture",
-      "location": "Bandung",
-      "workMode": "Remote",
-      "level": "Mid",
-      "timeAgo": "4 hari lalu",
-      "isClosed": false,
-    },
-    {
-      "title": "Data Scientist",
-      "company": "Traveloka",
-      "description": "Analyze user behavior and build ML models for recommendations",
-      "location": "Jakarta",
-      "workMode": "Hybrid",
-      "level": "Senior",
-      "timeAgo": "5 hari lalu",
-      "isClosed": false,
-    },
-    {
-      "title": "Mobile Developer",
-      "company": "OVO",
-      "description": "Develop native mobile applications for iOS and Android",
-      "location": "Jakarta",
-      "workMode": "On-site",
-      "level": "Mid",
-      "timeAgo": "6 hari lalu",
-      "isClosed": false,
-    },
-    // Page 3 - with closed jobs
-    {
-      "title": "DevOps Engineer",
-      "company": "Blibli",
-      "description": "Manage cloud infrastructure and CI/CD pipelines",
-      "location": "Jakarta",
-      "workMode": "Remote",
-      "level": "Senior",
-      "timeAgo": "7 hari lalu",
-      "isClosed": false,
-    },
-    {
-      "title": "QA Engineer",
-      "company": "Dana",
-      "description": "Ensure quality through comprehensive testing strategies",
-      "location": "Jakarta",
-      "workMode": "Hybrid",
-      "level": "Mid",
-      "timeAgo": "8 hari lalu",
-      "isClosed": false,
-    },
-    {
-      "title": "Senior UI/UX Designer",
-      "company": "Gojek Indonesia",
-      "description": "Lead design initiatives for next-gen mobile experiences",
-      "location": "Batam",
-      "workMode": "Remote",
-      "level": "Senior",
-      "timeAgo": "15 hari lalu",
-      "isClosed": true, // Closed job
-    },
-  ];
-
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: 0);
+    _loadLokerData();
   }
+
+  Future<void> _loadLokerData() async {
+    setState(() {
+      _isLoadingLoker = true;
+      _loadError = '';
+    });
+
+    try {
+      final data = await _apiService.getAllLokerUmum();
+      setState(() {
+        _lokerList = data; // asumsi: List<LokerUmum>
+        _isLoadingLoker = false;
+      });
+    } catch (e) {
+      setState(() {
+        _loadError = 'Gagal memuat lowongan';
+        _isLoadingLoker = false;
+      });
+    }
+  }
+
+
 
   @override
   void dispose() {
@@ -135,14 +71,14 @@ class _SearchScreenState extends State<SearchScreen> {
     super.dispose();
   }
 
-  List<Map<String, dynamic>> _getJobsForCurrentPage() {
-    final startIndex = (_currentPage - 1) * 3;
-    final endIndex = startIndex + 3;
-    return _allJobs.sublist(
-      startIndex,
-      endIndex > _allJobs.length ? _allJobs.length : endIndex,
-    );
+  List<LokerUmum> _getLokerForCurrentPage() {
+    final perPage = 3;
+    final start = (_currentPage - 1) * perPage;
+    final end = start + perPage;
+    if (_lokerList.isEmpty) return [];
+    return _lokerList.sublist(start, end > _lokerList.length ? _lokerList.length : end);
   }
+
 
   void _showFilterDialog() {
     showDialog(
@@ -591,8 +527,40 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildJobList() {
-    final jobs = _getJobsForCurrentPage();
-    
+    if (_isLoadingLoker) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32.0),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (_loadError.isNotEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            children: [
+              Text(_loadError, style: const TextStyle(color: Color(0xFF7D7D7D))),
+              const SizedBox(height: 12),
+              ElevatedButton(onPressed: _loadLokerData, child: const Text('Coba lagi')),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final jobs = _getLokerForCurrentPage();
+    if (jobs.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32),
+          child: Text('Belum ada lowongan tersedia', style: TextStyle(color: Color(0xFF7D7D7D))),
+        ),
+      );
+    }
+
     return Column(
       children: [
         Expanded(
@@ -600,28 +568,36 @@ class _SearchScreenState extends State<SearchScreen> {
             padding: const EdgeInsets.only(top: 10, bottom: 20),
             itemCount: jobs.length,
             itemBuilder: (context, index) {
-              final job = jobs[index];
+              final loker = jobs[index];
+              // Ambil field aman (null-check)
+              final title = loker.posisi ?? '-';
+              final company = loker.companyName ?? '-';
+              final description = loker.deskripsiPekerjaan ?? '-';
+              final location = loker.lokasi ?? '-';
+              final workMode = loker.jenisPekerjaan ?? '-';
+              final level = loker.tingkatPengalaman ?? '-';
+              final timeAgo = waktuLalu(loker.tanggalPosting ?? DateTime.now());
+
               return Padding(
                 padding: const EdgeInsets.only(bottom: 17),
                 child: _jobCard(
-                  title: job["title"],
-                  company: job["company"],
-                  description: job["description"],
-                  location: job["location"],
-                  workMode: job["workMode"],
-                  level: job["level"],
-                  timeAgo: job["timeAgo"],
-                  isClosed: job["isClosed"],
-                  onTap: job["isClosed"]
-                      ? null
-                      : () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const JobDetailScreen(),
-                            ),
-                          );
-                        },
+                  title: title,
+                  company: company,
+                  description: description,
+                  location: location,
+                  workMode: workMode,
+                  level: level,
+                  timeAgo: timeAgo,
+                  isAIRecommended: false,
+                  isClosed: false, // kalau model punya flag closed, map ke situ
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => JobDetailScreen(lowonganId: loker.lowonganId),
+                      ),
+                    );
+                  },
                 ),
               );
             },
@@ -631,6 +607,7 @@ class _SearchScreenState extends State<SearchScreen> {
       ],
     );
   }
+
 
   Widget _buildAIRecommendationList() {
     return ListView(
@@ -646,14 +623,14 @@ class _SearchScreenState extends State<SearchScreen> {
           timeAgo: "1 hari lalu",
           isAIRecommended: true,
           isClosed: false,
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const JobDetailScreen(),
-              ),
-            );
-          },
+          // onTap: () {
+          //   Navigator.push(
+          //     context,
+          //     MaterialPageRoute(
+          //       builder: (context) => const JobDetailScreen(),
+          //     ),
+          //   );
+          // },
         ),
       ],
     );
@@ -912,13 +889,41 @@ class _SearchScreenState extends State<SearchScreen> {
                 const SizedBox(width: 7),
                 _smallTag(workMode, isClosed),
                 const SizedBox(width: 7),
-                _smallTag(level, isClosed),
+                const Spacer(),  // ✅ Letakkan di sini
+                Text(
+                  timeAgo,
+                  style: const TextStyle(
+                    fontFamily: "SF Pro",
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF94A3B8),
+                  ),
+                ),
               ],
             ),
           ],
         ),
       ),
     );
+  }
+
+  String waktuLalu(DateTime date) {
+    final now = DateTime.now();
+    final diff = now.difference(date);
+
+    if (diff.inDays >= 30) {
+      return "${(diff.inDays / 30).floor()} bulan lalu";
+    } else if (diff.inDays >= 7) {
+      return "${(diff.inDays / 7).floor()} minggu lalu";
+    } else if (diff.inDays >= 1) {
+      return "${diff.inDays} hari lalu";
+    } else if (diff.inHours >= 1) {
+      return "${diff.inHours} jam lalu";
+    } else if (diff.inMinutes >= 1) {
+      return "${diff.inMinutes} menit lalu";
+    } else {
+      return "Baru saja";
+    }
   }
 
   Widget _smallTag(String text, bool isClosed) {
