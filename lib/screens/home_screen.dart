@@ -5,7 +5,6 @@ import 'package:jobfair/screens/job_detail_screen.dart';
 import '/widget/header.dart';
 import '/widget/bottom_navbar.dart';
 
-
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -14,7 +13,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final ApiService _apiService = ApiService(); // Sesuaikan dengan nama service Anda
+  final ApiService _apiService =
+      ApiService(); // Sesuaikan dengan nama service Anda
   List<LokerUmum> _lokerList = [];
   bool _isLoading = true;
   String _errorMessage = '';
@@ -54,7 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             // Header dengan Search Bar
             const HeaderWidget(),
-            
+
             // Scrollable Content
             Expanded(
               child: RefreshIndicator(
@@ -65,14 +65,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 20),
-                      
+
                       // Kategori Populer Section
                       _buildSectionTitle("Kategori Populer"),
                       const SizedBox(height: 16),
                       _buildCategoryGrid(),
-                      
+
                       const SizedBox(height: 32),
-                      
+
                       // Terbaru Section
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 15),
@@ -106,10 +106,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      
+
                       // Job Cards from API
                       _buildJobList(),
-                      
+
                       const SizedBox(height: 20),
                     ],
                   ),
@@ -119,9 +119,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: 0,
-      ),
+      bottomNavigationBar: BottomNavBar(currentIndex: 0),
     );
   }
 
@@ -145,7 +143,11 @@ class _HomeScreenState extends State<HomeScreen> {
       {"name": "Teknologi", "count": "1.234 lowongan", "icon": Icons.computer},
       {"name": "Desain", "count": "1.234 lowongan", "icon": Icons.palette},
       {"name": "Marketing", "count": "1.234 lowongan", "icon": Icons.campaign},
-      {"name": "Keuangan", "count": "1.234 lowongan", "icon": Icons.account_balance},
+      {
+        "name": "Keuangan",
+        "count": "1.234 lowongan",
+        "icon": Icons.account_balance,
+      },
     ];
 
     return Padding(
@@ -221,11 +223,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-              child: Icon(
-                icon,
-                color: Colors.white,
-                size: 28,
-              ),
+              child: Icon(icon, color: Colors.white, size: 28),
             ),
             const Spacer(),
             Text(
@@ -310,10 +308,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       children: displayedLoker.map((loker) {
         return Column(
-          children: [
-            _buildJobCard(loker),
-            const SizedBox(height: 16),
-          ],
+          children: [_buildJobCard(loker), const SizedBox(height: 16)],
         );
       }).toList(),
     );
@@ -325,7 +320,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => JobDetailScreen(loker: loker),
+            builder: (context) => JobDetailScreen(lowonganId: loker.lowonganId),
           ),
         );
       },
@@ -400,7 +395,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            
+
             // Description
             Text(
               loker.deskripsiPekerjaan,
@@ -415,7 +410,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // Tags & Time
             Row(
               children: [
@@ -425,6 +420,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
                 if (loker.jenisPekerjaan != null) ...[
                   _buildTag(loker.jenisPekerjaan),
+                  const SizedBox(width: 6),
+                ],
+                if (loker.opsiKerjaRemote != false) ...[
+                  _buildTag(loker.opsiKerjaRemote ? "Remote" : ""),
                   const SizedBox(width: 6),
                 ],
                 const Spacer(),
@@ -445,17 +444,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-
   Widget _buildTag(String text) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: const Color(0xFFF1F5F9),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFF1F5F9), width: 1),
       ),
       child: Text(
         text,
@@ -487,5 +482,4 @@ class _HomeScreenState extends State<HomeScreen> {
       return "Baru saja";
     }
   }
-
 }

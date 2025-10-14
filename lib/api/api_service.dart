@@ -1,4 +1,5 @@
 import 'package:http/http.dart' as http;
+import 'package:jobfair/models/loker_umum_detail_model.dart';
 import 'package:jobfair/models/loker_umum_model.dart';
 import 'endpoints.dart';
 import 'dart:convert';
@@ -80,5 +81,30 @@ Future<List<LokerUmum>> getAllLokerUmum() async {
     return [];
   }
 }
+
+
+// ================== GET LOKER DETAIL BY ID ==================
+Future<LokerUmumDetail?> getLokerUmumDetailById(String id) async {
+  final url = Uri.parse(ApiConfig.lokerById(id));
+
+  try {
+    final response = await http.get(url);
+
+    print("STATUS BY ID: ${response.statusCode}");
+    print("RESPONSE BY ID: ${response.body}");
+
+    if (response.statusCode == 200) {
+      // Parse ke model LokerUmumDetail
+      return LokerUmumDetail.fromJson(jsonDecode(response.body));
+    } else {
+      return null;
+    }
+  } catch (e) {
+    print("ERROR: $e");
+    return null;
+  }
+}
+
+
 
 }

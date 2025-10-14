@@ -1,23 +1,61 @@
 import 'package:flutter/material.dart';
-import 'package:jobfair/models/loker_umum_model.dart';
+import 'package:jobfair/api/api_service.dart';
+import 'package:jobfair/models/loker_umum_detail_model.dart'; // pastikan model detail
 
-class JobDetailScreen extends StatelessWidget {
-  final LokerUmum loker;
-  const JobDetailScreen({super.key, required this.loker});
+class JobDetailScreen extends StatefulWidget {
+  final String lowonganId;
+  const JobDetailScreen({super.key, required this.lowonganId});
+
+  @override
+  State<JobDetailScreen> createState() => _JobDetailScreenState();
+}
+
+class _JobDetailScreenState extends State<JobDetailScreen> {
+  LokerUmumDetail? lokerDetail;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchDetail();
+  }
+
+  void fetchDetail() async {
+    final detail = await ApiService().getLokerUmumDetailById(widget.lowonganId);
+    setState(() {
+      lokerDetail = detail;
+      isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (lokerDetail == null) {
+      return const Scaffold(
+        body: Center(child: Text("Lowongan tidak ditemukan")),
+      );
+    }
+
+    final loker = lokerDetail!;
+
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
       body: SafeArea(
         child: Column(
           children: [
-            // Header with back button
+            // Header
             Container(
               height: 75,
               color: Colors.white,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 23, vertical: 18),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 23,
+                  vertical: 18,
+                ),
                 child: Row(
                   children: [
                     GestureDetector(
@@ -58,263 +96,20 @@ class JobDetailScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Job Header Section
-                    Container(
-                      width: double.infinity,
-                      color: Colors.white,
-                      padding: const EdgeInsets.fromLTRB(23, 30, 23, 25),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Company Logo
-                          Container(
-                            width: 60,
-                            height: 60,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF0987BB),
-                              borderRadius: BorderRadius.circular(9),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.25),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 21),
-                          // Job Info
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
-                                Text(
-                                  "Senior UI/UX \nDesigner",
-                                  style: TextStyle(
-                                    fontSize: 25,
-                                    fontFamily: "SF Pro",
-                                    fontWeight: FontWeight.w900,
-                                    color: Color(0xFF1A1A1A),
-                                    height: 1.12,
-                                  ),
-                                ),
-                                SizedBox(height: 8),
-                                Text(
-                                  "Gojek Indonesia",
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontFamily: "SF Pro",
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF64748B),
-                                  ),
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  "Jakarta, Indonesia",
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontFamily: "SF Pro",
-                                    fontWeight: FontWeight.w400,
-                                    color: Color(0xFF94A3B8),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Tags Section
-                    Container(
-                      color: Colors.white,
-                      padding: const EdgeInsets.fromLTRB(104, 0, 23, 20),
-                      child: Row(
-                        children: [
-                          _buildTag("Remote"),
-                          const SizedBox(width: 15),
-                          _buildTag("Senior Level"),
-                          const SizedBox(width: 15),
-                          _buildTag("Full Time"),
-                        ],
-                      ),
-                    ),
-
+                    _buildHeader(loker),
+                    _buildTags(loker),
                     const SizedBox(height: 20),
-
-                    // Experience & Education Box
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 23),
-                      child: Container(
-                        height: 59,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
-                                  Text(
-                                    "5-7 Thn",
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontFamily: "SF Pro",
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xFF191919),
-                                    ),
-                                  ),
-                                  SizedBox(height: 2),
-                                  Text(
-                                    "Experience",
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontFamily: "SF Pro",
-                                      fontWeight: FontWeight.w400,
-                                      color: Color(0xFF64748B),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Container(
-                              width: 1,
-                              height: 40,
-                              color: const Color(0xFFE2E8F0),
-                            ),
-                            Expanded(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
-                                  Text(
-                                    "S1",
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontFamily: "SF Pro",
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xFF191919),
-                                    ),
-                                  ),
-                                  SizedBox(height: 2),
-                                  Text(
-                                    "Pendidikan",
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontFamily: "SF Pro",
-                                      fontWeight: FontWeight.w400,
-                                      color: Color(0xFF64748B),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
+                    _buildExperienceEducation(loker),
                     const SizedBox(height: 20),
-
-                    // Job Description Section
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 31),
-                      child: Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.all(19),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: const [
-                                Icon(
-                                  Icons.description,
-                                  size: 21,
-                                  color: Color(0xFF0987BB),
-                                ),
-                                SizedBox(width: 14),
-                                Text(
-                                  "Deskripsi Pekerjaan",
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontFamily: "SF Pro",
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF191919),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 13),
-                            const Text(
-                              "Kami mencari Senior UI/UX Designer yang berpengalaman untuk memimpin inisiatif desain dalam mengembangkan pengalaman mobile generasi berikutnya. Kamu akan bekerja dengan tim product dan engineering untuk menciptakan solusi desain yang inovatif dan user-centric.\n\nSebagai Senior Designer, kamu akan bertanggung jawab untuk mengembangkan design system, melakukan user research, dan memastikan konsistensi pengalaman pengguna di seluruh platform Gojek yang digunakan oleh jutaan orang setiap harinya.",
-                              textAlign: TextAlign.justify,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontFamily: "SF Pro",
-                                fontWeight: FontWeight.w300,
-                                color: Color(0xFF64748B),
-                                height: 1.36,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
+                    _buildJobDescription(loker),
                     const SizedBox(height: 20),
-
-                    // Qualifications Section
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 31),
-                      child: Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.all(19),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: const [
-                                Icon(
-                                  Icons.check_circle_outline,
-                                  size: 19,
-                                  color: Color(0xFF0987BB),
-                                ),
-                                SizedBox(width: 12),
-                                Text(
-                                  "Kualifikasi & Persyaratan",
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontFamily: "SF Pro",
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF191919),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            _buildBulletPoint("Minimal S1 Desain Komunikasi Visual, HCI, atau bidang terkait"),
-                            const SizedBox(height: 18),
-                            _buildBulletPoint("5+ tahun pengalaman sebagai UI/UX Designer di perusahaan teknologi"),
-                            const SizedBox(height: 18),
-                            _buildBulletPoint("Mahir menggunakan Figma, Sketch, dan Adobe Creative Suite"),
-                            const SizedBox(height: 18),
-                            _buildBulletPoint("Pengalaman dalam mengembangkan dan mengelola design system"),
-                            const SizedBox(height: 18),
-                            _buildBulletPoint("Pemahaman yang mendalam tentang user research dan usability testing"),
-                          ],
-                        ),
-                      ),
-                    ),
-
+                    _buildQualifications(loker),
+                    const SizedBox(height: 20),
+                    _buildBenefits(loker),
+                    const SizedBox(height: 20),
+                    _buildAdditionalRequirements(loker),
+                    const SizedBox(height: 20),
+                    _buildFacilities(loker),
                     const SizedBox(height: 100),
                   ],
                 ),
@@ -324,7 +119,6 @@ class JobDetailScreen extends StatelessWidget {
         ),
       ),
 
-      // Apply Button - Fixed at bottom
       bottomNavigationBar: Container(
         color: Colors.transparent,
         padding: const EdgeInsets.fromLTRB(31, 0, 31, 26),
@@ -338,7 +132,6 @@ class JobDetailScreen extends StatelessWidget {
             color: Colors.transparent,
             child: InkWell(
               onTap: () {
-                // Handle apply button
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Fitur Lamar Pekerjaan akan segera hadir!'),
@@ -365,6 +158,239 @@ class JobDetailScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildHeader(LokerUmumDetail loker) {
+    return Container(
+      width: double.infinity,
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(23, 30, 23, 25),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: const Color(0xFF0987BB),
+              borderRadius: BorderRadius.circular(9),
+            ),
+          ),
+          const SizedBox(width: 21),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  loker.posisi,
+                  style: const TextStyle(
+                    fontSize: 25,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  loker.companyName,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  loker.lokasi ?? "-",
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: Color(0xFF94A3B8),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTags(LokerUmumDetail loker) {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(104, 0, 23, 20),
+      child: Row(
+        children: [
+          _buildTag(loker.jenisPekerjaan),
+          const SizedBox(width: 15),
+          if (loker.opsiKerjaRemote) _buildTag("Remote"),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExperienceEducation(LokerUmumDetail loker) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 23),
+      child: Container(
+        height: 59,
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    "5-7 Thn",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 2),
+                  const Text(
+                    "Experience",
+                    style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                  ),
+                ],
+              ),
+            ),
+            Container(width: 1, height: 40, color: const Color(0xFFE2E8F0)),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    loker.minimalLulusan ?? "-",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  const Text(
+                    "Pendidikan",
+                    style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildJobDescription(LokerUmumDetail loker) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 31),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        padding: const EdgeInsets.all(19),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: const [
+                Icon(Icons.description, size: 21, color: Color(0xFF0987BB)),
+                SizedBox(width: 14),
+                Text(
+                  "Deskripsi Pekerjaan",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                ),
+              ],
+            ),
+            const SizedBox(height: 13),
+            Text(
+              loker.deskripsiPekerjaan,
+              textAlign: TextAlign.justify,
+              style: const TextStyle(
+                fontSize: 14,
+                height: 1.36,
+                color: Color(0xFF64748B),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQualifications(LokerUmumDetail loker) {
+    if (loker.jobQualifications.isEmpty) return const SizedBox.shrink();
+    return _buildSectionList(
+      "Kualifikasi & Persyaratan",
+      loker.jobQualifications.map((e) => e.kualifikasi).toList(),
+    );
+  }
+
+  Widget _buildBenefits(LokerUmumDetail loker) {
+    if (loker.jobBenefits.isEmpty) return const SizedBox.shrink();
+    return _buildSectionList(
+      "Benefit",
+      loker.jobBenefits.map((e) => e.benefit).toList(),
+    );
+  }
+
+  Widget _buildAdditionalRequirements(LokerUmumDetail loker) {
+    if (loker.jobAdditionalRequirements.isEmpty) return const SizedBox.shrink();
+    return _buildSectionList(
+      "Persyaratan Tambahan",
+      loker.jobAdditionalRequirements.map((e) => e.persyaratan).toList(),
+    );
+  }
+
+  Widget _buildFacilities(LokerUmumDetail loker) {
+    if (loker.jobAdditionalFacilities.isEmpty) return const SizedBox.shrink();
+    return _buildSectionList(
+      "Fasilitas",
+      loker.jobAdditionalFacilities.map((e) => e.fasilitas).toList(),
+    );
+  }
+
+  Widget _buildSectionList(String title, List<String> items) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 31),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        padding: const EdgeInsets.all(19),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  Icons.check_circle_outline,
+                  size: 19,
+                  color: Color(0xFF0987BB),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            ...items.map(
+              (e) => Column(
+                children: [_buildBulletPoint(e), const SizedBox(height: 18)],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildTag(String text) {
     return Container(
       height: 23,
@@ -379,7 +405,6 @@ class JobDetailScreen extends StatelessWidget {
           text,
           style: const TextStyle(
             fontSize: 9,
-            fontFamily: "SF Pro",
             fontWeight: FontWeight.w500,
             color: Color(0xFF64748B),
           ),
@@ -407,8 +432,7 @@ class JobDetailScreen extends StatelessWidget {
             text,
             textAlign: TextAlign.justify,
             style: const TextStyle(
-              fontSize: 11,
-              fontFamily: "SF Pro",
+              fontSize: 14,
               fontWeight: FontWeight.w300,
               color: Color(0xFF64748B),
               height: 1.36,

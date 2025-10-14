@@ -594,7 +594,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => JobDetailScreen(loker: loker),
+                        builder: (context) => JobDetailScreen(lowonganId: loker.lowonganId),
                       ),
                     );
                   },
