@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '/screens/home_screen.dart';
-import '/screens/search_screen.dart';
-import '/screens/jobfair_screen.dart';
-import '/screens/profile_screen.dart';
-import '/screens/lamaran_screen.dart';
+import '../screens/lama/home_screen.dart';
+import '../screens/lama/search_screen.dart';
+import '../screens/lama/jobfair_screen.dart';
+import '../screens/lama/profile_screen.dart';
+import '../screens/lama/lamaran_screen.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;

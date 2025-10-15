@@ -1,42 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'screens/splash_screen.dart';
-
+import 'screens/halaman_1.dart'; // ✅ ubah ke halaman_1.dart
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Muat file .env
-  // await dotenv.load(fileName: ".env");
 
-  // Set warna status bar dan navigation bar agar match dengan splash screen
+  // Warna status bar & navigation bar agar sesuai dengan tema light
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
-      systemNavigationBarColor: Color(0xFF87CEEB),
+      systemNavigationBarColor: Color(0xFFFFF8F8),
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
-  
-  runApp(const FigmaToCodeApp());
+
+  runApp(const JobFairApp());
 }
 
-class FigmaToCodeApp extends StatelessWidget {
-  const FigmaToCodeApp({super.key});
+class JobFairApp extends StatelessWidget {
+  const JobFairApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Job Search App',
-      theme: ThemeData(
-        // Gunakan theme light dengan warna yang match splash screen
-        brightness: Brightness.light,
-        scaffoldBackgroundColor: const Color(0xFF87CEEB), // Sky blue dari splash
-        primaryColor: const Color(0xFF1747A2),
-      ),
-      home: const SplashScreen(),
+      title: 'JobFair',
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: const Color(0xFFFFF8F8),
+        primaryColor: const Color(0xFF1747A2),
+        fontFamily: 'Poppins',
+      ),
+      home: const Halaman1(), 
     );
   }
 }
