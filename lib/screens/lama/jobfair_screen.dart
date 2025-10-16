@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '/widget/bottom_navbar.dart';
 import '/widget/header.dart';
-import '/screens/jobfair_detail_screen.dart'; // Import halaman detail
+import 'jobfair_detail_screen.dart'; // Import halaman detail
 
 class JobFairScreen extends StatelessWidget {
   const JobFairScreen({super.key});
