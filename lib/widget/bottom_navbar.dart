@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import '/screens/halaman_beranda.dart';  
 import '/screens/halaman_cari_loker.dart';
+// import 'package:jobfair/screens/halaman_jobfair.dart';
+
+
+
 
 class BottomNavBar extends StatefulWidget {
   final int currentIndex;
@@ -15,6 +19,7 @@ class BottomNavBar extends StatefulWidget {
   @override
   State<BottomNavBar> createState() => _BottomNavBarState();
 }
+
 
 class _BottomNavBarState extends State<BottomNavBar>
     with SingleTickerProviderStateMixin {

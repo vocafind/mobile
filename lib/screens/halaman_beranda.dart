@@ -41,7 +41,7 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
     final bool showSearchOnly = _scrollOffset > 100;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF8F8),
+      backgroundColor: const Color(0xFFFFFFFF),
       body: Stack(
         children: [
           // Main scrollable content

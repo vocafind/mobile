@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'halaman_login.dart'; // tambahkan import ini
 
+
+
 class Halaman1 extends StatelessWidget {
   const Halaman1({super.key});
+
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF8F8),
+      backgroundColor: const Color(0xFFFFFFFF),
       body: Stack(
         children: [
           // Background biru
@@ -136,3 +139,4 @@ class Halaman1 extends StatelessWidget {
     );
   }
 }
+

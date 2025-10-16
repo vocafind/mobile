@@ -9,7 +9,7 @@ void main() {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
+      statusBarIconBrightness: Brightness.light,
       systemNavigationBarColor: Color(0xFFFFF8F8),
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
@@ -27,7 +27,7 @@ class JobFairApp extends StatelessWidget {
       title: 'JobFair',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        brightness: Brightness.light,
+        brightness: Brightness.dark,
         scaffoldBackgroundColor: const Color(0xFFFFF8F8),
         primaryColor: const Color(0xFF1747A2),
         fontFamily: 'Poppins',
