@@ -12,6 +12,7 @@ class HalamanCariLoker extends StatefulWidget {
 class _HalamanCariLokerState extends State<HalamanCariLoker> {
   final ScrollController _scrollController = ScrollController();
   int _selectedTab = 0; // 0 = Semua, 1 = Rekomendasi AI
+  int _currentPage = 0; // untuk pagination
 
   @override
   void dispose() {
@@ -22,7 +23,7 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFf0f4fa),
       body: Stack(
         children: [
           // Main scrollable content with padding for header and filter tabs
@@ -33,6 +34,8 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
               child: Column(
                 children: [
                   _buildLowonganList(),
+                  const SizedBox(height: 24),
+                  _buildPagination(),
                   const SizedBox(height: 100),
                 ],
               ),
@@ -147,6 +150,7 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
                     onTap: () {
                       setState(() {
                         _selectedTab = 0;
+                        _currentPage = 0;
                       });
                     },
                     child: Container(
@@ -177,6 +181,7 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
                     onTap: () {
                       setState(() {
                         _selectedTab = 1;
+                        _currentPage = 0;
                       });
                     },
                     child: Container(
@@ -231,9 +236,9 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
       return Column(
         children: [
           const _JobCard(),
-          const SizedBox(height: 20),
+          const SizedBox(height: 1),
           const _JobCard(),
-          const SizedBox(height: 20),
+          const SizedBox(height: 1),
           const _JobCard(),
         ],
       );
@@ -242,13 +247,46 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
       return Column(
         children: [
           const _JobCardAI(),
-          const SizedBox(height: 20),
+          const SizedBox(height: 1),
           const _JobCardAI(),
-          const SizedBox(height: 20),
+          const SizedBox(height: 1),
           const _JobCardAI(),
         ],
       );
     }
+  }
+
+  Widget _buildPagination() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _buildPaginationDot(0),
+        const SizedBox(width: 7),
+        _buildPaginationDot(1),
+        const SizedBox(width: 7),
+        _buildPaginationDot(2),
+        const SizedBox(width: 7),
+        _buildPaginationDot(3),
+      ],
+    );
+  }
+
+  Widget _buildPaginationDot(int index) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _currentPage = index;
+        });
+      },
+      child: Container(
+        width: _currentPage == index ? 10 : 8,
+        height: _currentPage == index ? 10 : 8,
+        decoration: BoxDecoration(
+          color: _currentPage == index ? const Color(0xFF1B55FC) : const Color(0xFFBDC0C1),
+          shape: BoxShape.circle,
+        ),
+      ),
+    );
   }
 }
 
@@ -264,21 +302,15 @@ class _JobCard extends StatelessWidget {
         showJobDetail(context);
       },
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 18),
+        width: double.infinity,
         height: 235,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: const Color(0xFFDADADA).withOpacity(0.5),
-          ),
-          gradient: LinearGradient(
-            colors: [
-              const Color(0xFFE9DFC3).withOpacity(0.4),
-              Colors.white.withOpacity(0.4),
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            stops: const [0.0, 1.0],
+          color: Colors.white,
+          border: Border(
+            bottom: BorderSide(
+              color: const Color(0xFFDADADA).withOpacity(0.5),
+              width: 1,
+            ),
           ),
         ),
         child: Stack(
@@ -306,7 +338,7 @@ class _JobCard extends StatelessWidget {
             ),
             // Job title
             const Positioned(
-              left: 102,
+              left: 84,
               top: 20,
               right: 16,
               child: Text(
@@ -322,7 +354,7 @@ class _JobCard extends StatelessWidget {
             ),
             // Company name
             const Positioned(
-              left: 102,
+              left: 84,
               top: 43,
               child: Text(
                 'Inforsys Indonesia',
@@ -460,15 +492,19 @@ class _JobCardAI extends StatelessWidget {
         showJobDetail(context);
       },
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 18),
+        width: double.infinity,
         height: 235,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFF0118D8)),
-          gradient: const LinearGradient(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
             colors: [Color(0xFF0118D8), Color(0xFF1B56FD)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
+          ),
+          border: Border(
+            bottom: BorderSide(
+              color: Color(0xFF0118D8),
+              width: 1,
+            ),
           ),
         ),
         child: Stack(

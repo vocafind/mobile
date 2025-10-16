@@ -1,97 +1,110 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import '../screens/lama/notification_screen.dart';
+import 'package:flutter/services.dart'; // TAMBAHKAN INI
 
 class HeaderWidget extends StatelessWidget {
-  const HeaderWidget({super.key});
+  final bool showNotification;
+  final bool showFilter;
+  final VoidCallback? onNotificationTap;
+  final VoidCallback? onFilterTap;
+
+  const HeaderWidget({
+    super.key,
+    this.showNotification = true,
+    this.showFilter = false,
+    this.onNotificationTap,
+    this.onFilterTap,
+  });
 
   @override
   Widget build(BuildContext context) {
+    // Set status bar style
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+      ),
+    );
+
     return Container(
-      height: 107,
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 20),
-      child: Row(
-        children: [
-          // Search Bar
-          Expanded(
-            child: Container(
-              height: 39,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                children: const [
-                  SizedBox(width: 12),
-                  Icon(
-                    Icons.search,
-                    color: Color(0xFF2A3038),
-                    size: 20,
-                  ),
-                  SizedBox(width: 13),
-                  Text(
-                    "Cari posisi atau perusahaan...",
-                    style: TextStyle(
-                      fontFamily: "SF Pro",
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF747474),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 9),
-          
-          // Notification Button
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const NotificationScreen(),
-                ),
-              );
-            },
-            child: Stack(
-              children: [
-                Container(
-                  width: 39,
-                  height: 39,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF1B56FD), Color(0xFF0118D8)],
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(15, 0, 15, 20),
+          child: Row(
+            children: [
+              // Search bar
+              Expanded(
+                child: Container(
+                  height: 44,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(10),
+                    color: const Color(0xFFEEEEEE).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(50),
                   ),
-                  child: Center(
-                    child: SvgPicture.asset(
-                      'assets/icons/bel.svg',
-                      width: 24,
-                      height: 24,
-                      colorFilter: const ColorFilter.mode(
-                        Color(0xFF2A3038),
-                        BlendMode.srcIn,
+                  child: const Row(
+                    children: [
+                      SizedBox(width: 14),
+                      Icon(Icons.search, color: Colors.white, size: 25),
+                      SizedBox(width: 16),
+                      Text(
+                        'Cari lowongan kerja...',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
-                Positioned(
-                  right: 2,
-                  top: 0,
+              ),
+              const SizedBox(width: 6),
+              // Notification button (conditional)
+              if (showNotification)
+                GestureDetector(
+                  onTap: onNotificationTap,
                   child: Container(
-                    width: 10,
-                    height: 10,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFFF0004),
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEEEEEE).withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
+                    child: const Icon(
+                      Icons.notifications_outlined,
+                      color: Colors.white,
+                      size: 20,
+                    ),
                   ),
                 ),
-              ],
-            ),
+              // Filter button (conditional)
+              if (showFilter)
+                GestureDetector(
+                  onTap: onFilterTap,
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEEEEEE).withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.tune,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
