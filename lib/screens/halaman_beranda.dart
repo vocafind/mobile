@@ -41,7 +41,7 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
     final bool showSearchOnly = _scrollOffset > 100;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF8F8),
+      backgroundColor: const Color(0xFFf0f4fa),
       body: Stack(
         children: [
           // Main scrollable content
@@ -221,9 +221,9 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
           ),
           const SizedBox(height: 16),
           const _JobCard(),
-          const SizedBox(height: 12),
+          const SizedBox(height: 1),
           const _JobCard(),
-          const SizedBox(height: 12),
+          const SizedBox(height: 1),
           const _JobCard(),
         ],
       );
@@ -377,200 +377,191 @@ class _JobCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        margin: const EdgeInsets.symmetric(horizontal: 21),
-        height: 235,
+        width: double.infinity,
+        height: 240,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFDADADA).withValues(alpha:0.5)),
-          gradient: LinearGradient(
-            colors: [
-              const Color(0xFFE9DFC3).withValues(alpha:0.1),
-              Colors.white.withValues(alpha:0.6),
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            stops: const [0.7, 1.0],
+          color: Colors.white,
+          border: Border(
+            bottom: BorderSide(
+              color: const Color(0xFFDADADA).withValues(alpha: 0.5),
+              width: 1,
+            ),
           ),
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4), // blur 4px
-            child: Stack(
-              children: [
-                // Logo box
-                Positioned(
-                  left: 17,
-                  top: 16,
-                  child: Container(
-                    width: 55,
-                    height: 54,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFF1F5F9)),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: Image.asset(
-                        'assets/icons/icon.png',
-                        fit: BoxFit.contain,
-                      ),
+        child: Stack(
+            children: [
+              // Logo box
+              Positioned(
+                left: 17,
+                top: 16,
+                child: Container(
+                  width: 55,
+                  height: 54,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFF1F5F9)),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Image.asset(
+                      'assets/icons/icon.png',
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ),
-                // Job title
-                const Positioned(
-                  left: 84,
-                  top: 20,
-                  right: 16,
-                  child: Text(
-                    'Fulltime Backend Developer',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w600,
-                      height: 1.5,
-                    ),
+              ),
+              // Job title
+              const Positioned(
+                left: 84,
+                top: 20,
+                right: 16,
+                child: Text(
+                  'Fulltime Backend Developer',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 16,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w600,
+                    height: 1.5,
                   ),
                 ),
-                // Company name
-                const Positioned(
-                  left: 84,
-                  top: 43,
-                  child: Text(
-                    'Inforsys Indonesia',
-                    style: TextStyle(
-                      color: Color(0xFF515151),
-                      fontSize: 14,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w500,
-                      height: 1.71,
-                    ),
-                  ),
-                ),
-                // Location icon
-                const Positioned(
-                  left: 17,
-                  top: 80,
-                  child: Icon(
-                    Icons.location_on_outlined,
-                    size: 19,
+              ),
+              // Company name
+              const Positioned(
+                left: 84,
+                top: 43,
+                child: Text(
+                  'Inforsys Indonesia',
+                  style: TextStyle(
                     color: Color(0xFF515151),
+                    fontSize: 14,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w500,
+                    height: 1.71,
                   ),
                 ),
-                // Location text
-                const Positioned(
-                  left: 39,
-                  top: 77,
-                  child: Text(
-                    'Kota Batam',
-                    style: TextStyle(
-                      color: Color(0xFF515151),
-                      fontSize: 12,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w500,
-                      height: 2,
-                    ),
+              ),
+              // Location icon
+              const Positioned(
+                left: 17,
+                top: 80,
+                child: Icon(
+                  Icons.location_on_outlined,
+                  size: 19,
+                  color: Color(0xFF515151),
+                ),
+              ),
+              // Location text
+              const Positioned(
+                left: 39,
+                top: 77,
+                child: Text(
+                  'Kota Batam',
+                  style: TextStyle(
+                    color: Color(0xFF515151),
+                    fontSize: 12,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w500,
+                    height: 2,
                   ),
                 ),
-                // Salary icon
-                const Positioned(
-                  left: 18,
-                  top: 103,
-                  child: Icon(
-                    Icons.payments_outlined,
+              ),
+              // Salary icon
+              const Positioned(
+                left: 18,
+                top: 103,
+                child: Icon(
+                  Icons.payments_outlined,
+                  size: 18,
+                  color: Color(0xFF515151),
+                ),
+              ),
+              // Salary text
+              const Positioned(
+                left: 39,
+                top: 100,
+                child: Text(
+                  'Rp 9.000.000',
+                  style: TextStyle(
+                    color: Color(0xFF515151),
+                    fontSize: 12,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w500,
+                    height: 2,
+                  ),
+                ),
+              ),
+              // Bookmark icon
+              Positioned(
+                right: 16,
+                top: 90,
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFFF1F5F9)),
+                  ),
+                  child: const Icon(
+                    Icons.bookmark_outline,
                     size: 18,
                     color: Color(0xFF515151),
                   ),
                 ),
-                                // Salary text
-                const Positioned(
-                  left: 39,
-                  top: 100,
-                  child: Text(
-                    'Rp 9.000.000',
-                    style: TextStyle(
-                      color: Color(0xFF515151),
-                      fontSize: 12,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w500,
-                      height: 2,
-                    ),
+              ),
+              // Description
+              const Positioned(
+                left: 16,
+                top: 136,
+                right: 16,
+                child: Text(
+                  'Bertanggung jawab mengembangkan, mengelola, dan mengoptimalkan sistem backend untuk...',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Color(0xFF515151),
+                    fontSize: 12,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w400,
+                    height: 2,
                   ),
                 ),
-                // Bookmark icon
-                Positioned(
-                  right: 16,
-                  top: 90,
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFFF1F5F9)),
-                    ),
-                    child: const Icon(
-                      Icons.bookmark_outline,
-                      size: 18,
-                      color: Color(0xFF515151),
-                    ),
+              ),
+              // Tags
+              const Positioned(
+                left: 15,
+                bottom: 18,
+                child: Row(
+                  children: [
+                    _Tag(text: 'S1'),
+                    SizedBox(width: 6),
+                    _Tag(text: 'Remote'),
+                    SizedBox(width: 6),
+                    _Tag(text: 'Senior'),
+                  ],
+                ),
+              ),
+              // Time ago
+              const Positioned(
+                right: 16,
+                bottom: 18,
+                child: Text(
+                  '1 hari lalu',
+                  style: TextStyle(
+                    color: Color(0xFF464E5E),
+                    fontSize: 10,
+                    fontFamily: 'SF Pro',
+                    fontWeight: FontWeight.w700,
+                    height: 2.4,
                   ),
                 ),
-                // Description
-                const Positioned(
-                  left: 16,
-                  top: 136,
-                  right: 16,
-                  child: Text(
-                    'Bertanggung jawab mengembangkan, mengelola, dan mengoptimalkan sistem backend untuk...',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Color(0xFF515151),
-                      fontSize: 12,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w400,
-                      height: 2,
-                    ),
-                  ),
-                ),
-                // Tags
-                const Positioned(
-                  left: 15,
-                  bottom: 18,
-                  child: Row(
-                    children: [
-                      _Tag(text: 'S1'),
-                      SizedBox(width: 6),
-                      _Tag(text: 'Remote'),
-                      SizedBox(width: 6),
-                      _Tag(text: 'Senior'),
-                    ],
-                  ),
-                ),
-                // Time ago
-                const Positioned(
-                  right: 16,
-                  bottom: 18,
-                  child: Text(
-                    '1 hari lalu',
-                    style: TextStyle(
-                      color: Color(0xFF464E5E),
-                      fontSize: 10,
-                      fontFamily: 'SF Pro',
-                      fontWeight: FontWeight.w700,
-                      height: 2.4,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ),
-      );
+        );
+      
 }
 
 

@@ -26,7 +26,7 @@ class _HalamanLoginState extends State<HalamanLogin> {
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF8F8),
+      backgroundColor: const Color(0xFFFFFFFF),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(

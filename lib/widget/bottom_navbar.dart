@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import '/screens/halaman_beranda.dart';  
 import '/screens/halaman_cari_loker.dart';
+import '/screens/halaman_jobfair.dart';
+
+
+
 
 class BottomNavBar extends StatefulWidget {
   final int currentIndex;
@@ -15,6 +19,7 @@ class BottomNavBar extends StatefulWidget {
   @override
   State<BottomNavBar> createState() => _BottomNavBarState();
 }
+
 
 class _BottomNavBarState extends State<BottomNavBar>
     with SingleTickerProviderStateMixin {
@@ -117,9 +122,9 @@ class _BottomNavBarState extends State<BottomNavBar>
   Widget _getJobfairPage() {
     // Import manual - uncomment ketika halaman sudah siap
     // import '../screens/halaman_jobfair.dart';
-    // return const HalamanJobfair();
+    return const HalamanJobfair();
     
-    return _buildPlaceholder('Jobfair', 2);
+    // return _buildPlaceholder('Jobfair', 2);
   }
 
   Widget _getLamaranPage() {
