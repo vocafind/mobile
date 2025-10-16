@@ -96,7 +96,7 @@ class Halaman1 extends StatelessWidget {
             ),
           ),
 
-          //  POP transisi
+          // Button tanpa efek transisi
           Positioned(
             left: (screenWidth - 144) / 2,
             top: 633,
@@ -104,26 +104,8 @@ class Halaman1 extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  PageRouteBuilder(
-                    transitionDuration: const Duration(milliseconds: 600),
-                    pageBuilder: (_, __, ___) => const HalamanLogin(),
-                    transitionsBuilder: (_, animation, __, child) {
-                      return FadeTransition(
-                        opacity: animation,
-                        child: ScaleTransition(
-                          scale: Tween<double>(
-                            begin: 0.9,
-                            end: 1.0,
-                          ).animate(
-                            CurvedAnimation(
-                              parent: animation,
-                              curve: Curves.easeOutBack,
-                            ),
-                          ),
-                          child: child,
-                        ),
-                      );
-                    },
+                  MaterialPageRoute(
+                    builder: (context) => const HalamanLogin(),
                   ),
                 );
               },

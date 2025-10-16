@@ -3,7 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:jobfair/api/api_service.dart';
 import 'package:jobfair/models/loker_umum_model.dart';
 import '/widget/header.dart';
-import '/widget/bottom_navbar.dart';
+import '../../widget/lama/bottom_navbar.dart';
 import 'job_detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '/widget/bottom_navbar.dart';
+import '../../widget/lama/bottom_navbar.dart';
 import '/widget/header.dart';
 
 class ApplicationScreen extends StatefulWidget {
