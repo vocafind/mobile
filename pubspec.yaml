@@ -46,6 +46,7 @@ flutter:
   - assets/icons/pesan.png
   - assets/icons/bawah.svg
   - assets/icons/atas.svg
+  - assets/images/image10.png
 
 
 
@@ -154,8 +155,9 @@ flutter_icons:
 
 flutter_native_splash:
   # Menggunakan background image untuk hasil yang sama persis
-  background_image: "assets/images/splash.png"
-  background_image_dark: "assets/images/splash.png"
+  color: "#FFFFFF"
+  image: assets/icons/icon.png
+  icon_background_color: "#FFFFFF"
   android: true
   ios: true
   web: false
@@ -164,7 +166,7 @@ flutter_native_splash:
   # Untuk Android 12+ tetap perlu color + image
   android_12:
     color: "#FFFFFF"
-    image: assets/images/logo1.png
+    image: assets/icons/icon.png
     icon_background_color: "#FFFFFF"
 
   # To add assets to your application, add an assets section, like this:

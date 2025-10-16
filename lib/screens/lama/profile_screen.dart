@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '/widget/bottom_navbar.dart';
+import '../../widget/lama/bottom_navbar.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({Key? key}) : super(key: key);

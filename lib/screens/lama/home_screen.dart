@@ -3,7 +3,7 @@ import 'package:jobfair/api/api_service.dart';
 import 'package:jobfair/models/loker_umum_model.dart';
 import 'package:jobfair/screens/lama/job_detail_screen.dart';
 import '/widget/header.dart';
-import '/widget/bottom_navbar.dart';
+import '../../widget/lama/bottom_navbar.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

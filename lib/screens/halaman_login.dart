@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'halaman_register.dart';
+import 'halaman_beranda.dart';
 
 class HalamanLogin extends StatefulWidget {
   const HalamanLogin({super.key});
@@ -40,22 +41,6 @@ class _HalamanLoginState extends State<HalamanLogin> {
                   Container(
                     width: 115,
                     height: 115,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: const LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Colors.white, Color(0xFFFAFAFA)],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha:0.15),
-                          blurRadius: 17,
-                          spreadRadius: 0,
-                          offset: const Offset(17, 17),
-                        ),
-                      ],
-                    ),
                   ),
                   // Logo - GANTI DENGAN LOGO KAMU
                   SizedBox(
@@ -227,7 +212,10 @@ class _HalamanLoginState extends State<HalamanLogin> {
                 padding: const EdgeInsets.symmetric(horizontal: 46),
                 child: GestureDetector(
                   onTap: () {
-                    // Handle login
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HalamanBeranda()),
+                    );
                   },
                   child: Container(
                     width: double.infinity,
