@@ -40,10 +40,10 @@ class Halaman1 extends StatelessWidget {
               width: 93,
               height: 94,
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF8F8),
+                color: const Color.fromARGB(255, 255, 255, 255),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: const Color(0xFFE9DFC3),
+                  color: const Color.fromARGB(255, 255, 255, 255),
                   width: 1,
                 ),
               ),
@@ -123,7 +123,7 @@ class Halaman1 extends StatelessWidget {
                   child: Text(
                     'Mulai',
                     style: TextStyle(
-                      color: Color(0xFFFFF8F8),
+                      color: Color.fromARGB(255, 255, 255, 255),
                       fontSize: 14,
                       fontFamily: 'Poppins',
                       fontWeight: FontWeight.w500,

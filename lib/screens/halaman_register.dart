@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'dart:io';
-import 'package:jobfair/screens/halaman_login.dart';
 import 'buat_akun.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -15,30 +16,27 @@ class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
   final _nikController = TextEditingController();
   final _whatsappController = TextEditingController();
-  
+
   String? _selectedGender;
   String? _selectedAge;
   String? _selectedProvince;
   String? _selectedCity;
   File? _ktpImage;
-  
+
+  //error live form validation
+  String? _nikError;
+  String? _ageError;
+  String? _whatsappError;
+  String? _ktpError;
+
   final _nikFocus = FocusNode();
   final _whatsappFocus = FocusNode();
-  
-  final List<String> _genderOptions = ['Laki-laki', 'Perempuan'];
-  final List<String> _ageOptions = ['17-25', '26-35', '36-45', '46-55', '56+'];
-  final List<String> _provinces = [
-    'DKI Jakarta', 
-    'Jawa Barat', 
-    'Jawa Tengah', 
-    'Jawa Timur'
-  ];
-  final List<String> _cities = [
-    'Jakarta Pusat', 
-    'Bandung', 
-    'Semarang', 
-    'Surabaya'
-  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _nikController.addListener(_handleNikChange);
+  }
 
   @override
   void dispose() {
@@ -49,12 +47,130 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
+  // 🔹 Fungsi untuk handle perubahan NIK (Auto-fill)
+  void _handleNikChange() async {
+    final nik = _nikController.text;
+
+    // 🔍 Validasi NIK (Live Error)
+    if (nik.isEmpty) {
+      setState(() {
+        _nikError = 'NIK tidak boleh kosong';
+      });
+    } else if (nik.length < 16) {
+      setState(() {
+        _nikError = 'NIK harus 16 digit';
+      });
+    } else if (nik.length > 16) {
+      setState(() {
+        _nikError = 'NIK tidak boleh lebih dari 16 digit';
+      });
+    } else {
+      setState(() {
+        _nikError = null;
+      });
+    }
+
+    // Ambil provinsi & kabupaten dari 6 digit pertama
+    if (nik.length >= 6) {
+      final kodeProv = nik.substring(0, 2);
+      final kodeKab = nik.substring(0, 4);
+
+      try {
+        // Ambil daftar provinsi
+        final provRes = await http.get(
+          Uri.parse(
+            'https://www.emsifa.com/api-wilayah-indonesia/api/provinces.json',
+          ),
+        );
+        if (provRes.statusCode == 200) {
+          final provList = json.decode(provRes.body);
+          final prov = provList.firstWhere(
+            (p) => p['id'] == kodeProv,
+            orElse: () => null,
+          );
+
+          if (prov != null) {
+            setState(() {
+              _selectedProvince = prov['name'];
+            });
+
+            // Ambil daftar kota
+            final kotaRes = await http.get(
+              Uri.parse(
+                'https://www.emsifa.com/api-wilayah-indonesia/api/regencies/${prov['id']}.json',
+              ),
+            );
+            if (kotaRes.statusCode == 200) {
+              final kotaList = json.decode(kotaRes.body);
+              final kota = kotaList.firstWhere(
+                (k) => k['id'] == kodeKab,
+                orElse: () => null,
+              );
+
+              if (kota != null) {
+                setState(() {
+                  _selectedCity = kota['name'];
+                });
+              }
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint("Gagal ambil provinsi/kota: $e");
+      }
+    }
+
+    // Ambil jenis kelamin & usia dari NIK
+    if (nik.length >= 12) {
+      final tanggalRaw = int.tryParse(nik.substring(6, 8)) ?? 0;
+      final bulanRaw = int.tryParse(nik.substring(8, 10)) ?? 0;
+      final tahunRaw = int.tryParse(nik.substring(10, 12)) ?? 0;
+
+      // Jenis Kelamin
+      final jenisKelamin = tanggalRaw > 40 ? 'Perempuan' : 'Laki-Laki';
+      setState(() {
+        _selectedGender = jenisKelamin;
+      });
+
+      // Hitung Usia
+      final tanggal = tanggalRaw > 40 ? tanggalRaw - 40 : tanggalRaw;
+      final tahun = (tahunRaw <= 24) ? 2000 + tahunRaw : 1900 + tahunRaw;
+      final birthDate = DateTime(tahun, bulanRaw, tanggal);
+      final now = DateTime.now();
+
+      int usia = now.year - birthDate.year;
+      if (now.month < birthDate.month ||
+          (now.month == birthDate.month && now.day < birthDate.day)) {
+        usia--;
+      }
+
+      // Usia < 17 tahun = ERROR (live)
+      if (usia < 17) {
+        setState(() {
+          _selectedAge = null; // kosongkan
+          _ageError = 'Usia Anda belum 17 tahun'; // tampilkan error
+        });
+        return;
+      } else {
+        setState(() {
+          _ageError = null; // hapus error kalau valid
+          _selectedAge = '$usia Tahun';
+        });
+      }
+
+      // Set usia pasti
+      if (usia > 0 && usia < 120) {
+        setState(() {
+          _selectedAge = '$usia';
+        });
+      }
+    }
+  }
+
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(
-      source: ImageSource.gallery
-    );
-    
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
     if (image != null) {
       setState(() {
         _ktpImage = File(image.path);
@@ -66,6 +182,14 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFFFFFF),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 38),
@@ -73,8 +197,50 @@ class _RegisterPageState extends State<RegisterPage> {
             key: _formKey,
             child: Column(
               children: [
-                const SizedBox(height: 40),
-                
+                const SizedBox(height: 20),
+
+                // Logo
+                Container(
+                  width: 63.23,
+                  height: 62,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.asset(
+                      'assets/icons/icon.png',
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Title
+                const Text(
+                  'Daftar Akun',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xCC000000),
+                    fontSize: 18,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                const Text(
+                  'Lengkapi data diri untuk mendaftar',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFF65758C),
+                    fontSize: 12,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+
+                const SizedBox(height: 32),
+
                 // NIK Input
                 AnimatedTextField(
                   controller: _nikController,
@@ -83,57 +249,98 @@ class _RegisterPageState extends State<RegisterPage> {
                   icon: Icons.credit_card,
                   keyboardType: TextInputType.number,
                 ),
-                
+
+                // ERROR ala USIA 📌
+                if (_nikError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6, left: 12),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        _nikError!,
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontSize: 11,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    ),
+                  ),
+
                 const SizedBox(height: 24),
-                
-                // Jenis Kelamin
-                AnimatedDropdown(
-                  label: 'Jenis Kelamin',
-                  icon: Icons.person,
-                  value: _selectedGender,
-                  items: _genderOptions,
-                  onChanged: null,
-                  isEnabled: false,
+
+                // Jenis Kelamin (Read Only)
+                IgnorePointer(
+                  ignoring: true,
+                  child: AnimatedDropdown(
+                    label: 'Jenis Kelamin',
+                    icon: Icons.person,
+                    value: _selectedGender,
+                    items: const ['Laki-Laki', 'Perempuan'],
+                    onChanged: (_) {}, // atau boleh dihapus saja kalau otomatis
+                  ),
                 ),
-                
+
                 const SizedBox(height: 24),
-                
-                // Usia
-                AnimatedDropdown(
-                  label: 'Usia',
-                  icon: Icons.calendar_today,
-                  value: _selectedAge,
-                  items: _ageOptions,
-                  onChanged: null,
-                  isEnabled: false,
+
+                // Usia (Read Only)
+                IgnorePointer(
+                  ignoring: true,
+                  child: AnimatedDropdown(
+                    label: 'Usia',
+                    icon: Icons.calendar_today,
+                    value: _selectedAge,
+                    items: const ['17-25', '26-35', '36-45', '46-55', '56+'],
+                    onChanged: (_) {}, // atau boleh dihapus saja kalau otomatis
+                  ),
                 ),
-                
+                // Tampilkan error usia (< 17 tahun)
+                if (_ageError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6, left: 12),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        _ageError!,
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontSize: 11,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    ),
+                  ),
+
                 const SizedBox(height: 24),
-                
-                // Provinsi
-                AnimatedDropdown(
-                  label: 'Provinsi',
-                  icon: Icons.location_on,
-                  value: _selectedProvince,
-                  items: _provinces,
-                  onChanged: null,
-                  isEnabled: false,
+
+                // Provinsi (Read Only)
+                IgnorePointer(
+                  ignoring: true,
+                  child: AnimatedDropdown(
+                    label: 'Provinsi',
+                    icon: Icons.location_on,
+                    value: _selectedProvince,
+                    items: const [],
+                    onChanged: (_) {}, // atau boleh dihapus saja kalau otomatis
+                  ),
                 ),
-                
+
                 const SizedBox(height: 24),
-                
-                // Kabupaten/Kota
-                AnimatedDropdown(
-                  label: 'Kabupaten / Kota',
-                  icon: Icons.location_city,
-                  value: _selectedCity,
-                  items: _cities,
-                  onChanged: null,
-                  isEnabled: false,
+
+                // Kabupaten / Kota (Read Only)
+                IgnorePointer(
+                  ignoring: true,
+                  child: AnimatedDropdown(
+                    label: 'Kabupaten / Kota',
+                    icon: Icons.location_city,
+                    value: _selectedCity,
+                    items: const [],
+                    onChanged: (_) {}, // atau boleh dihapus saja kalau otomatis
+                  ),
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Nomor Whatsapp
                 AnimatedTextField(
                   controller: _whatsappController,
@@ -141,21 +348,38 @@ class _RegisterPageState extends State<RegisterPage> {
                   label: 'Nomor Whatsapp',
                   icon: Icons.phone,
                   keyboardType: TextInputType.phone,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Nomor WhatsApp tidak boleh kosong';
+                    }
+                    return null;
+                  },
                 ),
-                
+                if (_whatsappError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6, left: 12),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        _whatsappError!,
+                        style: const TextStyle(color: Colors.red, fontSize: 11),
+                      ),
+                    ),
+                  ),
+
                 const SizedBox(height: 24),
-                
+
                 // Upload KTP
                 GestureDetector(
                   onTap: _pickImage,
                   child: Container(
                     height: 52,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFF8F8),
+                      color: const Color.fromARGB(255, 255, 255, 255),
                       borderRadius: BorderRadius.circular(70),
                       border: Border.all(
-                        color: const Color(0xFF98AFFF), 
-                        width: 1.5
+                        color: const Color(0xFF98AFFF),
+                        width: 1.5,
                       ),
                     ),
                     child: Row(
@@ -165,8 +389,8 @@ class _RegisterPageState extends State<RegisterPage> {
                           decoration: const BoxDecoration(
                             color: Color(0xFFF9F9F9),
                             borderRadius: BorderRadius.only(
-                              topLeft: Radius.circular(14),
-                              bottomLeft: Radius.circular(14),
+                              topLeft: Radius.circular(70),
+                              bottomLeft: Radius.circular(70),
                             ),
                           ),
                           child: const Center(
@@ -183,9 +407,9 @@ class _RegisterPageState extends State<RegisterPage> {
                         const SizedBox(width: 16),
                         Expanded(
                           child: Text(
-                            _ktpImage == null 
-                              ? 'Upload Scan KTP' 
-                              : 'KTP Dipilih',
+                            _ktpImage == null
+                                ? 'Upload Scan KTP'
+                                : 'KTP Dipilih',
                             overflow: TextOverflow.ellipsis,
                             maxLines: 1,
                             style: const TextStyle(
@@ -200,23 +424,91 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                   ),
                 ),
-                
+
+                if (_ktpError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6, left: 12),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        _ktpError!,
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontSize: 11,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    ),
+                  ),
+
                 const SizedBox(height: 40),
-                
+
                 // Button Selanjutnya
                 SizedBox(
                   width: double.infinity,
                   height: 48,
                   child: ElevatedButton(
                     onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const BuatAkunPage(),
+                      // 🔍 Cek NIK Error
+                      if (_nikController.text.isEmpty) {
+                        setState(() => _nikError = 'NIK tidak boleh kosong');
+                        return;
+                      }
+                      if (_nikError != null) return; // kalau masih error, stop
+
+                      // 🔍 Cek Usia (hasil NIK)
+                      if (_selectedAge == null || _ageError != null) {
+                        setState(
+                          () => _ageError =
+                              'Usia tidak valid atau belum 17 tahun',
+                        );
+                        return;
+                      }
+
+                      // 🔍 Cek Provinsi & Kota
+                      if (_selectedProvince == null || _selectedCity == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Data Provinsi/Kota belum terbaca dari NIK',
+                            ),
                           ),
                         );
+                        return;
                       }
+
+                      // 🔍 Cek Nomor WhatsApp
+                      if (_whatsappController.text.isEmpty) {
+                        setState(
+                          () => _whatsappError =
+                              'Nomor WhatsApp tidak boleh kosong',
+                        );
+                        return;
+                      }
+
+                      // 🔍 Cek Foto KTP
+                      if (_ktpImage == null) {
+                        setState(() => _ktpError = 'Harap upload scan KTP');
+                        return;
+                      } else {
+                        setState(() => _ktpError = null);
+                      }
+
+                      // ✅ Kalau semua valid → Lanjut
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BuatAkunPage(
+                            nik: _nikController.text,
+                            jenisKelamin: _selectedGender ?? '',
+                            usia: _selectedAge ?? '',
+                            provinsi: _selectedProvince ?? '',
+                            kabupatenKota: _selectedCity ?? '',
+                            nomorWhatsapp: _whatsappController.text,
+                            ktpImagePath: _ktpImage?.path,
+                          ),
+                        ),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1548F5),
@@ -228,7 +520,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     child: const Text(
                       'Selanjutnya',
                       style: TextStyle(
-                        color: Color(0xFFFFF8F8),
+                        color: Color.fromARGB(255, 255, 255, 255),
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                         fontFamily: 'Poppins',
@@ -236,9 +528,9 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                   ),
                 ),
-                
-                const SizedBox(height: 40),
-                
+
+                const SizedBox(height: 24),
+
                 // Login Link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -253,14 +545,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
                     GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const HalamanLogin(),
-                          ),
-                        );
-                      },
+                      onTap: () => Navigator.pop(context),
                       child: const Text(
                         'Masuk',
                         style: TextStyle(
@@ -273,7 +558,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 40),
               ],
             ),
@@ -291,6 +576,7 @@ class AnimatedTextField extends StatefulWidget {
   final String label;
   final IconData icon;
   final TextInputType? keyboardType;
+  final String? Function(String?)? validator;
 
   const AnimatedTextField({
     Key? key,
@@ -299,6 +585,7 @@ class AnimatedTextField extends StatefulWidget {
     required this.label,
     required this.icon,
     this.keyboardType,
+    this.validator,
   }) : super(key: key);
 
   @override
@@ -324,8 +611,8 @@ class _AnimatedTextFieldState extends State<AnimatedTextField> {
 
   void _onFocusChange() {
     setState(() {
-      _isFocused = widget.focusNode.hasFocus || 
-                   widget.controller.text.isNotEmpty;
+      _isFocused =
+          widget.focusNode.hasFocus || widget.controller.text.isNotEmpty;
     });
   }
 
@@ -336,18 +623,16 @@ class _AnimatedTextFieldState extends State<AnimatedTextField> {
       curve: Curves.easeInOut,
       height: 52,
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF8F8),
+        color: const Color.fromARGB(255, 255, 255, 255),
         borderRadius: BorderRadius.circular(70),
         border: Border.all(
-          color: _isFocused 
-            ? const Color(0xFF1548F5) 
-            : const Color(0xFF98AFFF),
+          color: _isFocused ? const Color(0xFF1548F5) : const Color(0xFF98AFFF),
           width: 1.7,
         ),
         boxShadow: _isFocused
             ? [
                 BoxShadow(
-                  color: const Color(0xFF1548F5).withValues(alpha:0.15),
+                  color: const Color(0xFF1548F5).withValues(alpha: 0.15),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 ),
@@ -363,6 +648,7 @@ class _AnimatedTextFieldState extends State<AnimatedTextField> {
               controller: widget.controller,
               focusNode: widget.focusNode,
               keyboardType: widget.keyboardType,
+              validator: widget.validator,
               style: const TextStyle(
                 color: Color(0xFF515151),
                 fontSize: 14,
@@ -370,7 +656,8 @@ class _AnimatedTextFieldState extends State<AnimatedTextField> {
               ),
               decoration: const InputDecoration(
                 border: InputBorder.none,
-                contentPadding: EdgeInsets.only(top: 14),
+                contentPadding: EdgeInsets.only(top: 0, left: 0),
+                errorStyle: TextStyle(fontSize: 0, height: 0),
               ),
             ),
           ),
@@ -388,9 +675,9 @@ class _AnimatedTextFieldState extends State<AnimatedTextField> {
                 vertical: _isFocused ? 2 : 0,
               ),
               decoration: BoxDecoration(
-                color: _isFocused 
-                  ? const Color(0xFFFFF8F8) 
-                  : Colors.transparent,
+                color: _isFocused
+                    ? const Color.fromARGB(255, 255, 255, 255)
+                    : Colors.transparent,
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Row(
@@ -408,9 +695,9 @@ class _AnimatedTextFieldState extends State<AnimatedTextField> {
                       color: const Color(0xFF515151),
                       fontSize: _isFocused ? 11 : 14,
                       fontFamily: 'Poppins',
-                      fontWeight: _isFocused 
-                        ? FontWeight.w500 
-                        : FontWeight.w400,
+                      fontWeight: _isFocused
+                          ? FontWeight.w500
+                          : FontWeight.w400,
                     ),
                   ),
                 ],
@@ -451,7 +738,7 @@ class _AnimatedDropdownState extends State<AnimatedDropdown> {
 
   @override
   Widget build(BuildContext context) {
-    final bool hasValue = widget.value != null;
+    final bool hasValue = widget.value != null && widget.value!.isNotEmpty;
     final bool isActive = hasValue || _isOpen;
 
     return AnimatedContainer(
@@ -459,70 +746,27 @@ class _AnimatedDropdownState extends State<AnimatedDropdown> {
       curve: Curves.easeInOut,
       height: 52,
       decoration: BoxDecoration(
-        color: widget.isEnabled 
-          ? const Color(0xFFFFF8F8) 
-          : const Color(0xFFF5F5F5),
+        color: const Color.fromARGB(255, 255, 255, 255), // PUTIH
         borderRadius: BorderRadius.circular(70),
         border: Border.all(
-          color: widget.isEnabled
-              ? (_isOpen 
-                  ? const Color(0xFF1548F5) 
-                  : const Color(0xFF98AFFF))
-              : const Color(0xFFD0D0D0),
+          color: const Color(0xFF98AFFF), // BORDER BIRU MUDA (SAMA TEXTFIELD)
           width: 1.7,
         ),
-        boxShadow: _isOpen && widget.isEnabled
-            ? [
-                BoxShadow(
-                  color: const Color(0xFF1548F5).withValues(alpha:0.12),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
-                )
-              ]
-            : [],
       ),
       child: Stack(
         clipBehavior: Clip.none,
         children: [
           Padding(
             padding: const EdgeInsets.only(left: 50, right: 20),
-            child: IgnorePointer(
-              ignoring: !widget.isEnabled,
-              child: DropdownButtonFormField<String>(
-                value: widget.value,
-                onChanged: widget.isEnabled ? (value) {
-                  if (widget.onChanged != null) {
-                    widget.onChanged!(value);
-                  }
-                  setState(() => _isOpen = false);
-                } : null,
-                onTap: widget.isEnabled ? () {
-                  setState(() => _isOpen = !_isOpen);
-                } : null,
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.only(top: 14),
-                ),
-                style: TextStyle(
-                  color: widget.isEnabled 
-                    ? const Color(0xFF515151) 
-                    : const Color(0xFFAAAAAA),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                widget.value ?? '',
+                style: const TextStyle(
+                  color: Color(0xFF515151),
                   fontSize: 14,
                   fontFamily: 'Poppins',
                 ),
-                dropdownColor: const Color(0xFFFFF8F8),
-                icon: Icon(
-                  Icons.keyboard_arrow_down,
-                  color: widget.isEnabled 
-                    ? const Color(0xFF515151) 
-                    : const Color(0xFFAAAAAA),
-                ),
-                items: widget.items
-                    .map((value) => DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        ))
-                    .toList(),
               ),
             ),
           ),
@@ -540,11 +784,9 @@ class _AnimatedDropdownState extends State<AnimatedDropdown> {
                 vertical: isActive ? 2 : 0,
               ),
               decoration: BoxDecoration(
-                color: isActive 
-                    ? (widget.isEnabled 
-                        ? const Color(0xFFFFF8F8) 
-                        : const Color(0xFFF5F5F5))
-                    : Colors.transparent,
+                color: isActive
+                    ? const Color.fromARGB(255, 255, 255, 255)
+                    : const Color.fromARGB(0, 0, 0, 0),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Row(
@@ -553,22 +795,16 @@ class _AnimatedDropdownState extends State<AnimatedDropdown> {
                   Icon(
                     widget.icon,
                     size: isActive ? 14 : 16,
-                    color: widget.isEnabled 
-                      ? const Color(0xFF515151) 
-                      : const Color(0xFFAAAAAA),
+                    color: const Color.fromARGB(255, 0, 0, 0),
                   ),
                   const SizedBox(width: 6),
                   Text(
                     widget.label,
                     style: TextStyle(
-                      color: widget.isEnabled 
-                        ? const Color(0xFF515151) 
-                        : const Color(0xFFAAAAAA),
+                      color: const Color.fromARGB(255, 0, 0, 0),
                       fontSize: isActive ? 11 : 14,
                       fontFamily: 'Poppins',
-                      fontWeight: isActive 
-                        ? FontWeight.w500 
-                        : FontWeight.w400,
+                      fontWeight: isActive ? FontWeight.w500 : FontWeight.w400,
                     ),
                   ),
                 ],

@@ -1,26 +1,58 @@
 import 'package:flutter/material.dart';
+import 'package:jobfair/api/api_service.dart';
+import 'package:jobfair/screens/halaman_login.dart';
 
 class BuatAkunPage extends StatefulWidget {
-  const BuatAkunPage({super.key});
+  final String nik;
+  final String jenisKelamin;
+  final String usia;
+  final String provinsi;
+  final String kabupatenKota;
+  final String nomorWhatsapp;
+  final String? ktpImagePath;
+
+  const BuatAkunPage({
+    Key? key,
+    required this.nik,
+    required this.jenisKelamin,
+    required this.usia,
+    required this.provinsi,
+    required this.kabupatenKota,
+    required this.nomorWhatsapp,
+    this.ktpImagePath,
+  }) : super(key: key);
 
   @override
   State<BuatAkunPage> createState() => _BuatAkunPageState();
 }
 
 class _BuatAkunPageState extends State<BuatAkunPage> {
+  final apiService = ApiService();
+
   final _formKey = GlobalKey<FormState>();
+
+  // Controllers
   final _namaController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  
+
+  // Focus Nodes
   final _namaFocus = FocusNode();
   final _emailFocus = FocusNode();
   final _passwordFocus = FocusNode();
   final _confirmPasswordFocus = FocusNode();
-  
+
+  // State
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
+  bool _isLoading = false;
+
+  // Error Messages
+  String? _namaError;
+  String? _emailError;
+  String? _passwordError;
+  String? _confirmPasswordError;
 
   @override
   void dispose() {
@@ -35,10 +67,115 @@ class _BuatAkunPageState extends State<BuatAkunPage> {
     super.dispose();
   }
 
+  void _validateNama() {
+    setState(() {
+      if (_namaController.text.isEmpty) {
+        _namaError = 'Nama tidak boleh kosong';
+      } else {
+        _namaError = null;
+      }
+    });
+  }
+
+  void _validateEmail() {
+    setState(() {
+      if (_emailController.text.isEmpty) {
+        _emailError = 'Email tidak boleh kosong';
+      } else if (!RegExp(
+        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+      ).hasMatch(_emailController.text)) {
+        _emailError = 'Format email tidak valid';
+      } else {
+        _emailError = null;
+      }
+    });
+  }
+
+  void _validatePassword() {
+    setState(() {
+      if (_passwordController.text.isEmpty) {
+        _passwordError = 'Password tidak boleh kosong';
+      } else if (_passwordController.text.length < 8) {
+        _passwordError = 'Password minimal 8 karakter';
+      } else {
+        _passwordError = null;
+      }
+    });
+  }
+
+  void _validateConfirmPassword() {
+    setState(() {
+      if (_confirmPasswordController.text.isEmpty) {
+        _confirmPasswordError = 'Konfirmasi password tidak boleh kosong';
+      } else if (_confirmPasswordController.text != _passwordController.text) {
+        _confirmPasswordError = 'Password tidak sama';
+      } else {
+        _confirmPasswordError = null;
+      }
+    });
+  }
+
+  Future<void> _registerTalent() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    // Validasi password match
+    if (_passwordController.text != _confirmPasswordController.text) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Password tidak cocok')));
+      return;
+    }
+    debugPrint("🔍 Mencoba kirim data register..."); // <=== CEK DI SINI
+
+    setState(() => _isLoading = true);
+
+    try {
+      final fields = {
+        'Nama': _namaController.text,
+        'Nik': widget.nik,
+        'Provinsi': widget.provinsi,
+        'Kabupaten_Kota': widget.kabupatenKota,
+        'JenisKelamin': widget.jenisKelamin,
+        'Usia': widget.usia,
+        'Email': _emailController.text,
+        'NomorTelepon': widget.nomorWhatsapp,
+        'Password': _passwordController.text,
+      };
+
+      var response = await apiService.registerTalent(
+        fields,
+        widget.ktpImagePath,
+      );
+      var responseBody = await response.stream.bytesToString();
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Registrasi berhasil!")));
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HalamanLogin()),
+        );
+      } else {
+        debugPrint("Server error ${response.statusCode}:\n$responseBody");
+      }
+    } catch (e) {
+      debugPrint("Gagal terhubung ke server.\nCek koneksi internet Anda.");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFFFFFF),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 38),
@@ -46,25 +183,23 @@ class _BuatAkunPageState extends State<BuatAkunPage> {
             key: _formKey,
             child: Column(
               children: [
-                const SizedBox(height: 64),
-                
+                const SizedBox(height: 20),
+
                 // Logo
                 Container(
-                  margin: const EdgeInsets.only(top: 64),
                   width: 63.23,
                   height: 62,
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: Image.asset(
-                      'assets/icons/icon.png', 
+                      'assets/icons/icon.png',
                       fit: BoxFit.contain,
                     ),
                   ),
                 ),
 
-                
-                const SizedBox(height: 37),
-                
+                const SizedBox(height: 24),
+
                 // Title
                 const Text(
                   'Buat akun anda',
@@ -73,12 +208,25 @@ class _BuatAkunPageState extends State<BuatAkunPage> {
                     color: Color(0xCC000000),
                     fontSize: 18,
                     fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                const Text(
+                  'Lengkapi informasi akun Anda',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFF65758C),
+                    fontSize: 12,
+                    fontFamily: 'Poppins',
                     fontWeight: FontWeight.w400,
                   ),
                 ),
-                
-                const SizedBox(height: 28),
-                
+
+                const SizedBox(height: 32),
+
                 // Nama
                 AnimatedTextField(
                   controller: _namaController,
@@ -87,9 +235,24 @@ class _BuatAkunPageState extends State<BuatAkunPage> {
                   icon: Icons.person,
                   keyboardType: TextInputType.name,
                 ),
-                
+                if (_namaError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6, left: 12),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        _namaError!,
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontSize: 11,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    ),
+                  ),
+
                 const SizedBox(height: 17),
-                
+
                 // Email
                 AnimatedTextField(
                   controller: _emailController,
@@ -98,9 +261,24 @@ class _BuatAkunPageState extends State<BuatAkunPage> {
                   icon: Icons.email,
                   keyboardType: TextInputType.emailAddress,
                 ),
-                
+                if (_emailError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6, left: 12),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        _emailError!,
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontSize: 11,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    ),
+                  ),
+
                 const SizedBox(height: 17),
-                
+
                 // Password
                 AnimatedPasswordField(
                   controller: _passwordController,
@@ -113,9 +291,24 @@ class _BuatAkunPageState extends State<BuatAkunPage> {
                     });
                   },
                 ),
-                
-                const SizedBox(height: 24),
-                
+                if (_passwordError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6, left: 12),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        _passwordError!,
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontSize: 11,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    ),
+                  ),
+
+                const SizedBox(height: 17),
+
                 // Konfirmasi Password
                 AnimatedPasswordField(
                   controller: _confirmPasswordController,
@@ -128,19 +321,30 @@ class _BuatAkunPageState extends State<BuatAkunPage> {
                     });
                   },
                 ),
-                
+                if (_confirmPasswordError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6, left: 12),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        _confirmPasswordError!,
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontSize: 11,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    ),
+                  ),
+
                 const SizedBox(height: 61),
-                
-                // Button Selanjutnya
+
+                // Button Daftar
                 SizedBox(
                   width: double.infinity,
                   height: 48,
                   child: ElevatedButton(
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        // Handle form submission
-                      }
-                    },
+                    onPressed: _isLoading ? null : _registerTalent,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1548F5),
                       shape: RoundedRectangleBorder(
@@ -148,50 +352,36 @@ class _BuatAkunPageState extends State<BuatAkunPage> {
                       ),
                       elevation: 0,
                     ),
-                    child: const Text(
-                      'Selanjutnya',
-                      style: TextStyle(
-                        color: Color(0xFFFFF8F8),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        fontFamily: 'Poppins',
-                      ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (_isLoading)
+                          const Padding(
+                            padding: EdgeInsets.only(right: 8),
+                            child: SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        const Text(
+                          'Daftar',
+                          style: TextStyle(
+                            color: Color(0xFFFFF8F8),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                
-                const SizedBox(height: 52),
-                
-                // Login Link
-                // Row(
-                //   mainAxisAlignment: MainAxisAlignment.center,
-                //   children: [
-                //     const Text(
-                //       'Sudah punya akun? ',
-                //       style: TextStyle(
-                //         color: Color(0xFF464E5E),
-                //         fontSize: 12,
-                //         fontWeight: FontWeight.w500,
-                //         fontFamily: 'Poppins',
-                //       ),
-                //     ),
-                //     GestureDetector(
-                //       onTap: () {
-                //         Navigator.pop(context);
-                //       },
-                //       child: const Text(
-                //         'Masuk',
-                //         style: TextStyle(
-                //           color: Color(0xFF026F9D),
-                //           fontSize: 12,
-                //           fontWeight: FontWeight.w500,
-                //           fontFamily: 'Poppins',
-                //         ),
-                //       ),
-                //     ),
-                //   ],
-                // ),
-                
+
                 const SizedBox(height: 40),
               ],
             ),
@@ -242,8 +432,8 @@ class _AnimatedTextFieldState extends State<AnimatedTextField> {
 
   void _onFocusChange() {
     setState(() {
-      _isFocused = widget.focusNode.hasFocus || 
-                   widget.controller.text.isNotEmpty;
+      _isFocused =
+          widget.focusNode.hasFocus || widget.controller.text.isNotEmpty;
     });
   }
 
@@ -254,18 +444,16 @@ class _AnimatedTextFieldState extends State<AnimatedTextField> {
       curve: Curves.easeInOut,
       height: 52,
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF8F8),
+        color: const Color.fromARGB(255, 255, 255, 255),
         borderRadius: BorderRadius.circular(70),
         border: Border.all(
-          color: _isFocused 
-            ? const Color(0xFF1548F5) 
-            : const Color(0xFF98AFFF),
-          width: 1.5,
+          color: _isFocused ? const Color(0xFF1548F5) : const Color(0xFF98AFFF),
+          width: 1.7,
         ),
         boxShadow: _isFocused
             ? [
                 BoxShadow(
-                  color: const Color(0xFF1548F5).withValues(alpha:0.15),
+                  color: const Color(0xFF1548F5).withValues(alpha: 0.15),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 ),
@@ -288,7 +476,8 @@ class _AnimatedTextFieldState extends State<AnimatedTextField> {
               ),
               decoration: const InputDecoration(
                 border: InputBorder.none,
-                contentPadding: EdgeInsets.only(top: 14),
+                contentPadding: EdgeInsets.only(top: 0, left: 0),
+                errorStyle: TextStyle(fontSize: 0, height: 0),
               ),
             ),
           ),
@@ -306,9 +495,9 @@ class _AnimatedTextFieldState extends State<AnimatedTextField> {
                 vertical: _isFocused ? 2 : 0,
               ),
               decoration: BoxDecoration(
-                color: _isFocused 
-                  ? const Color(0xFFFFF8F8) 
-                  : Colors.transparent,
+                color: _isFocused
+                    ? const Color.fromARGB(255, 255, 255, 255)
+                    : Colors.transparent,
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Row(
@@ -326,9 +515,9 @@ class _AnimatedTextFieldState extends State<AnimatedTextField> {
                       color: const Color(0xFF515151),
                       fontSize: _isFocused ? 11 : 14,
                       fontFamily: 'Poppins',
-                      fontWeight: _isFocused 
-                        ? FontWeight.w500 
-                        : FontWeight.w400,
+                      fontWeight: _isFocused
+                          ? FontWeight.w500
+                          : FontWeight.w400,
                     ),
                   ),
                 ],
@@ -381,8 +570,8 @@ class _AnimatedPasswordFieldState extends State<AnimatedPasswordField> {
 
   void _onFocusChange() {
     setState(() {
-      _isFocused = widget.focusNode.hasFocus || 
-                   widget.controller.text.isNotEmpty;
+      _isFocused =
+          widget.focusNode.hasFocus || widget.controller.text.isNotEmpty;
     });
   }
 
@@ -393,18 +582,16 @@ class _AnimatedPasswordFieldState extends State<AnimatedPasswordField> {
       curve: Curves.easeInOut,
       height: 52,
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF8F8),
+        color: const Color.fromARGB(255, 255, 255, 255),
         borderRadius: BorderRadius.circular(70),
         border: Border.all(
-          color: _isFocused 
-            ? const Color(0xFF1548F5) 
-            : const Color(0xFF98AFFF),
-          width: 1.5,
+          color: _isFocused ? const Color(0xFF1548F5) : const Color(0xFF98AFFF),
+          width: 1.7,
         ),
         boxShadow: _isFocused
             ? [
                 BoxShadow(
-                  color: const Color(0xFF1548F5).withValues(alpha:0.15),
+                  color: const Color(0xFF1548F5).withValues(alpha: 0.15),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 ),
@@ -427,7 +614,8 @@ class _AnimatedPasswordFieldState extends State<AnimatedPasswordField> {
               ),
               decoration: const InputDecoration(
                 border: InputBorder.none,
-                contentPadding: EdgeInsets.only(top: 14),
+                contentPadding: EdgeInsets.only(top: 0, left: 0),
+                errorStyle: TextStyle(fontSize: 0, height: 0),
               ),
             ),
           ),
@@ -439,9 +627,9 @@ class _AnimatedPasswordFieldState extends State<AnimatedPasswordField> {
             child: GestureDetector(
               onTap: widget.onToggleVisibility,
               child: Icon(
-                widget.isPasswordVisible 
-                  ? Icons.visibility 
-                  : Icons.visibility_off,
+                widget.isPasswordVisible
+                    ? Icons.visibility
+                    : Icons.visibility_off,
                 size: 20,
                 color: const Color(0xFF515151),
               ),
@@ -461,9 +649,9 @@ class _AnimatedPasswordFieldState extends State<AnimatedPasswordField> {
                 vertical: _isFocused ? 2 : 0,
               ),
               decoration: BoxDecoration(
-                color: _isFocused 
-                  ? const Color(0xFFFFF8F8) 
-                  : Colors.transparent,
+                color: _isFocused
+                    ? const Color.fromARGB(255, 255, 255, 255)
+                    : Colors.transparent,
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Row(
@@ -481,9 +669,9 @@ class _AnimatedPasswordFieldState extends State<AnimatedPasswordField> {
                       color: const Color(0xFF515151),
                       fontSize: _isFocused ? 11 : 14,
                       fontFamily: 'Poppins',
-                      fontWeight: _isFocused 
-                        ? FontWeight.w500 
-                        : FontWeight.w400,
+                      fontWeight: _isFocused
+                          ? FontWeight.w500
+                          : FontWeight.w400,
                     ),
                   ),
                 ],

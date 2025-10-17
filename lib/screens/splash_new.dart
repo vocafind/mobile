@@ -75,7 +75,7 @@ class _SplashScreenState extends State<SplashScreen> {
   // Konten splash yang sama, dijadikan method biar bisa dipanggil di transisi
   Widget _buildSplashContent() {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF8F8),
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       body: Stack(
         children: [
           // SVG kiri bawah
