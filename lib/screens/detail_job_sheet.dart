@@ -22,7 +22,7 @@ class JobDetailSheet extends StatelessWidget {
       builder: (context, scrollController) {
         return Container(
           decoration: const BoxDecoration(
-            color: Colors.white,
+            color: Color(0xFFFFFFFF),
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(30),
               topRight: Radius.circular(30),
@@ -46,7 +46,7 @@ class JobDetailSheet extends StatelessWidget {
                     width: 143,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF162781).withOpacity(0.9),
+                      color: const Color(0xFF162781).withValues(alpha:0.9),
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
@@ -54,182 +54,203 @@ class JobDetailSheet extends StatelessWidget {
                   Expanded(
                     child: ListView(
                       controller: scrollController,
-                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                      padding: EdgeInsets.zero,
                       children: [
                         const SizedBox(height: 30),
                         
                         // Header Section
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Company Logo
-                            Container(
-                              width: 60,
-                              height: 53,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: const Color(0xFFF1F5F9)),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(8),
-                                child: Image.asset(
-                                  'assets/icons/icon.png',
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 20),
-                            
-                            // Job Title & Company
-                            Expanded(
-                              child: Column(
+                        Container(
+                          color: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 18),
+                          child: Column(
+                            children: [
+                              Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
-                                    'Fulltime Backend Developer',
-                                    style: TextStyle(
-                                      color: Color(0xFF1A1A1A),
-                                      fontSize: 24,
-                                      fontFamily: 'Poppins',
-                                      fontWeight: FontWeight.w400,
-                                      height: 1.25,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  const Text(
-                                    'Inforsys Indonesia',
-                                    style: TextStyle(
-                                      color: Color(0xFF515151),
-                                      fontSize: 16,
-                                      fontFamily: 'Poppins',
-                                      fontWeight: FontWeight.w400,
-                                      height: 1.5,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  // Remote Tag
+                                  // Company Logo
                                   Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 15,
-                                      vertical: 4,
-                                    ),
+                                    width: 60,
+                                    height: 53,
                                     decoration: BoxDecoration(
                                       color: Colors.white,
                                       borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(color: const Color(0xFFE2E2E2)),
+                                      border: Border.all(color: const Color(0xFFF1F5F9)),
                                     ),
-                                    child: const Text(
-                                      'Remote',
-                                      style: TextStyle(
-                                        color: Color(0xFF464E5E),
-                                        fontSize: 12,
-                                        fontFamily: 'SF Pro',
-                                        fontWeight: FontWeight.w400,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8),
+                                      child: Image.asset(
+                                        'assets/icons/icon.png',
+                                        fit: BoxFit.contain,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 20),
+                                  
+                                  // Job Title & Company
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Fulltime Backend Developer',
+                                          style: TextStyle(
+                                            color: Color(0xFF1A1A1A),
+                                            fontSize: 24,
+                                            fontFamily: 'SF Pro',
+                                            fontWeight: FontWeight.w500,
+                                            height: 1.25,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        const Text(
+                                          'Inforsys Indonesia',
+                                          style: TextStyle(
+                                            color: Color(0xFF515151),
+                                            fontSize: 16,
+                                            fontFamily: 'SF Pro',
+                                            fontWeight: FontWeight.w400,
+                                            height: 1.5,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        // Remote Tag
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 15,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(color: const Color(0xFFE2E2E2)),
+                                          ),
+                                          child: const Text(
+                                            'Remote',
+                                            style: TextStyle(
+                                              color: Color(0xFF464E5E),
+                                              fontSize: 12,
+                                              fontFamily: 'SF Pro',
+                                              fontWeight: FontWeight.w400,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  
+                                  // Bookmark Icon
+                                  Container(
+                                    width: 16,
+                                    height: 23,
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: Colors.black.withValues(alpha:0.5),
+                                        width: 1.5,
                                       ),
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
-                            
-                            // Bookmark Icon
-                            IconButton(
-                              icon: const Icon(Icons.bookmark_outline),
-                              onPressed: () {},
-                              color: Colors.black.withOpacity(0.5),
-                            ),
-                          ],
-                        ),
-                        
-                        const SizedBox(height: 24),
-                        
-                        // Info Cards
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildInfoCard('Dibutuhkan', '5'),
-                            ),
-                            Container(
-                              width: 1.4,
-                              height: 26,
-                              color: const Color(0xFFE9E9E9),
-                            ),
-                            Expanded(
-                              child: _buildInfoCard('Lokasi', 'Kota Batam'),
-                            ),
-                            Container(
-                              width: 1.4,
-                              height: 26,
-                              color: const Color(0xFFE9E9E9),
-                            ),
-                            Expanded(
-                              child: _buildInfoCard('Gaji', 'Rp 9.000.000'),
-                            ),
-                          ],
-                        ),
-                        
-                        const SizedBox(height: 24),
-                        
-                        // Tab Navigation
-                        Container(
-                          height: 45,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF162781).withOpacity(0.9),
-                            borderRadius: BorderRadius.circular(50),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  margin: const EdgeInsets.all(5),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF2345F7).withOpacity(0.7),
-                                    borderRadius: BorderRadius.circular(100),
+                              
+                              const SizedBox(height: 24),
+                              
+                              // Info Cards
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildInfoCard('Dibutuhkan', '5'),
                                   ),
-                                  child: const Center(
-                                    child: Text(
-                                      'Deskripsi',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 14,
-                                        fontFamily: 'Poppins',
-                                        fontWeight: FontWeight.w500,
+                                  Container(
+                                    width: 1.4,
+                                    height: 26,
+                                    color: const Color(0xFFE9E9E9),
+                                  ),
+                                  Expanded(
+                                    child: _buildInfoCard('Lokasi', 'Kota Batam'),
+                                  ),
+                                  Container(
+                                    width: 1.4,
+                                    height: 26,
+                                    color: const Color(0xFFE9E9E9),
+                                  ),
+                                  Expanded(
+                                    child: _buildInfoCard('Gaji', 'Rp 9.000.000'),
+                                  ),
+                                ],
+                              ),
+                              
+                              const SizedBox(height: 24),
+                              
+                              // Tab Navigation
+                              Container(
+                                height: 45,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF162781).withValues(alpha:0.9),
+                                  borderRadius: BorderRadius.circular(50),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Container(
+                                        margin: const EdgeInsets.all(5),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF2345F7).withValues(alpha:0.7),
+                                          borderRadius: BorderRadius.circular(100),
+                                        ),
+                                        child: const Center(
+                                          child: Text(
+                                            'Deskripsi',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 14,
+                                              fontFamily: 'Poppins',
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: Container(
-                                  margin: const EdgeInsets.all(5),
-                                  child: const Center(
-                                    child: Text(
-                                      'Perusahaan',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 14,
-                                        fontFamily: 'Poppins',
-                                        fontWeight: FontWeight.w500,
+                                    Expanded(
+                                      child: Container(
+                                        margin: const EdgeInsets.all(5),
+                                        child: const Center(
+                                          child: Text(
+                                            'Perusahaan',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 14,
+                                              fontFamily: 'Poppins',
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                  ),
+                                  ],
                                 ),
                               ),
+                              const SizedBox(height: 22),
                             ],
                           ),
                         ),
                         
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 2),
                         
-                        // Deskripsi Pekerjaan
-                        const Text(
-                          'Deskripsi Pekerjaan',
+                        // Deskripsi Pekerjaan Section
+                        Container(
+                          color: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 18),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 20),
+                              const Text(
+                                'Deskripsi Pekerjaan',
                           style: TextStyle(
                             color: Color(0xFF191919),
                             fontSize: 20,
                             fontFamily: 'SF Pro',
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w500,
                             height: 1.2,
                           ),
                         ),
@@ -256,16 +277,24 @@ class JobDetailSheet extends StatelessWidget {
                           ),
                         ),
                         
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 24),
                         
-                        // Kualifikasi & Persyaratan
+                        // Divider
+                        Container(
+                          height: 1,
+                          color: const Color(0xFFE9E9E9),
+                        ),
+                        
+                        const SizedBox(height: 8),
+                        
+                        // Kualifikasi & Persyaratan Section
                         const Text(
                           'Kualifikasi & Persyaratan',
                           style: TextStyle(
                             color: Color(0xFF191919),
                             fontSize: 20,
                             fontFamily: 'SF Pro',
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w500,
                             height: 1.2,
                           ),
                         ),
@@ -275,16 +304,24 @@ class JobDetailSheet extends StatelessWidget {
                         _buildBulletPoint('Mahir menggunakan Figma, Sketch, dan Adobe Creative Suite'),
                         _buildBulletPoint('Pengalaman dalam mengembangkan dan mengelola design system'),
                         
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 24),
                         
-                        // Benefit
+                        // Divider
+                        Container(
+                          height: 1,
+                          color: const Color(0xFFE9E9E9),
+                        ),
+                        
+                        const SizedBox(height: 8),
+                        
+                        // Benefit Section
                         const Text(
                           'Benefit',
                           style: TextStyle(
                             color: Color(0xFF191919),
                             fontSize: 20,
                             fontFamily: 'SF Pro',
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w500,
                             height: 1.2,
                           ),
                         ),
@@ -294,16 +331,24 @@ class JobDetailSheet extends StatelessWidget {
                         _buildBulletPoint('Tunjangan makan & transport', fontSize: 12),
                         _buildBulletPoint('Cuti tahunan dan cuti sakit', fontSize: 12),
                         
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 24),
                         
-                        // Persyaratan Tambahan
+                        // Divider
+                        Container(
+                          height: 1,
+                          color: const Color(0xFFE9E9E9),
+                        ),
+                        
+                        const SizedBox(height: 8),
+                        
+                        // Persyaratan Tambahan Section
                         const Text(
                           'Persyaratan Tambahan',
                           style: TextStyle(
                             color: Color(0xFF191919),
                             fontSize: 20,
                             fontFamily: 'SF Pro',
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w500,
                             height: 1.2,
                           ),
                         ),
@@ -313,16 +358,24 @@ class JobDetailSheet extends StatelessWidget {
                         _buildBulletPoint('Siap bekerja dengan target dan deadline', fontSize: 12),
                         _buildBulletPoint('Tidak sedang terikat kontrak dengan perusahaan lain', fontSize: 12),
                         
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 24),
                         
-                        // Fasilitas
+                        // Divider
+                        Container(
+                          height: 1,
+                          color: const Color(0xFFE9E9E9),
+                        ),
+                        
+                        const SizedBox(height: 8),
+                        
+                        // Fasilitas Section
                         const Text(
                           'Fasilitas',
                           style: TextStyle(
                             color: Color(0xFF191919),
                             fontSize: 20,
                             fontFamily: 'SF Pro',
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w500,
                             height: 1.2,
                           ),
                         ),
@@ -331,6 +384,10 @@ class JobDetailSheet extends StatelessWidget {
                         _buildBulletPoint('Pantry & Snack gratis', fontSize: 12),
                         _buildBulletPoint('Ruang istirahat / Games room (PS, billiard, dll)', fontSize: 12),
                         _buildBulletPoint('Parkir gratis (motor & mobil)', fontSize: 12),
+                              const SizedBox(height: 20),
+                            ],
+                          ),
+                        ),
                         
                         const SizedBox(height: 100), // Extra space for fixed button
                       ],
@@ -346,9 +403,6 @@ class JobDetailSheet extends StatelessWidget {
                 bottom: 10,
                 child: Container(
                   padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: Colors.transparent,
-                  ),
                   child: GestureDetector(
                     onTap: () {
                       // Handle apply action

@@ -23,8 +23,7 @@ class _HalamanLoginState extends State<HalamanLogin> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-
+    
     return Scaffold(
       backgroundColor: const Color(0xFFFFFFFF),
       body: SafeArea(

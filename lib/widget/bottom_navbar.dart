@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import '/screens/halaman_beranda.dart';  
-import '/screens/halaman_cari_loker.dart';
-import '/screens/halaman_jobfair.dart';
+import 'package:jobfair/screens/halaman_beranda.dart';  
+import 'package:jobfair/screens/halaman_cari_loker.dart';
+import 'package:jobfair/screens/halaman_jobfair.dart';
+import 'package:jobfair/screens/profil/halaman_profil.dart';
+import 'package:jobfair/screens/halaman_lamaran.dart';
 
 
 
@@ -67,7 +69,6 @@ class _BottomNavBarState extends State<BottomNavBar>
     Widget page;
     switch (index) {
       case 0:
-        // Import manual di sini
         page = _getBerandaPage();
         break;
       case 1:
@@ -86,116 +87,91 @@ class _BottomNavBarState extends State<BottomNavBar>
         return;
     }
 
-    // Navigate with replacement to avoid stack buildup
+    // Navigate with replacement without transition
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) => page,
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-        transitionDuration: const Duration(milliseconds: 200),
+        transitionDuration: Duration.zero, // No transition
+        reverseTransitionDuration: Duration.zero,
       ),
     );
   }
 
   // Helper methods untuk lazy loading pages
   Widget _getBerandaPage() {
-    // Import manual - uncomment ketika halaman sudah siap
-    // import '../screens/halaman_beranda.dart';
     return const HalamanBeranda();
-    
-    // Sementara gunakan placeholder, atau bisa langsung return halaman asli
-    // Contoh jika sudah ada:
-    // return const HalamanBeranda();
-    // return _buildPlaceholder('Beranda', 0);
   }
 
   Widget _getCariLokerPage() {
-    // Import manual - uncomment ketika halaman sudah siap
-    // import '../screens/halaman_cari_loker.dart';
     return const HalamanCariLoker();
-    
-    // Sementara gunakan placeholder
-    // return _buildPlaceholder('Cari Loker', 1);
   }
 
   Widget _getJobfairPage() {
-    // Import manual - uncomment ketika halaman sudah siap
-    // import '../screens/halaman_jobfair.dart';
     return const HalamanJobfair();
-    
-    // return _buildPlaceholder('Jobfair', 2);
   }
 
   Widget _getLamaranPage() {
-    // Import manual - uncomment ketika halaman sudah siap
-    // import '../screens/halaman_lamaran.dart';
-    // return const HalamanLamaran();
-    
-    return _buildPlaceholder('Lamaran', 3);
+    return const HalamanLamaran();
   }
 
   Widget _getProfilePage() {
-    // Import manual - uncomment ketika halaman sudah siap
-    // import '../screens/halaman_profile.dart';
-    // return const HalamanProfile();
-    
-    return _buildPlaceholder('Profile', 4);
+    return const HalamanProfil();
+
   }
 
-  Widget _buildPlaceholder(String title, int index) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFFF8F8),
-      body: Stack(
-        children: [
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.construction,
-                  size: 80,
-                  color: Colors.grey[400],
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Halaman $title',
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Sedang dalam pengembangan',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: BottomNavBar(currentIndex: index),
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildPlaceholder(String title, int index) {
+  //   return Scaffold(
+  //     backgroundColor: const Color(0xFFFFF8F8),
+  //     body: Stack(
+  //       children: [
+  //         Center(
+  //           child: Column(
+  //             mainAxisAlignment: MainAxisAlignment.center,
+  //             children: [
+  //               Icon(
+  //                 Icons.construction,
+  //                 size: 100,
+  //                 color: Colors.grey[400],
+  //               ),
+  //               const SizedBox(height: 16),
+  //               Text(
+  //                 'Halaman $title',
+  //                 style: const TextStyle(
+  //                   fontSize: 24,
+  //                   fontWeight: FontWeight.w600,
+  //                   fontFamily: 'Poppins',
+  //                 ),
+  //               ),
+  //               const SizedBox(height: 8),
+  //               Text(
+  //                 'Sedang dalam pengembangan',
+  //                 style: TextStyle(
+  //                   fontSize: 14,
+  //                   color: Colors.grey[600],
+  //                   fontFamily: 'Poppins',
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //         Positioned(
+  //           left: 0,
+  //           right: 0,
+  //           bottom: 0,
+  //           child: BottomNavBar(currentIndex: index),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(left: 28, right: 28, bottom: 20),
-      height: 58,
+      height: 68,
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.5),
+        color: Colors.black.withValues(alpha:0.5),
         borderRadius: BorderRadius.circular(60),
       ),
       child: Padding(
@@ -260,7 +236,7 @@ class _BottomNavBarState extends State<BottomNavBar>
             Icon(
               icon,
               color: isActive ? Colors.black : Colors.white,
-              size: 20,
+              size: 30,
             ),
             if (isActive) ...[
               const SizedBox(width: 8),

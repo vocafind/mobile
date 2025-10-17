@@ -14,8 +14,8 @@ class HalamanJobfair extends StatelessWidget {
         children: [
           // Fixed Header
           const HeaderWidget(
-            showNotification: false,
-            showFilter: true,
+            showNotification: true,
+            showFilter: false,
           ),
           // Content area dengan scroll
           Expanded(
@@ -98,7 +98,7 @@ class HalamanJobfair extends StatelessWidget {
           Container(
             height: 240,
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.6),
+              color: Colors.black.withValues(alpha:0.6),
               borderRadius: BorderRadius.circular(16),
             ),
           ),
@@ -192,10 +192,10 @@ class HalamanJobfair extends StatelessWidget {
                   width: double.infinity,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
+                    color: Colors.white.withValues(alpha:0.1),
                     borderRadius: BorderRadius.circular(45),
                     border: Border.all(
-                      color: const Color(0xFFF1F5F9).withOpacity(0.4),
+                      color: const Color(0xFFF1F5F9).withValues(alpha:0.4),
                       width: 1,
                     ),
                   ),
@@ -226,10 +226,10 @@ class HalamanJobfair extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       height: 22,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white.withValues(alpha:0.1),
         borderRadius: BorderRadius.circular(45),
         border: Border.all(
-          color: const Color(0xFFF1F5F9).withOpacity(0.4),
+          color: const Color(0xFFF1F5F9).withValues(alpha:0.4),
           width: 1,
         ),
       ),

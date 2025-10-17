@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '/widget/bottom_navbar.dart';
-import 'dart:ui';
+import 'halaman_notifikasi.dart';
+
 
 
 class HalamanBeranda extends StatefulWidget {
@@ -11,7 +12,7 @@ class HalamanBeranda extends StatefulWidget {
 }
 
 class _HalamanBerandaState extends State<HalamanBeranda> {
-  int _currentIndex = 0;
+  
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0.0;
 
@@ -37,7 +38,6 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
   @override
   Widget build(BuildContext context) {
     // Calculate opacity based on scroll
-    final double opacity = (_scrollOffset / 150).clamp(0.0, 1.0);
     final bool showSearchOnly = _scrollOffset > 100;
 
     return Scaffold(
@@ -84,7 +84,7 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
                 boxShadow: showSearchOnly
                     ? [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha:0.1),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         )
@@ -135,7 +135,7 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
                             child: Container(
                               height: 44,
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.1),
+                                color: Colors.white.withValues(alpha:0.1),
                                 borderRadius: BorderRadius.circular(50),
                               ),
                               child: const Row(
@@ -156,19 +156,33 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.notifications_outlined,
-                              color: Colors.white,
-                              size: 20,
-                            ),
+                          Row(
+                            children: [
+                              const SizedBox(width: 12),
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const NotificationPage(),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  width: 44,
+                                  height: 44,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.notifications_outlined,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -253,7 +267,7 @@ class _BannerCard extends StatelessWidget {
                 Container(
                   height: 169,
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.65),
+                    color: Colors.black.withValues(alpha:0.65),
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
@@ -317,10 +331,10 @@ class _BannerCard extends StatelessWidget {
                       width: 292,
                       height: 39,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
+                        color: Colors.white.withValues(alpha:0.1),
                         borderRadius: BorderRadius.circular(45),
                         border: Border.all(
-                          color: const Color(0xFFF3F6F9).withOpacity(0.4),
+                          color: const Color(0xFFF3F6F9).withValues(alpha:0.4),
                         ),
                       ),
                       child: const Center(
