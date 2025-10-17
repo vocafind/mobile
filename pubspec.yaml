@@ -46,7 +46,9 @@ flutter:
   - assets/icons/pesan.png
   - assets/icons/bawah.svg
   - assets/icons/atas.svg
+  - assets/icons/bookmark.svg
   - assets/images/image10.png
+  - assets/icons/setting.svg
 
 
 

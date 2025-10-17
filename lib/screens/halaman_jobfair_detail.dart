@@ -27,9 +27,11 @@ class HalamanJobfairDetail extends StatelessWidget {
             _buildJobsSection(),
             
             const SizedBox(height: 100),
+
           ],
         ),
       ),
+      
       bottomNavigationBar: BottomNavBar(currentIndex: 2),
     );
   }
@@ -60,7 +62,7 @@ class HalamanJobfairDetail extends StatelessWidget {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEEEEEE).withOpacity(0.1),
+                        color: const Color(0xFFEEEEEE).withValues(alpha:0.1),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -75,7 +77,7 @@ class HalamanJobfairDetail extends StatelessWidget {
                     child: Container(
                       height: 44,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEEEEEE).withOpacity(0.1),
+                        color: const Color(0xFFEEEEEE).withValues(alpha:0.1),
                         borderRadius: BorderRadius.circular(50),
                       ),
                       child: const Row(
@@ -101,11 +103,11 @@ class HalamanJobfairDetail extends StatelessWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEEEEEE).withOpacity(0.1),
+                      color: const Color(0xFFEEEEEE).withValues(alpha:0.1),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
-                      Icons.tune,
+                      Icons.notifications_outlined,
                       color: Colors.white,
                       size: 24,
                     ),
@@ -188,7 +190,7 @@ class HalamanJobfairDetail extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 30),
             ],
           ),
         ),
@@ -199,12 +201,12 @@ class HalamanJobfairDetail extends StatelessWidget {
   Widget _buildBadge(String text) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      height: 20,
+      height: 30,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white.withValues(alpha:0.1),
         borderRadius: BorderRadius.circular(45),
         border: Border.all(
-          color: const Color(0xFFF1F5F9).withOpacity(0.4),
+          color: const Color(0xFFF1F5F9).withValues(alpha:0.4),
           width: 1,
         ),
       ),
@@ -275,7 +277,7 @@ class HalamanJobfairDetail extends StatelessWidget {
             text: const TextSpan(
               style: TextStyle(
                 color: Color(0xFF525252),
-                fontSize: 12,
+                fontSize: 14,
                 fontFamily: 'SF Pro',
                 height: 1.3,
               ),
@@ -367,26 +369,27 @@ class HalamanJobfairDetail extends StatelessWidget {
   Widget _buildJobsSection() {
     return Container(
       width: double.infinity,
-      color: Colors.white,
-      padding: const EdgeInsets.all(19),
+      color: const Color(0xFFF1F5F9),
       margin: const EdgeInsets.only(top: 15),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Lowongan tersedia',
-            style: TextStyle(
-              color: Color(0xFF18181B),
-              fontSize: 20,
-              fontFamily: 'SF Pro',
-              fontWeight: FontWeight.w400,
+          const Padding(
+            padding: EdgeInsets.fromLTRB(19, 19, 19, 16),
+            child: Text(
+              'Lowongan tersedia',
+              style: TextStyle(
+                color: Color(0xFF18181B),
+                fontSize: 20,
+                fontFamily: 'SF Pro',
+                fontWeight: FontWeight.w400,
+              ),
             ),
           ),
-          const SizedBox(height: 16),
           _buildJobCard(),
-          const SizedBox(height: 15),
+          const SizedBox(height: 1),
           _buildJobCard(),
-          const SizedBox(height: 15),
+          const SizedBox(height: 1),
           _buildJobCard(),
         ],
       ),
@@ -395,175 +398,202 @@ class HalamanJobfairDetail extends StatelessWidget {
 
   Widget _buildJobCard() {
     return Container(
+      width: double.infinity,
+      height: 235,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[300]!),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+        border: Border(
+          bottom: BorderSide(
+            color: const Color(0xFFDADADA).withValues(alpha:0.5),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Stack(
+        children: [
+          // Logo box
+          Positioned(
+            left: 17,
+            top: 16,
+            child: Container(
+              width: 55,
+              height: 54,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFF1F5F9)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Image.asset(
+                  'assets/icons/icon.png',
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(Icons.business, color: Colors.grey, size: 32);
+                  },
+                ),
+              ),
+            ),
+          ),
+          // Job title
+          const Positioned(
+            left: 84,
+            top: 20,
+            right: 16,
+            child: Text(
+              'Fulltime Backend Developer',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 16,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w600,
+                height: 1.5,
+              ),
+            ),
+          ),
+          // Company name
+          const Positioned(
+            left: 84,
+            top: 43,
+            child: Text(
+              'Inforsys Indonesia',
+              style: TextStyle(
+                color: Color(0xFF515151),
+                fontSize: 14,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w500,
+                height: 1.71,
+              ),
+            ),
+          ),
+          // Location icon
+          const Positioned(
+            left: 17,
+            top: 80,
+            child: Icon(
+              Icons.location_on_outlined,
+              size: 19,
+              color: Color(0xFF515151),
+            ),
+          ),
+          // Location text
+          const Positioned(
+            left: 39,
+            top: 77,
+            child: Text(
+              'Kota Batam',
+              style: TextStyle(
+                color: Color(0xFF515151),
+                fontSize: 12,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w500,
+                height: 2,
+              ),
+            ),
+          ),
+          // Salary icon
+          const Positioned(
+            left: 18,
+            top: 103,
+            child: Icon(
+              Icons.payments_outlined,
+              size: 18,
+              color: Color(0xFF515151),
+            ),
+          ),
+          // Salary text
+          const Positioned(
+            left: 39,
+            top: 100,
+            child: Text(
+              'Rp 9.000.000',
+              style: TextStyle(
+                color: Color(0xFF515151),
+                fontSize: 12,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w500,
+                height: 2,
+              ),
+            ),
+          ),
+          // Bookmark icon
+          Positioned(
+            right: 16,
+            top: 92,
+            child: Icon(
+              Icons.bookmark_outline,
+              size: 18,
+              color: Colors.black.withValues(alpha:0.5),
+            ),
+          ),
+          // Description
+          const Positioned(
+            left: 16,
+            top: 136,
+            right: 16,
+            child: Text(
+              'Bertanggung jawab mengembangkan, mengelola, dan mengoptimalkan sistem backend untuk...',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: Color(0xFF515151),
+                fontSize: 12,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w400,
+                height: 2,
+              ),
+            ),
+          ),
+          // Tags
+          Positioned(
+            left: 15,
+            bottom: 18,
+            child: Row(
+              children: [
+                _buildTag('S1'),
+                const SizedBox(width: 6),
+                _buildTag('Remote'),
+                const SizedBox(width: 6),
+                _buildTag('Senior'),
+              ],
+            ),
+          ),
+          // Time ago
+          const Positioned(
+            right: 16,
+            bottom: 18,
+            child: Text(
+              '1 hari lalu',
+              style: TextStyle(
+                color: Color(0xFF464E5E),
+                fontSize: 10,
+                fontFamily: 'SF Pro',
+                fontWeight: FontWeight.w700,
+                height: 2.4,
+              ),
+            ),
           ),
         ],
       ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Company logo
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 3,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Image.asset(
-                      'assets/images/company_logo.png',
-                      width: 38,
-                      height: 34,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(Icons.business, size: 32, color: Colors.grey);
-                      },
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                // Job info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Fulltime Backend Developer',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 16,
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Inforsys Indonesia',
-                        style: TextStyle(
-                          color: Color(0xFF525252),
-                          fontSize: 14,
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w300,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: const [
-                          Icon(
-                            Icons.location_on,
-                            size: 14,
-                            color: Color(0xFF525252),
-                          ),
-                          SizedBox(width: 4),
-                          Text(
-                            'Kota Batam',
-                            style: TextStyle(
-                              color: Color(0xFF525252),
-                              fontSize: 14,
-                              fontFamily: 'Poppins',
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: const [
-                          Icon(
-                            Icons.attach_money,
-                            size: 14,
-                            color: Color(0xFF525252),
-                          ),
-                          Text(
-                            'Rp 9.000.000',
-                            style: TextStyle(
-                              color: Color(0xFF525252),
-                              fontSize: 14,
-                              fontFamily: 'Poppins',
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                // Bookmark icon
-                Icon(
-                  Icons.bookmark_border,
-                  color: Colors.black.withOpacity(0.5),
-                  size: 20,
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1, color: Color(0xFFE5E5E5)),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Bertanggung jawab mengembangkan, mengelola, dan mengoptimalkan sistem...',
-                  style: TextStyle(
-                    color: Color(0xFF525252),
-                    fontSize: 14,
-                    fontFamily: 'Poppins',
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFD4D4D4)),
-                      ),
-                      child: const Text(
-                        'Remote',
-                        style: TextStyle(
-                          color: Color(0xFF525252),
-                          fontSize: 12,
-                          fontFamily: 'SF Pro',
-                        ),
-                      ),
-                    ),
-                    const Text(
-                      '1 hari lalu',
-                      style: TextStyle(
-                        color: Color(0xFF525252),
-                        fontSize: 12,
-                        fontFamily: 'SF Pro',
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
+    );
+  }
+
+  Widget _buildTag(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFF1F5F9)),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Color(0xFF464E5E),
+          fontSize: 12,
+          fontFamily: 'SF Pro',
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }

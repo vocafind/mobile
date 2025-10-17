@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // TAMBAHKAN INI
+import 'package:flutter/services.dart'; 
+import 'package:jobfair/screens/halaman_notifikasi.dart';
 
 class HeaderWidget extends StatelessWidget {
   final bool showNotification;
@@ -44,7 +45,7 @@ class HeaderWidget extends StatelessWidget {
                 child: Container(
                   height: 44,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEEEEEE).withOpacity(0.1),
+                    color: const Color(0xFFEEEEEE).withValues(alpha:0.1),
                     borderRadius: BorderRadius.circular(50),
                   ),
                   child: const Row(
@@ -67,23 +68,35 @@ class HeaderWidget extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               // Notification button (conditional)
-              if (showNotification)
-                GestureDetector(
-                  onTap: onNotificationTap,
-                  child: Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEEEEEE).withOpacity(0.1),
-                      shape: BoxShape.circle,
+              Row(
+                children: [
+                  const SizedBox(width: 12),
+                  if (showNotification)
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const NotificationPage(),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEEEEEE).withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.notifications_outlined,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.notifications_outlined,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                  ),
-                ),
+                ],
+              ),
               // Filter button (conditional)
               if (showFilter)
                 GestureDetector(
@@ -92,7 +105,7 @@ class HeaderWidget extends StatelessWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEEEEEE).withOpacity(0.1),
+                      color: const Color(0xFFEEEEEE).withValues(alpha:0.1),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
