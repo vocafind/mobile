@@ -4,9 +4,7 @@ import 'package:jobfair/screens/halaman_cari_loker.dart';
 import 'package:jobfair/screens/halaman_jobfair.dart';
 import 'package:jobfair/screens/profil/halaman_profil.dart';
 import 'package:jobfair/screens/halaman_lamaran.dart';
-
-
-
+import 'package:flutter_svg/flutter_svg.dart';
 
 class BottomNavBar extends StatefulWidget {
   final int currentIndex;
@@ -21,7 +19,6 @@ class BottomNavBar extends StatefulWidget {
   @override
   State<BottomNavBar> createState() => _BottomNavBarState();
 }
-
 
 class _BottomNavBarState extends State<BottomNavBar>
     with SingleTickerProviderStateMixin {
@@ -69,19 +66,19 @@ class _BottomNavBarState extends State<BottomNavBar>
     Widget page;
     switch (index) {
       case 0:
-        page = _getBerandaPage();
+        page = const HalamanBeranda();
         break;
       case 1:
-        page = _getCariLokerPage();
+        page = const HalamanCariLoker();
         break;
       case 2:
-        page = _getJobfairPage();
+        page = const HalamanJobfair();
         break;
       case 3:
-        page = _getLamaranPage();
+        page = const HalamanLamaran();
         break;
       case 4:
-        page = _getProfilePage();
+        page = const HalamanProfil();
         break;
       default:
         return;
@@ -91,79 +88,11 @@ class _BottomNavBarState extends State<BottomNavBar>
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) => page,
-        transitionDuration: Duration.zero, // No transition
+        transitionDuration: Duration.zero,
         reverseTransitionDuration: Duration.zero,
       ),
     );
   }
-
-  // Helper methods untuk lazy loading pages
-  Widget _getBerandaPage() {
-    return const HalamanBeranda();
-  }
-
-  Widget _getCariLokerPage() {
-    return const HalamanCariLoker();
-  }
-
-  Widget _getJobfairPage() {
-    return const HalamanJobfair();
-  }
-
-  Widget _getLamaranPage() {
-    return const HalamanLamaran();
-  }
-
-  Widget _getProfilePage() {
-    return const HalamanProfil();
-
-  }
-
-  // Widget _buildPlaceholder(String title, int index) {
-  //   return Scaffold(
-  //     backgroundColor: const Color(0xFFFFF8F8),
-  //     body: Stack(
-  //       children: [
-  //         Center(
-  //           child: Column(
-  //             mainAxisAlignment: MainAxisAlignment.center,
-  //             children: [
-  //               Icon(
-  //                 Icons.construction,
-  //                 size: 100,
-  //                 color: Colors.grey[400],
-  //               ),
-  //               const SizedBox(height: 16),
-  //               Text(
-  //                 'Halaman $title',
-  //                 style: const TextStyle(
-  //                   fontSize: 24,
-  //                   fontWeight: FontWeight.w600,
-  //                   fontFamily: 'Poppins',
-  //                 ),
-  //               ),
-  //               const SizedBox(height: 8),
-  //               Text(
-  //                 'Sedang dalam pengembangan',
-  //                 style: TextStyle(
-  //                   fontSize: 14,
-  //                   color: Colors.grey[600],
-  //                   fontFamily: 'Poppins',
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //         Positioned(
-  //           left: 0,
-  //           right: 0,
-  //           bottom: 0,
-  //           child: BottomNavBar(currentIndex: index),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -171,7 +100,7 @@ class _BottomNavBarState extends State<BottomNavBar>
       margin: const EdgeInsets.only(left: 28, right: 28, bottom: 20),
       height: 68,
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha:0.5),
+        color: Colors.black.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(60),
       ),
       child: Padding(
@@ -181,27 +110,27 @@ class _BottomNavBarState extends State<BottomNavBar>
           children: [
             _buildNavButton(
               index: 0,
-              icon: Icons.home_outlined,
+              svgPath: 'assets/icons/home.svg',
               label: 'Beranda',
             ),
             _buildNavButton(
               index: 1,
-              icon: Icons.search,
+              svgPath: 'assets/icons/search.svg',
               label: 'Cari Loker',
             ),
             _buildNavButton(
               index: 2,
-              icon: Icons.favorite_border,
+              svgPath: 'assets/icons/jobfairIcon.svg',
               label: 'Jobfair',
             ),
             _buildNavButton(
               index: 3,
-              icon: Icons.description_outlined,
+              svgPath: 'assets/icons/lamaran.svg',
               label: 'Lamaran',
             ),
             _buildNavButton(
               index: 4,
-              icon: Icons.person_outline,
+              svgPath: 'assets/icons/profile.svg',
               label: 'Profile',
             ),
           ],
@@ -212,7 +141,7 @@ class _BottomNavBarState extends State<BottomNavBar>
 
   Widget _buildNavButton({
     required int index,
-    required IconData icon,
+    required String svgPath,
     required String label,
   }) {
     final bool isActive = widget.currentIndex == index;
@@ -233,10 +162,14 @@ class _BottomNavBarState extends State<BottomNavBar>
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              color: isActive ? Colors.black : Colors.white,
-              size: 30,
+            SvgPicture.asset(
+              svgPath,
+              width: 30,
+              height: 30,
+              colorFilter: ColorFilter.mode(
+                isActive ? Colors.black : Colors.white,
+                BlendMode.srcIn,
+              ),
             ),
             if (isActive) ...[
               const SizedBox(width: 8),
