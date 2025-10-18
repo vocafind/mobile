@@ -1,5 +1,5 @@
 class ApiConfig {
-  static const String baseUrl = "http://10.136.130.227:5035/api";  //ganti 10.136.149.51 dengan ip address komputer 
+  static const String baseUrl = "http://192.168.1.3:5035/api";  //ganti 10.136.149.51 dengan ip address komputer 
 
 
   // -------------------------------------------------------------TALENTS

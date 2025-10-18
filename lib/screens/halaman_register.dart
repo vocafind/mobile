@@ -144,16 +144,16 @@ class _RegisterPageState extends State<RegisterPage> {
         usia--;
       }
 
-      // Usia < 17 tahun = ERROR (live)
+    
       if (usia < 17) {
         setState(() {
-          _selectedAge = null; // kosongkan
-          _ageError = 'Usia Anda belum 17 tahun'; // tampilkan error
+          _selectedAge = null; 
+          _ageError = 'Usia Anda belum 17 tahun'; 
         });
         return;
       } else {
         setState(() {
-          _ageError = null; // hapus error kalau valid
+          _ageError = null; 
           _selectedAge = '$usia Tahun';
         });
       }
@@ -277,7 +277,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     icon: Icons.person,
                     value: _selectedGender,
                     items: const ['Laki-Laki', 'Perempuan'],
-                    onChanged: (_) {}, // atau boleh dihapus saja kalau otomatis
+                    onChanged: (_) {}, 
                   ),
                 ),
 
@@ -291,7 +291,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     icon: Icons.calendar_today,
                     value: _selectedAge,
                     items: const ['17-25', '26-35', '36-45', '46-55', '56+'],
-                    onChanged: (_) {}, // atau boleh dihapus saja kalau otomatis
+                    onChanged: (_) {}, 
                   ),
                 ),
                 // Tampilkan error usia (< 17 tahun)
@@ -321,7 +321,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     icon: Icons.location_on,
                     value: _selectedProvince,
                     items: const [],
-                    onChanged: (_) {}, // atau boleh dihapus saja kalau otomatis
+                    onChanged: (_) {},
                   ),
                 ),
 
@@ -749,7 +749,7 @@ class _AnimatedDropdownState extends State<AnimatedDropdown> {
         color: const Color.fromARGB(255, 255, 255, 255), // PUTIH
         borderRadius: BorderRadius.circular(70),
         border: Border.all(
-          color: const Color(0xFF98AFFF), // BORDER BIRU MUDA (SAMA TEXTFIELD)
+          color: const Color(0xFF98AFFF), 
           width: 1.7,
         ),
       ),
