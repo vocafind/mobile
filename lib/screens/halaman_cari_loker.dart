@@ -3,7 +3,6 @@ import 'package:jobfair/widget/bottom_navbar.dart';
 import 'package:jobfair/widget/header.dart';
 import 'detail_job_sheet.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'dart:ui';
 
 class HalamanCariLoker extends StatefulWidget {
   const HalamanCariLoker({super.key});
@@ -40,120 +39,82 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          // Background dengan blur effect
-          Positioned.fill(
-            child: Stack(
-              children: [
-                // Background image atas
-                Positioned(
-                  top: 101,
-                  left: 0,
-                  right: 0,
-                  height: MediaQuery.of(context).size.height * 0.9,
-                  child: Image.asset(
-                    'assets/images/fullip.jpg',
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                // Background image bawah (overlap)
-                Positioned(
-                  top: MediaQuery.of(context).size.height * 0.6,
-                  left: 0,
-                  right: 0,
-                  height: MediaQuery.of(context).size.height * 0.9,
-                  child: Image.asset(
-                    'assets/images/fullip.jpg',
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                // Overlay blur effect
-                Positioned.fill(
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
-                    child: Container(
-                      color: Colors.transparent,
-                    ),
-                  ),
-                ),
-              ],
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/fullip.jpg'),
+            fit: BoxFit.cover,
+            alignment: Alignment(0, -0.9),
+          ),
+        ),
+        child: Column(
+          children: [
+            // Fixed Header
+            const HeaderWidget(
+              showNotification: true,
+              showFilter: false,
             ),
-          ),
 
-          // Main Content
-          Column(
-            children: [
-              // Fixed Header
-              const HeaderWidget(
-                showNotification: true,
-                showFilter: false,
-              ),
+            // Fixed Filter Tabs
+            _buildFilterTabs(),
 
-              // Fixed Filter Tabs
-              _buildFilterTabs(),
-
-              // Main scrollable content with rounded container
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFAFAFA).withOpacity(0.8),
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(37),
-                      topRight: Radius.circular(37),
-                    ),
+            // Main scrollable content with rounded container
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFAFAFA).withOpacity(0.95),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(37),
+                    topRight: Radius.circular(37),
                   ),
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(37),
-                      topRight: Radius.circular(37),
-                    ),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                      child: PageView(
-                        controller: _pageController,
-                        physics: const NeverScrollableScrollPhysics(),
-                        children: [
-                          // Tab Semua
-                          SingleChildScrollView(
-                            controller: _scrollController,
-                            child: Column(
-                              children: [
-                                const SizedBox(height: 17),
-                                _buildLowonganList(false),
-                                const SizedBox(height: 24),
-                                _buildPagination(),
-                                const SizedBox(height: 100),
-                              ],
-                            ),
-                          ),
-                          // Tab Rekomendasi AI
-                          SingleChildScrollView(
-                            child: Column(
-                              children: [
-                                const SizedBox(height: 17),
-                                _buildLowonganList(true),
-                                const SizedBox(height: 24),
-                                _buildPagination(),
-                                const SizedBox(height: 100),
-                              ],
-                            ),
-                          ),
-                        ],
+                ),
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(37),
+                    topRight: Radius.circular(37),
+                  ),
+                  child: PageView(
+                    controller: _pageController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      // Tab Semua
+                      SingleChildScrollView(
+                        controller: _scrollController,
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 17),
+                            _buildLowonganList(false),
+                            const SizedBox(height: 24),
+                            _buildPagination(),
+                            const SizedBox(height: 100),
+                          ],
+                        ),
                       ),
-                    ),
+                      // Tab Rekomendasi AI
+                      SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 17),
+                            _buildLowonganList(true),
+                            const SizedBox(height: 24),
+                            _buildPagination(),
+                            const SizedBox(height: 100),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
       bottomNavigationBar: const BottomNavBar(currentIndex: 1),
     );
   }
 
-    Widget _buildFilterTabs() {
+  Widget _buildFilterTabs() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
       child: Row(
@@ -163,7 +124,7 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
             child: Container(
               height: 45,
               decoration: BoxDecoration(
-                color: const Color(0xFF162781).withValues(alpha:0.9),
+                color: const Color(0xFF162781).withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(50),
               ),
               child: Row(
@@ -179,7 +140,7 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
                       height: 35,
                       decoration: BoxDecoration(
                         color: _selectedTab == 0
-                            ? const Color(0xFF2345F7).withValues(alpha:0.7)
+                            ? const Color(0xFF2345F7).withValues(alpha: 0.7)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(100),
                       ),
@@ -207,7 +168,7 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
                       height: 35,
                       decoration: BoxDecoration(
                         color: _selectedTab == 1
-                            ? const Color(0xFF2345F7).withValues(alpha:0.7)
+                            ? const Color(0xFF2345F7).withValues(alpha: 0.7)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(100),
                       ),
@@ -234,7 +195,7 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
             width: 45,
             height: 45,
             decoration: BoxDecoration(
-              color: const Color(0xFF162781).withValues(alpha:0.9),
+              color: const Color(0xFF162781).withValues(alpha: 0.9),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -310,8 +271,7 @@ class _JobCard extends StatelessWidget {
             ),
           ],
         ),
-
-          child: Stack(
+        child: Stack(
           children: [
             // Urgent badge (jika ada)
             if (isUrgent)
@@ -416,17 +376,17 @@ class _JobCard extends StatelessWidget {
             Positioned(
               right: 16,
               top: 40,
-              child: Container(
+              child: SizedBox(
                 width: 16,
                 height: 24,
                 child: ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: SvgPicture.asset(
-                'assets/icons/bookmark.svg',
-                fit: BoxFit.contain, 
-                color: Colors.black.withValues(alpha: 0.5), 
-              ),
-            ),
+                  borderRadius: BorderRadius.circular(4),
+                  child: SvgPicture.asset(
+                    'assets/icons/bookmark.svg',
+                    fit: BoxFit.contain,
+                    color: Colors.black.withValues(alpha: 0.5),
+                  ),
+                ),
               ),
             ),
 
