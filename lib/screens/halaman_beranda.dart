@@ -274,39 +274,45 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
   }
 
   Widget _buildJobFairSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20),
-          child: Text(
-            'Jelajahi Kesempatan Karier',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 26,
-              fontFamily: 'Poppins',
-              fontWeight: FontWeight.w600,
-            ),
+  final List<String> backgrounds = [
+    'assets/images/biru.png',
+    'assets/images/kuning.png',
+    'assets/images/pink.png',
+  ];
+
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 20),
+        child: Text(
+          'Jelajahi Kesempatan Karier',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 26,
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 335,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.only(left: 20, bottom: 5),
-            itemCount: 3,
-            itemBuilder: (context, index) {
-              return const Padding(
-                padding: EdgeInsets.only(right: 16),
-                child: _JobFairCard(),
-              );
-            },
-          ),
+      ),
+      const SizedBox(height: 16),
+      SizedBox(
+        height: 335,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.only(left: 20, bottom: 5),
+          itemCount: 3,
+          itemBuilder: (context, index) {
+            return Padding(
+              padding: EdgeInsets.only(right: 16),
+              child: _JobFairCard(backgroundImage: backgrounds[index]),
+            );
+          },
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
+}
 
   Widget _buildKesepatanSegeraSection() {
     return Container(
@@ -628,7 +634,9 @@ class _CocokUntukKamuCardState extends State<_CocokUntukKamuCard> {
 }
 
 class _JobFairCard extends StatelessWidget {
-  const _JobFairCard();
+  final String backgroundImage;
+  
+  const _JobFairCard({required this.backgroundImage});
 
   @override
   Widget build(BuildContext context) {
@@ -695,7 +703,7 @@ class _JobFairCard extends StatelessWidget {
                   height: 236,
                   color: const Color(0xFFE8F0FE),
                   child: Image.asset(
-                    'assets/images/image10.png',
+                    backgroundImage, // Menggunakan background dinamis
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -704,7 +712,7 @@ class _JobFairCard extends StatelessWidget {
                 width: 338,
                 height: 236,
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.75),
+                  color: Colors.black.withValues(alpha: 0.1),
                   borderRadius: const BorderRadius.only(
                     bottomLeft: Radius.circular(34),
                     bottomRight: Radius.circular(34),
