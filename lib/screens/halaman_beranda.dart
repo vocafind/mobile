@@ -39,15 +39,13 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
     final bool showSearchOnly = _scrollOffset > 100;
     final double topPadding = MediaQuery.of(context).padding.top;
     
-    // Calculate header height dynamically
     final double headerHeight = showSearchOnly 
-        ? topPadding + 12 + 44 + 16  // collapsed: padding + search bar + bottom padding
-        : topPadding + 16 + 90 + 44 + 16; // expanded: padding + greeting text + search + bottom
+        ? topPadding + 25 + 50 + 16
+        : topPadding + 12 + 120 + 44 + 30;
 
     return Scaffold(
       body: Stack(
         children: [
-          // Main scrollable content with background
           SingleChildScrollView(
             controller: _scrollController,
             child: Container(
@@ -60,22 +58,13 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
               ),
               child: Column(
                 children: [
-                  // Header space - dynamically adjusted
                   SizedBox(height: 220),
-
-                  // Section: Cocok untuk kamu
                   _buildCocokUntukKamuSection(),
-                  const SizedBox(height: 40),
-
-                  // Section: Ayo Temui Mereka (Company Logos)
-                  _buildAyoTemuiMerekaSection(),
-                  const SizedBox(height: 40),
-
-                  // Section: Jelajahi Kesempatan Karier (Job Fair)
+                  const SizedBox(height: 50),
+                  const AyoTemuiMerekaSection(), // Widget baru dengan animasi
+                  const SizedBox(height: 60),
                   _buildJobFairSection(),
-                  const SizedBox(height: 40),
-
-                  // Section: Kesempatan Segera
+                  const SizedBox(height: 60),
                   _buildKesepatanSegeraSection(),
                   const SizedBox(height: 0),
                 ],
@@ -83,17 +72,17 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
             ),
           ),
 
-          // Fixed Header with Search
           Positioned(
             top: 0,
             left: 0,
             right: 0,
+            height: headerHeight,
             child: Container(
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF1B56FD), Color(0xFF0118D8)],
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topRight,
+                  colors: [Color(0xFF0118D8), Color(0xFF1B56FD)],
                 ),
                 boxShadow: showSearchOnly
                     ? [
@@ -119,7 +108,6 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Greeting text
                       AnimatedOpacity(
                         opacity: showSearchOnly ? 0.0 : 1.0,
                         duration: const Duration(milliseconds: 200),
@@ -142,7 +130,6 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
                         ),
                       ),
 
-                      // Search bar
                       Row(
                         children: [
                           Expanded(
@@ -205,7 +192,6 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
             ),
           ),
 
-          // Bottom Navigation
           const Positioned(
             left: 0,
             right: 0,
@@ -217,107 +203,76 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
     );
   }
 
-  // Section: Cocok untuk kamu (Horizontal Scroll Cards)
   Widget _buildCocokUntukKamuSection() {
     return Container(
-      margin: const EdgeInsets.only(top: 20),
-      padding: const EdgeInsets.symmetric(vertical: 40),
-      decoration: const BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage('assets/images/iphone14bg.jpg'),
-          fit: BoxFit.cover,
-        ),
-      ),
-      child: SizedBox(
-        height: 500,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: Text(
-                'Cocok untuk kamu',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 26,
-                  fontFamily: 'Poppins',
-                  fontWeight: FontWeight.w600,
-                ),
+      margin: const EdgeInsets.only(top: 0),
+      height: 620,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: ShaderMask(
+              shaderCallback: (bounds) {
+                return LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.white,
+                    Colors.white, 
+                    Colors.white, 
+                    Colors.white, 
+                    Colors.white.withOpacity(0.5),
+                    Colors.white.withOpacity(0.0),
+                  ],
+                  stops: const [0.0,0.0,0.4, 0.7, 0.85, 1.0],
+                ).createShader(bounds);
+              },
+              blendMode: BlendMode.dstIn,
+              child: Image.asset(
+                'assets/images/iphone14bg.jpg',
+                fit: BoxFit.cover,
               ),
             ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.only(left: 20, bottom: 5),
-                itemCount: 3,
-                itemBuilder: (context, index) {
-                  return const Padding(
-                    padding: EdgeInsets.only(right: 16),
-                    child: _CocokUntukKamuCard(),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Section: Ayo Temui Mereka (Company Logos)
-  Widget _buildAyoTemuiMerekaSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20),
-          child: Text(
-            'Ayo Temui Mereka',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 26,
-              fontFamily: 'Poppins',
-              fontWeight: FontWeight.w600,
-            ),
           ),
-        ),
-        const SizedBox(height: 16),
-        Container(
-          height: 113,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(34),
-          ),
-          margin: const EdgeInsets.symmetric(horizontal: 20),
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 28),
-            itemCount: 5,
-            itemBuilder: (context, index) {
-              return Padding(
-                padding: EdgeInsets.only(right: index < 4 ? 35 : 0),
-                child: Container(
-                  width: 62,
-                  height: 56,
-                  child: Center(
-                    child: Image.asset(
-                      'assets/icons/poltek.png',
-                      width: 62,
-                      height: 56,
-                      fit: BoxFit.contain,
+          
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 60),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    'Cocok untuk kamu',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 26,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
-              );
-            },
+                const SizedBox(height: 16),
+                Expanded(
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.only(left: 20, bottom: 5),
+                    itemCount: 3,
+                    itemBuilder: (context, index) {
+                      return const Padding(
+                        padding: EdgeInsets.only(right: 16),
+                        child: _CocokUntukKamuCard(),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  // Section: Jelajahi Kesempatan Karier (Job Fair)
   Widget _buildJobFairSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -353,7 +308,6 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
     );
   }
 
-  // Section: Kesempatan Segera
   Widget _buildKesepatanSegeraSection() {
     return Container(
       width: double.infinity,
@@ -364,7 +318,7 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
           topRight: Radius.circular(34),
         ),
       ),
-      padding: const EdgeInsets.only(top: 31, bottom: 120), // Increased bottom padding untuk menutupi sampai navbar
+      padding: const EdgeInsets.only(top: 31, bottom: 120),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: const [
@@ -392,11 +346,134 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
   }
 }
 
-// ---------------- Reusable Widgets ---------------- //
+// Widget untuk bagian "Ayo Temui Mereka" dengan auto-scroll looping
+class AyoTemuiMerekaSection extends StatefulWidget {
+  const AyoTemuiMerekaSection({Key? key}) : super(key: key);
 
-// Card untuk "Cocok untuk kamu"
-class _CocokUntukKamuCard extends StatelessWidget {
+  @override
+  State<AyoTemuiMerekaSection> createState() => _AyoTemuiMerekaSectionState();
+}
+
+class _AyoTemuiMerekaSectionState extends State<AyoTemuiMerekaSection> {
+  late ScrollController _scrollController;
+  bool _isAutoScrolling = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _startAutoScroll();
+  }
+
+  void _startAutoScroll() async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    
+    while (mounted && _isAutoScrolling) {
+      if (_scrollController.hasClients) {
+        final maxScroll = _scrollController.position.maxScrollExtent;
+        
+        // Scroll ke kanan sampai akhir
+        await _scrollController.animateTo(
+          maxScroll,
+          duration: const Duration(seconds: 10),
+          curve: Curves.linear,
+        );
+        
+        // Instant jump ke awal tanpa animasi
+        if (mounted && _isAutoScrolling) {
+          _scrollController.jumpTo(0);
+          await Future.delayed(const Duration(milliseconds: 100));
+        }
+      } else {
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _isAutoScrolling = false;
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20),
+          child: Text(
+            'Ayo Temui Mereka',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 26,
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        GestureDetector(
+          onHorizontalDragStart: (_) {
+            setState(() {
+              _isAutoScrolling = false;
+            });
+          },
+          onHorizontalDragEnd: (_) {
+            setState(() {
+              _isAutoScrolling = true;
+              _startAutoScroll();
+            });
+          },
+          child: Container(
+            height: 113,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(34),
+            ),
+            margin: const EdgeInsets.symmetric(horizontal: 20),
+            child: ListView.builder(
+              controller: _scrollController,
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 28),
+              itemCount: 15, // Lebih banyak item untuk looping smooth
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: EdgeInsets.only(right: index < 14 ? 35 : 0),
+                  child: Container(
+                    width: 62,
+                    height: 56,
+                    child: Center(
+                      child: Image.asset(
+                        'assets/icons/poltek.png',
+                        width: 62,
+                        height: 56,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// Card untuk "Cocok untuk kamu" dengan animasi bookmark
+class _CocokUntukKamuCard extends StatefulWidget {
   const _CocokUntukKamuCard();
+
+  @override
+  State<_CocokUntukKamuCard> createState() => _CocokUntukKamuCardState();
+}
+
+class _CocokUntukKamuCardState extends State<_CocokUntukKamuCard> {
+  bool isSaved = false;
 
   @override
   Widget build(BuildContext context) {
@@ -410,7 +487,6 @@ class _CocokUntukKamuCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Image with match percentage overlay
           Stack(
             children: [
               ClipRRect(
@@ -423,7 +499,7 @@ class _CocokUntukKamuCard extends StatelessWidget {
                   height: 236,
                   color: const Color(0xFFE8F0FE),
                   child: Image.asset(
-                    'assets/images/image10.png',
+                    'assets/images/job.png',
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -456,7 +532,6 @@ class _CocokUntukKamuCard extends StatelessWidget {
               ),
             ],
           ),
-          // Content
           Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -552,7 +627,6 @@ class _CocokUntukKamuCard extends StatelessWidget {
   }
 }
 
-// Card untuk Job Fair
 class _JobFairCard extends StatelessWidget {
   const _JobFairCard();
 
@@ -568,7 +642,6 @@ class _JobFairCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top info section
           Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -610,7 +683,6 @@ class _JobFairCard extends StatelessWidget {
               ],
             ),
           ),
-          // Image section with overlay
           Stack(
             children: [
               ClipRRect(
@@ -775,242 +847,367 @@ class _JobFairCard extends StatelessWidget {
   }
 }
 
-// Card untuk Kesempatan Segera
-class _UrgentJobCard extends StatelessWidget {
+// Card untuk Kesempatan Segera dengan animasi swipe dan bookmark
+class _UrgentJobCard extends StatefulWidget {
   const _UrgentJobCard();
 
   @override
+  State<_UrgentJobCard> createState() => _UrgentJobCardState();
+}
+
+class _UrgentJobCardState extends State<_UrgentJobCard> with SingleTickerProviderStateMixin {
+  bool isSaved = false;
+  double _dragOffset = 0;
+  bool _isDismissed = false;
+  late AnimationController _bookmarkController;
+  late Animation<double> _bookmarkScale;
+
+  @override
+  void initState() {
+    super.initState();
+    _bookmarkController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+    _bookmarkScale = Tween<double>(begin: 1.0, end: 1.3).animate(
+      CurvedAnimation(parent: _bookmarkController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _bookmarkController.dispose();
+    super.dispose();
+  }
+
+  void _toggleBookmark() {
+    setState(() {
+      isSaved = !isSaved;
+    });
+    _bookmarkController.forward().then((_) {
+      _bookmarkController.reverse();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: 306,
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(34),
-      ),
+    if (_isDismissed) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Stack(
         children: [
-          // Urgent badge
-          Positioned(
-            left: 0,
-            top: 0,
-            child: Container(
-              width: 220,
-              height: 29,
-              decoration: const BoxDecoration(
-                color: Color(0xFF0E37EB),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(34),
-                  bottomRight: Radius.circular(90),
-                ),
-              ),
-              child: Row(
-                children: const [
-                  SizedBox(width: 16),
-                  Icon(Icons.bolt, color: Color(0xFFFFCC00), size: 18),
-                  SizedBox(width: 4),
-                  Text(
-                    'Dibutuhkan segera',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // Company logo
-          Positioned(
-            left: 16,
-            top: 47,
-            child: Container(
-              width: 40,
-              height: 36,
+          // Background delete indicator
+          if (_dragOffset < -10)
+            Container(
+              height: 306,
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.only(right: 30),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(8),
+                color: Colors.red.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(34),
               ),
-              child: Image.asset(
-                'assets/icons/poltek.png',
-                fit: BoxFit.contain,
-              ),
-            ),
-          ),
-          // Job title and company
-          Positioned(
-            left: 66,
-            top: 47,
-            right: 66,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  'Fulltime Backend Developer',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 16,
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Inforsys Indonesia',
-                  style: TextStyle(
-                    color: Color(0x993C3C43),
-                    fontSize: 14,
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Bookmark icon
-          Positioned(
-          right: 16,
-          top: 47,
-          child: Container(
-            width: 32,
-            height: 32,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: SvgPicture.asset(
-                'assets/icons/bookmark.svg',
-                fit: BoxFit.contain, 
-                color: Colors.black.withValues(alpha: 0.5), 
+              child: const Icon(
+                Icons.delete_outline,
+                color: Colors.red,
+                size: 28,
               ),
             ),
-          ),
-        ),
-
-          // Description
-          const Positioned(
-            left: 16,
-            top: 107,
-            right: 16,
-            child: Text(
-              'Bertanggung jawab dalam  mengelola, dan mengoptimal siste . . .',
-              style: TextStyle(
-                color: Color(0xFF404040),
-                fontSize: 14,
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w300,
-                height: 1.8,
-              ),
-            ),
-          ),
-          // Salary
-          Positioned(
-            left: 16,
-            top: 172,
-            child: RichText(
-              text: const TextSpan(
-                children: [
-                  TextSpan(
-                    text: 'Rp',
-                    style: TextStyle(
-                      color: Color(0xFF40403F),
-                      fontSize: 14,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  TextSpan(
-                    text: ' 9.000.000 - ',
-                    style: TextStyle(
-                      color: Color(0xFF40403F),
-                      fontSize: 18,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  TextSpan(
-                    text: 'Rp',
-                    style: TextStyle(
-                      color: Color(0xFF40403F),
-                      fontSize: 14,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  TextSpan(
-                    text: ' 12.000.000',
-                    style: TextStyle(
-                      color: Color(0xFF40403F),
-                      fontSize: 18,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w600,
-                    ),
+          
+          // Main card with swipe gesture
+          GestureDetector(
+            onHorizontalDragUpdate: (details) {
+              setState(() {
+                _dragOffset += details.delta.dx;
+                _dragOffset = _dragOffset.clamp(-100.0, 0.0);
+              });
+            },
+            onHorizontalDragEnd: (details) {
+              if (_dragOffset < -50) {
+                setState(() {
+                  _dragOffset = -MediaQuery.of(context).size.width;
+                });
+                Future.delayed(const Duration(milliseconds: 300), () {
+                  setState(() {
+                    _isDismissed = true;
+                  });
+                });
+              } else {
+                setState(() {
+                  _dragOffset = 0;
+                });
+              }
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+              transform: Matrix4.translationValues(_dragOffset, 0, 0),
+              width: double.infinity,
+              height: 306,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(34),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
-            ),
-          ),
-          // Tags
-          Positioned(
-            left: 16,
-            top: 210,
-            child: Row(
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                        color: Colors.black.withValues(alpha: 0.06)),
-                  ),
-                  child: const Text(
-                    'Batam Kota, Kepulauan Riau',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 14,
-                      fontFamily: 'SF Pro',
-                      fontWeight: FontWeight.w400,
+              child: Stack(
+                children: [
+                  // Urgent badge
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    child: Container(
+                      width: 220,
+                      height: 29,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF0E37EB),
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(34),
+                          bottomRight: Radius.circular(90),
+                        ),
+                      ),
+                      child: Row(
+                        children: const [
+                          SizedBox(width: 16),
+                          Icon(Icons.bolt, 
+                            color: Color(0xFFFFCC00), 
+                            size: 18
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            'Dibutuhkan segera',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                        color: Colors.black.withValues(alpha: 0.06)),
-                  ),
-                  child: const Text(
-                    'Remote',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 14,
-                      fontFamily: 'SF Pro',
-                      fontWeight: FontWeight.w400,
+                  // Company logo
+                  Positioned(
+                    left: 16,
+                    top: 47,
+                    child: Container(
+                      width: 40,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Image.asset(
+                        'assets/icons/poltek.png',
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-
-          // Time ago
-          const Positioned(
-            right: 16,
-            bottom: 18,
-            child: Text(
-              '1 hari lalu',
-              style: TextStyle(
-                color: Color(0xFF464E5E),
-                fontSize: 12,
-                fontFamily: 'SF Pro',
-                fontWeight: FontWeight.w400,
+                  // Job title and company
+                  Positioned(
+                    left: 66,
+                    top: 47,
+                    right: 66,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          'Fulltime Backend Developer',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 16,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Inforsys Indonesia',
+                          style: TextStyle(
+                            color: Color(0x993C3C43),
+                            fontSize: 14,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Bookmark icon with animation
+                  Positioned(
+                    right: 16,
+                    top: 47,
+                    child: GestureDetector(
+                      onTap: _toggleBookmark,
+                      child: ScaleTransition(
+                        scale: _bookmarkScale,
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 200),
+                            transitionBuilder: (child, animation) {
+                              return ScaleTransition(
+                                scale: animation,
+                                child: child,
+                              );
+                            },
+                            child: isSaved
+                                ? const Icon(
+                                    Icons.bookmark,
+                                    key: ValueKey('saved'),
+                                    color: Color(0xFF0E37EB),
+                                    size: 28,
+                                  )
+                                : Icon(
+                                    Icons.bookmark_border,
+                                    key: const ValueKey('unsaved'),
+                                    color: Colors.black.withValues(alpha: 0.5),
+                                    size: 28,
+                                  ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Description
+                  Positioned(
+                    left: 16,
+                    top: 125,
+                    right: 16,
+                    child: const Text(
+                      'Bertanggung jawab dalam  mengelola, dan mengoptimal siste . . .',
+                      style: TextStyle(
+                        color: Color(0xFF404040),
+                        fontSize: 14,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w300,
+                        height: 1,
+                      ),
+                    ),
+                  ),
+                  // Salary
+                  Positioned(
+                    left: 16,
+                    top: 172,
+                    child: RichText(
+                      text: const TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'Rp',
+                            style: TextStyle(
+                              color: Color(0xFF40403F),
+                              fontSize: 14,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          TextSpan(
+                            text: ' 9.000.000 - ',
+                            style: TextStyle(
+                              color: Color(0xFF40403F),
+                              fontSize: 18,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'Rp',
+                            style: TextStyle(
+                              color: Color(0xFF40403F),
+                              fontSize: 14,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          TextSpan(
+                            text: ' 12.000.000',
+                            style: TextStyle(
+                              color: Color(0xFF40403F),
+                              fontSize: 18,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // Tags
+                  Positioned(
+                    left: 16,
+                    top: 210,
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12, 
+                            vertical: 2
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(
+                                color: Colors.black.withValues(alpha: 0.06)),
+                          ),
+                          child: const Text(
+                            'Batam Kota, Kepulauan Riau',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 14,
+                              fontFamily: 'SF Pro',
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12, 
+                            vertical: 2
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(
+                                color: Colors.black.withValues(alpha: 0.06)),
+                          ),
+                          child: const Text(
+                            'Remote',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 14,
+                              fontFamily: 'SF Pro',
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Time ago
+                  Positioned(
+                    right: 16,
+                    bottom: 18,
+                    child: const Text(
+                      '1 hari lalu',
+                      style: TextStyle(
+                        color: Color(0xFF464E5E),
+                        fontSize: 12,
+                        fontFamily: 'SF Pro',
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
