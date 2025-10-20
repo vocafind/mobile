@@ -127,9 +127,10 @@ class _HalamanLoginState extends State<HalamanLogin> {
                         child: Text(
                           _emailError!,
                           style: const TextStyle(
-                              color: Colors.red,
-                              fontSize: 12,
-                              fontFamily: 'Poppins'),
+                            color: Colors.red,
+                            fontSize: 12,
+                            fontFamily: 'Poppins',
+                          ),
                         ),
                       ),
                   ],
@@ -160,9 +161,10 @@ class _HalamanLoginState extends State<HalamanLogin> {
                         child: Text(
                           _passwordError!,
                           style: const TextStyle(
-                              color: Colors.red,
-                              fontSize: 12,
-                              fontFamily: 'Poppins'),
+                            color: Colors.red,
+                            fontSize: 12,
+                            fontFamily: 'Poppins',
+                          ),
                         ),
                       ),
                   ],
@@ -349,7 +351,11 @@ class _AnimatedTextFieldState extends State<AnimatedTextField> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(widget.icon, size: _isFocused ? 14 : 16, color: const Color(0xFF515151)),
+                  Icon(
+                    widget.icon,
+                    size: _isFocused ? 14 : 16,
+                    color: const Color(0xFF515151),
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     widget.label,
@@ -357,7 +363,9 @@ class _AnimatedTextFieldState extends State<AnimatedTextField> {
                       color: const Color(0xFF515151),
                       fontSize: _isFocused ? 11 : 14,
                       fontFamily: 'Poppins',
-                      fontWeight: _isFocused ? FontWeight.w500 : FontWeight.w400,
+                      fontWeight: _isFocused
+                          ? FontWeight.w500
+                          : FontWeight.w400,
                     ),
                   ),
                 ],
@@ -491,7 +499,11 @@ class _AnimatedPasswordFieldState extends State<AnimatedPasswordField> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.lock, size: _isFocused ? 14 : 16, color: const Color(0xFF515151)),
+                  Icon(
+                    Icons.lock,
+                    size: _isFocused ? 14 : 16,
+                    color: const Color(0xFF515151),
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     widget.label,
@@ -499,7 +511,9 @@ class _AnimatedPasswordFieldState extends State<AnimatedPasswordField> {
                       color: const Color(0xFF515151),
                       fontSize: _isFocused ? 11 : 14,
                       fontFamily: 'Poppins',
-                      fontWeight: _isFocused ? FontWeight.w500 : FontWeight.w400,
+                      fontWeight: _isFocused
+                          ? FontWeight.w500
+                          : FontWeight.w400,
                     ),
                   ),
                 ],
