@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'tab_media_sosial.dart';
 import 'tab_minat_karir.dart';
 import 'tab_referensi.dart';
@@ -12,6 +13,18 @@ class TabProfil extends StatefulWidget {
 
 class _TabProfilState extends State<TabProfil> {
   int _selectedSubTab = 0;
+
+  // Editable fields
+  String _nama = 'Nasyith Aditya';
+  String _nomorWa = '0852-6590-0099';
+  String _lokasiKerja = 'Batam';
+  String _statusPekerjaan = 'Mencari pekerjaan';
+  String _preferensiGaji = 'Rp. 20.000.000';
+  String _preferensiJamKerja = '08.00 - 17.00';
+  String _preferensiPerjalananDinas = 'Tidak';
+
+  // Editing state for inline editing
+  String? _editingField;
 
   @override
   Widget build(BuildContext context) {
@@ -85,6 +98,46 @@ class _TabProfilState extends State<TabProfil> {
           ),
         ),
       ),
+    );
+  }
+
+  // Function to show edit dialog (for bottom card fields)
+  Future<void> _showEditDialog(String title, String currentValue, Function(String) onSave) async {
+    final controller = TextEditingController(text: currentValue);
+    
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Edit $title'),
+          content: TextField(
+            controller: controller,
+            decoration: InputDecoration(
+              hintText: 'Masukkan $title',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                onSave(controller.text);
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Simpan'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -184,26 +237,253 @@ class _TabProfilState extends State<TabProfil> {
 
           const SizedBox(height: 18),
 
-          // Profile Fields
+          // Profile Fields - Inline editing for Nama and Nomor WA
           _buildProfileField(Icons.photo_camera_outlined, 'Foto profil', hasAvatar: true, isFirst: true),
-          _buildProfileField(Icons.person_outline, 'Nama', value: 'Nasyith Aditya'),
+          _buildInlineEditableField(
+            Icons.person_outline,
+            'Nama',
+            'nama',
+            _nama,
+            (value) => setState(() => _nama = value),
+          ),
           _buildProfileField(Icons.badge_outlined, 'NIK', value: '21711022050689376'),
           _buildProfileField(Icons.wc, 'Jenis Kelamin', value: 'Laki-laki'),
           _buildProfileField(Icons.location_city_outlined, 'Provinsi', value: 'Kepulauan Riau'),
           _buildProfileField(Icons.location_on_outlined, 'Kabupaten / Kota', value: 'Kota Batam'),
           _buildProfileField(Icons.home_outlined, 'Alamat', value: 'Jl. Pegangsaan Timur No. 56'),
-          _buildProfileField(Icons.phone_outlined, 'Nomor Whatsapp', value: '0852-6590-0099', isLast: true),
+          _buildInlineEditableField(
+            Icons.phone_outlined,
+            'Nomor Whatsapp',
+            'nomorWa',
+            _nomorWa,
+            (value) => setState(() => _nomorWa = value),
+            isLast: true,
+          ),
 
           const SizedBox(height: 18),
 
-          _buildProfileField(Icons.location_searching, 'Lokasi kerja diinginkan', value: 'Batam', isFirst: true),
-          _buildProfileField(Icons.work_outline, 'Status pekerjaan saat ini', value: 'Mencari pekerjaan'),
-          _buildProfileField(Icons.attach_money, 'Preferensi gaji', value: 'Rp. 20.000.000'),
-          _buildProfileField(Icons.access_time, 'Preferensi jam kerja', value: '08.00 - 17.00'),
-          _buildProfileField(Icons.flight_outlined, 'Preferensi perjalanan dinas', value: 'Tidak', isLast: true),
+          // Editable Fields Card - Dialog editing
+          _buildDialogEditableField(
+            Icons.location_searching,
+            'Lokasi kerja diinginkan',
+            _lokasiKerja,
+            () => _showEditDialog('Lokasi Kerja', _lokasiKerja, (newValue) {
+              setState(() => _lokasiKerja = newValue);
+            }),
+            isFirst: true,
+          ),
+          _buildDialogEditableField(
+            Icons.work_outline,
+            'Status pekerjaan saat ini',
+            _statusPekerjaan,
+            () => _showEditDialog('Status Pekerjaan', _statusPekerjaan, (newValue) {
+              setState(() => _statusPekerjaan = newValue);
+            }),
+          ),
+          _buildDialogEditableField(
+            Icons.attach_money,
+            'Preferensi gaji',
+            _preferensiGaji,
+            () => _showEditDialog('Preferensi Gaji', _preferensiGaji, (newValue) {
+              setState(() => _preferensiGaji = newValue);
+            }),
+          ),
+          _buildDialogEditableField(
+            Icons.access_time,
+            'Preferensi jam kerja',
+            _preferensiJamKerja,
+            () => _showEditDialog('Preferensi Jam Kerja', _preferensiJamKerja, (newValue) {
+              setState(() => _preferensiJamKerja = newValue);
+            }),
+          ),
+          _buildDialogEditableField(
+            Icons.flight_outlined,
+            'Preferensi perjalanan dinas',
+            _preferensiPerjalananDinas,
+            () => _showEditDialog('Preferensi Perjalanan Dinas', _preferensiPerjalananDinas, (newValue) {
+              setState(() => _preferensiPerjalananDinas = newValue);
+            }),
+            isLast: true,
+          ),
 
           const SizedBox(height: 80),
         ],
+      ),
+    );
+  }
+
+  // Inline editable field (for Nama and Nomor WA)
+  Widget _buildInlineEditableField(
+    IconData icon,
+    String label,
+    String fieldKey,
+    String currentValue,
+    Function(String) onChanged, {
+    bool isLast = false,
+  }) {
+    final isEditing = _editingField == fieldKey;
+    final isPhoneNumber = fieldKey == 'nomorWa';
+
+    return GestureDetector(
+      onTap: () {
+        if (!isEditing) {
+          setState(() {
+            _editingField = fieldKey;
+          });
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            bottom: BorderSide(
+              color: isLast ? Colors.transparent : const Color(0xFFE8E8E8),
+              width: 1,
+            ),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 24, color: Colors.black54),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      color: Color(0xFF515151),
+                      fontSize: 16,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  if (isEditing)
+                    TextField(
+                      autofocus: true,
+                      controller: TextEditingController(text: currentValue)
+                        ..selection = TextSelection.fromPosition(
+                          TextPosition(offset: currentValue.length),
+                        ),
+                      style: const TextStyle(
+                        color: Color(0xFF515151),
+                        fontSize: 14,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w400,
+                      ),
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      keyboardType: isPhoneNumber ? TextInputType.phone : TextInputType.text,
+                      inputFormatters: isPhoneNumber ? [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(13),
+                        _PhoneNumberFormatter(),
+                      ] : null,
+                      onSubmitted: (value) {
+                        onChanged(value);
+                        setState(() {
+                          _editingField = null;
+                        });
+                      },
+                      onTapOutside: (event) {
+                        setState(() {
+                          _editingField = null;
+                        });
+                      },
+                    )
+                  else
+                    Text(
+                      currentValue,
+                      style: const TextStyle(
+                        color: Color(0xFF515151),
+                        fontSize: 14,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            if (!isEditing)
+              const Icon(Icons.edit, size: 20, color: Colors.black38),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Dialog editable field (for bottom card)
+  Widget _buildDialogEditableField(
+    IconData icon,
+    String label,
+    String value,
+    VoidCallback onTap, {
+    bool isFirst = false,
+    bool isLast = false,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            bottom: BorderSide(
+              color: isLast ? Colors.transparent : const Color(0xFFE8E8E8),
+              width: 1,
+            ),
+          ),
+          borderRadius: isFirst
+              ? const BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                )
+              : isLast
+                  ? const BorderRadius.only(
+                      bottomLeft: Radius.circular(20),
+                      bottomRight: Radius.circular(20),
+                    )
+                  : BorderRadius.zero,
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 24, color: Colors.black54),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      color: Color(0xFF515151),
+                      fontSize: 16,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      color: Color(0xFF515151),
+                      fontSize: 14,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.edit, size: 20, color: Colors.black38),
+          ],
+        ),
       ),
     );
   }
@@ -281,6 +561,39 @@ class _TabProfilState extends State<TabProfil> {
             ),
         ],
       ),
+    );
+  }
+}
+
+// Phone number formatter class
+class _PhoneNumberFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final text = newValue.text;
+    
+    if (text.isEmpty) {
+      return newValue;
+    }
+
+    final buffer = StringBuffer();
+    int index = 0;
+
+    // Format: 0812-3456-7890
+    for (int i = 0; i < text.length; i++) {
+      if (i == 4 || i == 8) {
+        buffer.write('-');
+      }
+      buffer.write(text[i]);
+    }
+
+    final formatted = buffer.toString();
+    
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
 }

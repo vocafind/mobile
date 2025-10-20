@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-// Function to show the bottom sheet
 void showJobDetail(BuildContext context) {
   showModalBottomSheet(
     context: context,

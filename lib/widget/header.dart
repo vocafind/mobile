@@ -37,7 +37,12 @@ class HeaderWidget extends StatelessWidget {
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(15, 0, 15, 20),
+          padding: const EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 12,
+            bottom: 16,
+          ),
           child: Row(
             children: [
               // Search bar
@@ -45,14 +50,14 @@ class HeaderWidget extends StatelessWidget {
                 child: Container(
                   height: 44,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEEEEEE).withValues(alpha:0.1),
+                    color: Colors.white.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(50),
                   ),
                   child: const Row(
                     children: [
-                      SizedBox(width: 14),
-                      Icon(Icons.search, color: Colors.white, size: 25),
-                      SizedBox(width: 16),
+                      SizedBox(width: 20),
+                      Icon(Icons.search, color: Colors.white, size: 20),
+                      SizedBox(width: 12),
                       Text(
                         'Cari lowongan kerja...',
                         style: TextStyle(
@@ -66,52 +71,50 @@ class HeaderWidget extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 12),
               // Notification button (conditional)
-              Row(
-                children: [
-                  const SizedBox(width: 12),
-                  if (showNotification)
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const NotificationPage(),
-                          ),
-                        );
-                      },
-                      child: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEEEEEE).withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.notifications_outlined,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              // Filter button (conditional)
-              if (showFilter)
+              if (showNotification)
                 GestureDetector(
-                  onTap: onFilterTap,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const NotificationPage(),
+                      ),
+                    );
+                  },
                   child: Container(
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEEEEEE).withValues(alpha:0.1),
+                      color: Colors.white.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
-                      Icons.tune,
+                      Icons.notifications_outlined,
                       color: Colors.white,
-                      size: 24,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              // Filter button (conditional)
+              if (showFilter)
+                Padding(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: GestureDetector(
+                    onTap: onFilterTap,
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.tune,
+                        color: Colors.white,
+                        size: 24,
+                      ),
                     ),
                   ),
                 ),
