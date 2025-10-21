@@ -206,7 +206,7 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
   Widget _buildCocokUntukKamuSection() {
     return Container(
       margin: const EdgeInsets.only(top: 0),
-      height: 620,
+      height: 610,
       child: Stack(
         children: [
           Positioned.fill(
@@ -855,7 +855,6 @@ class _JobFairCard extends StatelessWidget {
   }
 }
 
-// Card untuk Kesempatan Segera dengan animasi swipe dan bookmark
 class _UrgentJobCard extends StatefulWidget {
   const _UrgentJobCard();
 
@@ -865,8 +864,6 @@ class _UrgentJobCard extends StatefulWidget {
 
 class _UrgentJobCardState extends State<_UrgentJobCard> with SingleTickerProviderStateMixin {
   bool isSaved = false;
-  double _dragOffset = 0;
-  bool _isDismissed = false;
   late AnimationController _bookmarkController;
   late Animation<double> _bookmarkScale;
 
@@ -899,317 +896,250 @@ class _UrgentJobCardState extends State<_UrgentJobCard> with SingleTickerProvide
 
   @override
   Widget build(BuildContext context) {
-    if (_isDismissed) {
-      return const SizedBox.shrink();
-    }
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Stack(
-        children: [
-          // Background delete indicator
-          if (_dragOffset < -10)
-            Container(
-              height: 306,
-              alignment: Alignment.centerRight,
-              padding: const EdgeInsets.only(right: 30),
-              decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(34),
-              ),
-              child: const Icon(
-                Icons.delete_outline,
-                color: Colors.red,
-                size: 28,
+      child: Container(
+        width: double.infinity,
+        height: 306,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(34),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            // Urgent badge
+            Positioned(
+              left: 0,
+              top: 0,
+              child: Container(
+                width: 220,
+                height: 29,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF0E37EB),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(34),
+                    bottomRight: Radius.circular(90),
+                  ),
+                ),
+                child: Row(
+                  children: const [
+                    SizedBox(width: 16),
+                    Icon(Icons.bolt, 
+                      color: Color(0xFFFFCC00), 
+                      size: 18
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      'Dibutuhkan segera',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          
-          // Main card with swipe gesture
-          GestureDetector(
-            onHorizontalDragUpdate: (details) {
-              setState(() {
-                _dragOffset += details.delta.dx;
-                _dragOffset = _dragOffset.clamp(-100.0, 0.0);
-              });
-            },
-            onHorizontalDragEnd: (details) {
-              if (_dragOffset < -50) {
-                setState(() {
-                  _dragOffset = -MediaQuery.of(context).size.width;
-                });
-                Future.delayed(const Duration(milliseconds: 300), () {
-                  setState(() {
-                    _isDismissed = true;
-                  });
-                });
-              } else {
-                setState(() {
-                  _dragOffset = 0;
-                });
-              }
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-              transform: Matrix4.translationValues(_dragOffset, 0, 0),
-              width: double.infinity,
-              height: 306,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(34),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
+            // Company logo
+            Positioned(
+              left: 16,
+              top: 47,
+              child: Container(
+                width: 40,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Image.asset(
+                  'assets/icons/poltek.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+            // Job title and company
+            Positioned(
+              left: 66,
+              top: 47,
+              right: 66,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text(
+                    'Fulltime Backend Developer',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 16,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Inforsys Indonesia',
+                    style: TextStyle(
+                      color: Color(0x993C3C43),
+                      fontSize: 14,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
                 ],
               ),
-              child: Stack(
-                children: [
-                  // Urgent badge
-                  Positioned(
-                    left: 0,
-                    top: 0,
-                    child: Container(
-                      width: 220,
-                      height: 29,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF0E37EB),
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(34),
-                          bottomRight: Radius.circular(90),
-                        ),
-                      ),
-                      child: Row(
-                        children: const [
-                          SizedBox(width: 16),
-                          Icon(Icons.bolt, 
-                            color: Color(0xFFFFCC00), 
-                            size: 18
-                          ),
-                          SizedBox(width: 4),
-                          Text(
-                            'Dibutuhkan segera',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w600,
+            ),
+            // Bookmark icon with animation
+            Positioned(
+              right: 16,
+              top: 47,
+              child: GestureDetector(
+                onTap: _toggleBookmark,
+                child: ScaleTransition(
+                  scale: _bookmarkScale,
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      transitionBuilder: (child, animation) {
+                        return ScaleTransition(
+                          scale: animation,
+                          child: child,
+                        );
+                      },
+                      child: isSaved
+                          ? const Icon(
+                              Icons.bookmark,
+                              key: ValueKey('saved'),
+                              color: Color(0xFF0E37EB),
+                              size: 28,
+                            )
+                          : Icon(
+                              Icons.bookmark_border,
+                              key: const ValueKey('unsaved'),
+                              color: Colors.black.withValues(alpha: 0.5),
+                              size: 28,
                             ),
-                          ),
-                        ],
-                      ),
                     ),
                   ),
-                  // Company logo
-                  Positioned(
-                    left: 16,
-                    top: 47,
-                    child: Container(
-                      width: 40,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Image.asset(
-                        'assets/icons/poltek.png',
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                  ),
-                  // Job title and company
-                  Positioned(
-                    left: 66,
-                    top: 47,
-                    right: 66,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text(
-                          'Fulltime Backend Developer',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 16,
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Inforsys Indonesia',
-                          style: TextStyle(
-                            color: Color(0x993C3C43),
-                            fontSize: 14,
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Bookmark icon with animation
-                  Positioned(
-                    right: 16,
-                    top: 47,
-                    child: GestureDetector(
-                      onTap: _toggleBookmark,
-                      child: ScaleTransition(
-                        scale: _bookmarkScale,
-                        child: Container(
-                          width: 32,
-                          height: 32,
-                          child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 200),
-                            transitionBuilder: (child, animation) {
-                              return ScaleTransition(
-                                scale: animation,
-                                child: child,
-                              );
-                            },
-                            child: isSaved
-                                ? const Icon(
-                                    Icons.bookmark,
-                                    key: ValueKey('saved'),
-                                    color: Color(0xFF0E37EB),
-                                    size: 28,
-                                  )
-                                : Icon(
-                                    Icons.bookmark_border,
-                                    key: const ValueKey('unsaved'),
-                                    color: Colors.black.withValues(alpha: 0.5),
-                                    size: 28,
-                                  ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Description
-                  Positioned(
-                    left: 16,
-                    top: 125,
-                    right: 16,
-                    child: const Text(
-                      'Bertanggung jawab dalam  mengelola, dan mengoptimal siste . . .',
+                ),
+              ),
+            ),
+            // Description
+            Positioned(
+              left: 16,
+              top: 125,
+              right: 16,
+              child: const Text(
+                'Bertanggung jawab dalam  mengelola, dan mengoptimal siste . . .',
+                style: TextStyle(
+                  color: Color(0xFF404040),
+                  fontSize: 14,
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w300,
+                  height: 1.5,
+                ),
+              ),
+            ),
+            // Salary
+            Positioned(
+              left: 16,
+              top: 172,
+              child: RichText(
+                text: const TextSpan(
+                  children: [
+                    TextSpan(
+                      text: 'Rp',
                       style: TextStyle(
-                        color: Color(0xFF404040),
+                        color: Color(0xFF40403F),
                         fontSize: 14,
                         fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w300,
-                        height: 1,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                  ),
-                  // Salary
-                  Positioned(
-                    left: 16,
-                    top: 172,
-                    child: RichText(
-                      text: const TextSpan(
-                        children: [
-                          TextSpan(
-                            text: 'Rp',
-                            style: TextStyle(
-                              color: Color(0xFF40403F),
-                              fontSize: 14,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          TextSpan(
-                            text: ' 9.000.000 - ',
-                            style: TextStyle(
-                              color: Color(0xFF40403F),
-                              fontSize: 18,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          TextSpan(
-                            text: 'Rp',
-                            style: TextStyle(
-                              color: Color(0xFF40403F),
-                              fontSize: 14,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          TextSpan(
-                            text: ' 12.000.000',
-                            style: TextStyle(
-                              color: Color(0xFF40403F),
-                              fontSize: 18,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  // Tags
-                  Positioned(
-                    left: 16,
-                    top: 210,
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12, 
-                            vertical: 2
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(
-                                color: Colors.black.withValues(alpha: 0.06)),
-                          ),
-                          child: const Text(
-                            'Batam Kota, Kepulauan Riau',
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 14,
-                              fontFamily: 'SF Pro',
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12, 
-                            vertical: 2
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(
-                                color: Colors.black.withValues(alpha: 0.06)),
-                          ),
-                          child: const Text(
-                            'Remote',
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 14,
-                              fontFamily: 'SF Pro',
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Time ago
-                  Positioned(
-                    right: 16,
-                    bottom: 18,
-                    child: const Text(
-                      '1 hari lalu',
+                    TextSpan(
+                      text: ' 9.000.000 - ',
                       style: TextStyle(
-                        color: Color(0xFF464E5E),
-                        fontSize: 12,
+                        color: Color(0xFF40403F),
+                        fontSize: 18,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    TextSpan(
+                      text: 'Rp',
+                      style: TextStyle(
+                        color: Color(0xFF40403F),
+                        fontSize: 14,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    TextSpan(
+                      text: ' 12.000.000',
+                      style: TextStyle(
+                        color: Color(0xFF40403F),
+                        fontSize: 18,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // Tags
+            Positioned(
+              left: 16,
+              top: 210,
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12, 
+                      vertical: 2
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                          color: Colors.black.withValues(alpha: 0.06)),
+                    ),
+                    child: const Text(
+                      'Batam Kota, Kepulauan Riau',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 14,
+                        fontFamily: 'SF Pro',
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12, 
+                      vertical: 2
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                          color: Colors.black.withValues(alpha: 0.06)),
+                    ),
+                    child: const Text(
+                      'Remote',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 14,
                         fontFamily: 'SF Pro',
                         fontWeight: FontWeight.w400,
                       ),
@@ -1218,8 +1148,22 @@ class _UrgentJobCardState extends State<_UrgentJobCard> with SingleTickerProvide
                 ],
               ),
             ),
-          ),
-        ],
+            // Time ago
+            Positioned(
+              right: 16,
+              bottom: 18,
+              child: const Text(
+                '1 hari lalu',
+                style: TextStyle(
+                  color: Color(0xFF464E5E),
+                  fontSize: 12,
+                  fontFamily: 'SF Pro',
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
