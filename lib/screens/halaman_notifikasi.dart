@@ -8,36 +8,74 @@ class NotificationPage extends StatefulWidget {
 }
 
 class _NotificationPageState extends State<NotificationPage> {
+  String? expandedId;
+
   List<NotificationItem> notifications = [
     NotificationItem(
       id: '1',
-      title: 'Lowongan',
-      message: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor',
-      time: '5 menit lalu',
+      company: 'Inforsys Indonesia',
+      title: 'Lamaran anda diterima',
+      message: 'Lamaran Fulltime Backend Deve...',
+      fullMessage:
+          'Selamat! Lamaran Anda untuk posisi Fulltime Backend Developer telah diterima. Tim HR kami akan menghubungi Anda dalam 2-3 hari kerja untuk proses selanjutnya.',
+      time: '34m lalu',
       isRead: false,
+      logoUrl: 'https://via.placeholder.com/40',
     ),
     NotificationItem(
       id: '2',
-      title: 'Lowongan',
-      message: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor',
-      time: '10 menit lalu',
-      isRead: false,
+      company: 'Inforsys Indonesia',
+      title: 'Lamaran anda diterima',
+      message: 'Lamaran Fulltime Backend Deve...',
+      fullMessage:
+          'Selamat! Lamaran Anda untuk posisi Fulltime Backend Developer telah diterima. Tim HR kami akan menghubungi Anda dalam 2-3 hari kerja untuk proses selanjutnya.',
+      time: '34m lalu',
+      isRead: true,
+      logoUrl: 'https://via.placeholder.com/40',
     ),
     NotificationItem(
       id: '3',
-      title: 'Lowongan',
-      message: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor',
-      time: '1 jam lalu',
+      company: 'Inforsys Indonesia',
+      title: 'Lamaran anda diterima',
+      message: 'Lamaran Fulltime Backend Deve...',
+      fullMessage:
+          'Selamat! Lamaran Anda untuk posisi Fulltime Backend Developer telah diterima. Tim HR kami akan menghubungi Anda dalam 2-3 hari kerja untuk proses selanjutnya.',
+      time: '34m lalu',
       isRead: true,
+      logoUrl: 'https://via.placeholder.com/40',
     ),
     NotificationItem(
       id: '4',
-      title: 'Lowongan',
-      message: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor',
-      time: '2 jam lalu',
+      company: 'Inforsys Indonesia',
+      title: 'Lamaran anda diterima',
+      message: 'Lamaran Fulltime Backend Deve...',
+      fullMessage:
+          'Selamat! Lamaran Anda untuk posisi Fulltime Backend Developer telah diterima. Tim HR kami akan menghubungi Anda dalam 2-3 hari kerja untuk proses selanjutnya.',
+      time: '34m lalu',
       isRead: true,
+      logoUrl: 'https://via.placeholder.com/40',
+    ),
+    NotificationItem(
+      id: '5',
+      company: 'Inforsys Indonesia',
+      title: 'Lamaran anda diterima',
+      message: 'Lamaran Fulltime Backend Deve...',
+      fullMessage:
+          'Selamat! Lamaran Anda untuk posisi Fulltime Backend Developer telah diterima. Tim HR kami akan menghubungi Anda dalam 2-3 hari kerja untuk proses selanjutnya.',
+      time: '34m lalu',
+      isRead: true,
+      logoUrl: 'https://via.placeholder.com/40',
     ),
   ];
+
+  void _deleteNotification(String id) {
+    setState(() {
+      notifications.removeWhere((n) => n.id == id);
+      if (expandedId == id) {
+        expandedId = null;
+      }
+    });
+  }
 
   void _markAsRead(String id) {
     setState(() {
@@ -48,16 +86,13 @@ class _NotificationPageState extends State<NotificationPage> {
     });
   }
 
-  void _deleteNotification(String id) {
+  void _toggleExpand(String id) {
     setState(() {
-      notifications.removeWhere((n) => n.id == id);
-    });
-  }
-
-  void _markAllAsRead() {
-    setState(() {
-      for (var notification in notifications) {
-        notification.isRead = true;
+      if (expandedId == id) {
+        expandedId = null;
+      } else {
+        expandedId = id;
+        _markAsRead(id);
       }
     });
   }
@@ -89,11 +124,12 @@ class _NotificationPageState extends State<NotificationPage> {
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha:0.1),
+                          color: Colors.white.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.arrow_back, color: Colors.white),
+                          icon: const Icon(Icons.arrow_back_ios_new,
+                              color: Colors.white, size: 20),
                           onPressed: () => Navigator.pop(context),
                         ),
                       ),
@@ -107,189 +143,311 @@ class _NotificationPageState extends State<NotificationPage> {
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      const Spacer(),
-                      // Mark all as read button
-                      TextButton(
-                        onPressed: _markAllAsRead,
-                        style: TextButton.styleFrom(
-                          backgroundColor: Colors.white.withValues(alpha:0.1),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                            side: const BorderSide(color: Colors.white24),
-                          ),
-                        ),
-                        child: const Text(
-                          'Tandai Semua',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontFamily: 'SF Pro',
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 0.3,
-                          ),
-                        ),
-                      )
-
                     ],
                   ),
                 ),
               ),
             ),
-            
+
             // Notification List
-           Expanded(
-  child: notifications.isEmpty
-      ? const Center(
-          child: Text(
-            'Tidak ada notifikasi',
-            style: TextStyle(
-              color: Color(0xFF515151),
-              fontSize: 16,
-              fontFamily: 'SF Pro',
-            ),
-          ),
-        )
-      : ListView.builder(
-          padding: const EdgeInsets.only(top: 16),
-          itemCount: notifications.length,
-          itemBuilder: (context, index) {
-            final notification = notifications[index];
-            return Dismissible(
-              key: Key(notification.id),
-              direction: DismissDirection.endToStart,
-              background: Container(
-                alignment: Alignment.centerRight,
-                padding: const EdgeInsets.only(right: 20),
-                color: Colors.red,
-                child: const Icon(Icons.delete, color: Colors.white, size: 28),
-              ),
-              onDismissed: (direction) {
-                _deleteNotification(notification.id);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Notifikasi dihapus')),
-                );
-              },
-              child: GestureDetector(
-                onTap: () {
-                  if (!notification.isRead) {
-                    _markAsRead(notification.id);
-                  }
-                },
-                child: Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.only(bottom: 8),
-                  color: notification.isRead
-                      ? Colors.white.withValues(alpha:0.7)
-                      : Colors.white,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                Text(
-                                  notification.title,
-                                  style: const TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 16,
-                                    fontFamily: 'SF Pro',
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                if (!notification.isRead) ...[
-                                  const SizedBox(width: 6),
-                                  Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFF1B56FD),
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                ],
-                              ],
+            Expanded(
+              child: notifications.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'Tidak ada notifikasi',
+                        style: TextStyle(
+                          color: Color(0xFF515151),
+                          fontSize: 16,
+                          fontFamily: 'SF Pro',
+                        ),
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.only(top: 30, left: 21, right: 21),
+                      itemCount: notifications.length,
+                      itemBuilder: (context, index) {
+                        final notification = notifications[index];
+                        final isExpanded = expandedId == notification.id;
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Dismissible(
+                            key: Key(notification.id),
+                            direction: DismissDirection.endToStart,
+                            confirmDismiss: (direction) async {
+                              return true;
+                            },
+                            background: Container(
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.only(right: 20),
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                borderRadius: BorderRadius.circular(23),
+                              ),
+                              child: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.white,
+                                size: 28,
+                              ),
                             ),
-                            PopupMenuButton<String>(
-                              icon: const Icon(Icons.more_vert,
-                                  color: Color(0xFF515151)),
-                              onSelected: (value) {
-                                if (value == 'read') {
-                                  _markAsRead(notification.id);
-                                } else if (value == 'delete') {
-                                  _deleteNotification(notification.id);
-                                }
+                            onDismissed: (direction) {
+                              _deleteNotification(notification.id);
+                            },
+                            child: GestureDetector(
+                              onTap: () {
+                                _toggleExpand(notification.id);
                               },
-                              itemBuilder: (context) => [
-                                if (!notification.isRead)
-                                  const PopupMenuItem(
-                                    value: 'read',
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.check, size: 20),
-                                        SizedBox(width: 8),
-                                        Text('Tandai sudah dibaca'),
-                                      ],
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 300),
+                                decoration: BoxDecoration(
+                                  color: notification.isRead
+                                      ? const Color(0xFFEDEEF0)
+                                          .withValues(alpha: 0.75)
+                                      : Colors.white.withValues(alpha: 1),
+                                  borderRadius: BorderRadius.circular(23),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.1),
+                                      blurRadius: 10,
+                                      spreadRadius: 0,
+                                      offset: const Offset(0, 2),
                                     ),
-                                  ),
-                                const PopupMenuItem(
-                                  value: 'delete',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.delete,
-                                          size: 20, color: Colors.red),
-                                      SizedBox(width: 8),
-                                      Text('Hapus',
-                                          style:
-                                              TextStyle(color: Colors.red)),
-                                    ],
-                                  ),
+                                  ],
                                 ),
-                              ],
+                                child: Column(
+                                  children: [
+                                    // Main notification content
+                                    Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          // Company Logo
+                                          Container(
+                                            width: 38,
+                                            height: 38,
+                                            decoration: BoxDecoration(
+                                            ),
+                                            child: ClipRRect(
+                                              child: Image.asset(
+                                                "assets/icons/poltek.png",
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (context, error,
+                                                        stack) =>
+                                                    const Icon(
+                                                  Icons.business,
+                                                  color: Colors.grey,
+                                                  size: 24,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 11),
+                                          // Content
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
+                                                  children: [
+                                                    Expanded(
+                                                      child: Text(
+                                                        notification.company,
+                                                        style: const TextStyle(
+                                                          color:
+                                                              Color(0xFF515151),
+                                                          fontSize: 13,
+                                                          fontFamily: 'Poppins',
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          height: 1.38,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      notification.time,
+                                                      style: const TextStyle(
+                                                        color:
+                                                            Color(0xFF7D7D7D),
+                                                        fontSize: 13,
+                                                        fontFamily: 'Poppins',
+                                                        fontWeight:
+                                                            FontWeight.w400,
+                                                        height: 1.38,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 3),
+                                                Text(
+                                                  notification.title,
+                                                  style: const TextStyle(
+                                                    color: Colors.black,
+                                                    fontSize: 16,
+                                                    fontFamily: 'Poppins',
+                                                    fontWeight: FontWeight.w600,
+                                                    height: 1.12,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 3),
+                                                Text(
+                                                  notification.message,
+                                                  style: const TextStyle(
+                                                    color: Colors.black,
+                                                    fontSize: 14,
+                                                    fontFamily: 'Poppins',
+                                                    fontWeight: FontWeight.w400,
+                                                    height: 1.28,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    // Expanded Detail Section
+                                    AnimatedSize(
+                                      duration:
+                                          const Duration(milliseconds: 300),
+                                      curve: Curves.easeInOut,
+                                      child: isExpanded
+                                          ? Container(
+                                              width: double.infinity,
+                                              padding:
+                                                  const EdgeInsets.fromLTRB(
+                                                      16, 0, 16, 16),
+                                              decoration: BoxDecoration(
+                                                border: Border(
+                                                  top: BorderSide(
+                                                    color: Colors.grey
+                                                        .withValues(alpha: 0.2),
+                                                    width: 1,
+                                                  ),
+                                                ),
+                                              ),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  const SizedBox(height: 16),
+                                                  Text(
+                                                    notification.fullMessage,
+                                                    style: const TextStyle(
+                                                      color: Color(0xFF515151),
+                                                      fontSize: 14,
+                                                      fontFamily: 'Poppins',
+                                                      fontWeight:
+                                                          FontWeight.w400,
+                                                      height: 1.5,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 16),
+                                                  Row(
+                                                    children: [
+                                                      Expanded(
+                                                        child: OutlinedButton(
+                                                          onPressed: () {
+                                                            _toggleExpand(
+                                                                notification
+                                                                    .id);
+                                                          },
+                                                          style: OutlinedButton
+                                                              .styleFrom(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .symmetric(
+                                                                    vertical:
+                                                                        12),
+                                                            side: BorderSide(
+                                                              color: Colors.grey
+                                                                  .shade400,
+                                                            ),
+                                                            shape:
+                                                                RoundedRectangleBorder(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          10),
+                                                            ),
+                                                          ),
+                                                          child: const Text(
+                                                            'Tutup',
+                                                            style: TextStyle(
+                                                              color: Color(
+                                                                  0xFF515151),
+                                                              fontSize: 15,
+                                                              fontFamily:
+                                                                  'Poppins',
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w500,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 12),
+                                                      Expanded(
+                                                        child: ElevatedButton(
+                                                          onPressed: () {},
+                                                          style: ElevatedButton
+                                                              .styleFrom(
+                                                            backgroundColor:
+                                                                const Color(
+                                                                    0xFF1B56FD),
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .symmetric(
+                                                                    vertical:
+                                                                        12),
+                                                            shape:
+                                                                RoundedRectangleBorder(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          10),
+                                                            ),
+                                                            elevation: 0,
+                                                          ),
+                                                          child: const Text(
+                                                            'Lihat Detail',
+                                                            style: TextStyle(
+                                                              color:
+                                                                  Colors.white,
+                                                              fontSize: 15,
+                                                              fontFamily:
+                                                                  'Poppins',
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w500,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                            )
+                                          : const SizedBox.shrink(),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          notification.message,
-                          style: const TextStyle(
-                            color: Color(0xFF515151),
-                            fontSize: 14,
-                            fontFamily: 'SF Pro',
-                            fontWeight: FontWeight.w400,
-                            height: 1.43,
                           ),
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 12),
-                        const Divider(color: Color(0xFFE9E9E9), thickness: 1),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: Text(
-                            notification.time,
-                            style: const TextStyle(
-                              color: Color(0xFF515151),
-                              fontSize: 13,
-                              fontFamily: 'SF Pro',
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ),
-                      ],
+                        );
+                      },
                     ),
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
+            ),
           ],
         ),
       ),
@@ -299,16 +457,22 @@ class _NotificationPageState extends State<NotificationPage> {
 
 class NotificationItem {
   final String id;
+  final String company;
   final String title;
   final String message;
+  final String fullMessage;
   final String time;
   bool isRead;
+  final String logoUrl;
 
   NotificationItem({
     required this.id,
+    required this.company,
     required this.title,
     required this.message,
+    required this.fullMessage,
     required this.time,
     required this.isRead,
+    required this.logoUrl,
   });
 }
