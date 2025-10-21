@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:jobfair/api/api_service.dart';
 import 'halaman_register.dart';
 import 'halaman_beranda.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HalamanLogin extends StatefulWidget {
   const HalamanLogin({super.key});
@@ -51,7 +52,19 @@ class _HalamanLoginState extends State<HalamanLogin> {
 
     final result = await ApiService().loginTalent(email, password);
 
+    // ✅ Jika login berhasil dan ada token
     if (result['token'] != null) {
+      final prefs = await SharedPreferences.getInstance();
+
+      await prefs.setString('token', result['token']);
+      await prefs.setString('talentId', result['talentId']);
+      await prefs.setString('nama', result['message']); // opsional
+
+      // ✅ Tambahkan di sini untuk test
+      print("TOKEN: ${prefs.getString('token')}");
+      print("TALENT ID: ${prefs.getString('talentId')}");
+
+      // Lanjut ke halaman beranda
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HalamanBeranda()),

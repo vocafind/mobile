@@ -1,25 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:jobfair/screens/profil/keamanan_privasi.dart';
+import 'package:jobfair/api/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:jobfair/models/talent_profile_model.dart';
+import 'dart:convert';
 
 class ProfileHeader extends StatefulWidget {
   final TabController tabController;
 
-  const ProfileHeader({
-    super.key,
-    required this.tabController,
-  });
+  const ProfileHeader({super.key, required this.tabController});
 
   @override
   State<ProfileHeader> createState() => _ProfileHeaderState();
 }
 
-class _ProfileHeaderState extends State<ProfileHeader> with SingleTickerProviderStateMixin {
+class _ProfileHeaderState extends State<ProfileHeader>
+    with SingleTickerProviderStateMixin {
   final GlobalKey _settingButtonKey = GlobalKey();
   OverlayEntry? _overlayEntry;
   AnimationController? _animationController;
   Animation<double>? _scaleAnimation;
   Animation<double>? _fadeAnimation;
+
+  // --- Data Profil
+  String nama = 'Pengguna';
+  String lokasiKerja = '-';
 
   @override
   void initState() {
@@ -36,6 +42,46 @@ class _ProfileHeaderState extends State<ProfileHeader> with SingleTickerProvider
       parent: _animationController!,
       curve: Curves.easeOut,
     );
+
+    // ✅ Load cache & API data
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadDataDiri();
+    });
+  }
+
+  Future<void> _loadDataDiri() async {
+    final prefs = await SharedPreferences.getInstance();
+    final cached = prefs.getString('cachedProfile');
+
+    if (cached != null) {
+      // 🔹 Tampilkan cache langsung tanpa loading
+      final data = TalentProfileModel.fromJson(jsonDecode(cached));
+      if (mounted) {
+        setState(() {
+          nama = data.nama ?? 'Tanpa Nama';
+          lokasiKerja = data.lokasiKerjaDiinginkan ?? '-';
+        });
+      }
+    }
+
+    // 🔹 Lalu refresh data terbaru di background
+    final api = ApiService();
+    final latest = await api.getProfilDataDiri();
+    print("🔥 DATA DARI API: ${latest?.toJson()}");
+
+    if (latest != null && mounted) {
+      prefs.setString(
+        'cachedProfile',
+        jsonEncode({
+          "nama": latest.nama,
+          "lokasiKerjaDiinginkan": latest.lokasiKerjaDiinginkan,
+        }),
+      );
+      setState(() {
+        nama = latest.nama ?? nama;
+        lokasiKerja = latest.lokasiKerjaDiinginkan ?? lokasiKerja;
+      });
+    }
   }
 
   @override
@@ -46,7 +92,8 @@ class _ProfileHeaderState extends State<ProfileHeader> with SingleTickerProvider
   }
 
   void _showSettingMenu() {
-    final RenderBox? renderBox = _settingButtonKey.currentContext?.findRenderObject() as RenderBox?;
+    final RenderBox? renderBox =
+        _settingButtonKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) return;
 
     final offset = renderBox.localToGlobal(Offset.zero);
@@ -55,16 +102,10 @@ class _ProfileHeaderState extends State<ProfileHeader> with SingleTickerProvider
     _overlayEntry = OverlayEntry(
       builder: (context) => Stack(
         children: [
-          // Background overlay
           GestureDetector(
             onTap: _removeOverlay,
-            child: Container(
-              color: Colors.transparent,
-              width: double.infinity,
-              height: double.infinity,
-            ),
+            child: Container(color: Colors.transparent),
           ),
-          // Setting menu
           Positioned(
             top: offset.dy + size.height + 8,
             right: MediaQuery.of(context).size.width - offset.dx - size.width,
@@ -95,14 +136,15 @@ class _ProfileHeaderState extends State<ProfileHeader> with SingleTickerProvider
                           icon: Icons.security,
                           title: 'Keamanan dan Privasi',
                           onTap: () {
-                          _removeOverlay();
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const SecurityPrivacyPage(),
-                            ),
-                          );
-                        },
+                            _removeOverlay();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const SecurityPrivacyPage(),
+                              ),
+                            );
+                          },
                         ),
                         Divider(
                           height: 1,
@@ -115,7 +157,6 @@ class _ProfileHeaderState extends State<ProfileHeader> with SingleTickerProvider
                           isDestructive: true,
                           onTap: () {
                             _removeOverlay();
-                            // Handle logout
                             _showLogoutConfirmation(context);
                           },
                         ),
@@ -183,35 +224,23 @@ class _ProfileHeaderState extends State<ProfileHeader> with SingleTickerProvider
       builder: (context) => AlertDialog(
         title: const Text(
           'Logout',
-          style: TextStyle(
-            fontFamily: 'SF Pro',
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(fontFamily: 'SF Pro', fontWeight: FontWeight.w600),
         ),
         content: const Text(
           'Apakah Anda yakin ingin keluar?',
-          style: TextStyle(
-            fontFamily: 'SF Pro',
-          ),
+          style: TextStyle(fontFamily: 'SF Pro'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Batal',
-              style: TextStyle(
-                fontFamily: 'SF Pro',
-                color: Colors.grey,
-              ),
-            ),
+            child: const Text('Batal',
+                style: TextStyle(fontFamily: 'SF Pro', color: Colors.grey)),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              // Handle logout action
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Berhasil logout')),
-              );
+                  const SnackBar(content: Text('Berhasil logout')));
             },
             child: const Text(
               'Logout',
@@ -249,11 +278,10 @@ class _ProfileHeaderState extends State<ProfileHeader> with SingleTickerProvider
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
-                          'Danu Yudistia',
-                          style: TextStyle(
+                        Text(
+                          nama,
+                          style: const TextStyle(
                             color: Color(0xFFFFF8F8),
                             fontSize: 36,
                             fontFamily: 'SF Pro',
@@ -264,18 +292,15 @@ class _ProfileHeaderState extends State<ProfileHeader> with SingleTickerProvider
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
-                        const Row(
+                        Row(
                           children: [
-                            Icon(
-                              Icons.location_on,
-                              color: Color(0xFFFFF8F8),
-                              size: 14,
-                            ),
-                            SizedBox(width: 4),
+                            const Icon(Icons.location_on,
+                                color: Color(0xFFFFF8F8), size: 14),
+                            const SizedBox(width: 4),
                             Flexible(
                               child: Text(
-                                'Batam , Kepulauan Riau',
-                                style: TextStyle(
+                                lokasiKerja,
+                                style: const TextStyle(
                                   color: Color(0xFFFFF8F8),
                                   fontSize: 14,
                                   fontFamily: 'SF Pro',
@@ -324,11 +349,10 @@ class _ProfileHeaderState extends State<ProfileHeader> with SingleTickerProvider
               isScrollable: true,
               indicatorColor: Colors.white,
               indicatorWeight: 3,
-              indicatorSize: TabBarIndicatorSize.tab,
-              indicatorPadding: EdgeInsets.zero,
               dividerColor: Colors.transparent,
               labelColor: const Color(0xFFFFF8F8),
-              unselectedLabelColor: const Color(0xFFFFF8F8).withValues(alpha: 0.7),
+              unselectedLabelColor:
+                  const Color(0xFFFFF8F8).withValues(alpha: 0.7),
               labelStyle: const TextStyle(
                 fontSize: 16,
                 fontFamily: 'SF Pro',
@@ -339,7 +363,6 @@ class _ProfileHeaderState extends State<ProfileHeader> with SingleTickerProvider
                 fontFamily: 'SF Pro',
                 fontWeight: FontWeight.w400,
               ),
-              tabAlignment: TabAlignment.start,
               padding: const EdgeInsets.symmetric(horizontal: 23),
               tabs: const [
                 Tab(text: 'Profil'),
