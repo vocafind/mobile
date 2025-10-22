@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:jobfair/models/talent_profile_model.dart';
 import 'tab_media_sosial.dart';
 import 'tab_minat_karir.dart';
 import 'tab_referensi.dart';
+import 'package:jobfair/api/api_service.dart';
 
 class TabProfil extends StatefulWidget {
   const TabProfil({super.key});
@@ -14,17 +16,35 @@ class TabProfil extends StatefulWidget {
 class _TabProfilState extends State<TabProfil> {
   int _selectedSubTab = 0;
 
-  // Editable fields
-  String _nama = 'Nasyith Aditya';
-  String _nomorWa = '0852-6590-0099';
-  String _lokasiKerja = 'Batam';
-  String _statusPekerjaan = 'Mencari pekerjaan';
-  String _preferensiGaji = 'Rp. 20.000.000';
-  String _preferensiJamKerja = '08.00 - 17.00';
-  String _preferensiPerjalananDinas = 'Tidak';
-
-  // Editing state for inline editing
+  // Data profil dari API
+  TalentProfileModel? _profil;
+  bool _isLoading = true;
   String? _editingField;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfil();
+  }
+
+  Future<void> _loadProfil() async {
+    try {
+      final profil = await ApiService().getProfilDataDiri();
+      if (mounted) {
+        setState(() {
+          _profil = profil;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+      debugPrint('Gagal memuat profil: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,6 +80,42 @@ class _TabProfilState extends State<TabProfil> {
   }
 
   Widget _buildContent() {
+    // Tampilkan loading saat data belum siap
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    // Tampilkan error jika data gagal dimuat
+    if (_profil == null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 60, color: Colors.red),
+            const SizedBox(height: 16),
+            const Text(
+              'Gagal memuat data profil',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _isLoading = true;
+                });
+                _loadProfil();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Coba Lagi'),
+            ),
+          ],
+        ),
+      );
+    }
+
     switch (_selectedSubTab) {
       case 0:
         return _buildDataDiriContent();
@@ -101,47 +157,17 @@ class _TabProfilState extends State<TabProfil> {
     );
   }
 
-  // Function to show edit dialog (for bottom card fields)
-  Future<void> _showEditDialog(String title, String currentValue, Function(String) onSave) async {
-    final controller = TextEditingController(text: currentValue);
-    
-    return showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Edit $title'),
-          content: TextField(
-            controller: controller,
-            decoration: InputDecoration(
-              hintText: 'Masukkan $title',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Batal'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                onSave(controller.text);
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Simpan'),
-            ),
-          ],
-        );
-      },
+  // Helper untuk format currency
+  String _formatCurrency(int amount) {
+    return amount.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]}.',
     );
   }
 
   Widget _buildDataDiriContent() {
+    final profil = _profil!;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 21, vertical: 20),
       child: Column(
@@ -165,8 +191,8 @@ class _TabProfilState extends State<TabProfil> {
                         children: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
+                            children: const [
+                              Text(
                                 'Kelengkapan Profil',
                                 style: TextStyle(
                                   color: Color(0xFF515151),
@@ -175,7 +201,7 @@ class _TabProfilState extends State<TabProfil> {
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
-                              const Text(
+                              Text(
                                 '24 %',
                                 style: TextStyle(
                                   color: Color(0xFF515151),
@@ -209,10 +235,10 @@ class _TabProfilState extends State<TabProfil> {
                           ),
                           const SizedBox(height: 8),
                           Row(
-                            children: [
+                            children: const [
                               Icon(Icons.info_outline, size: 15, color: Colors.black54),
-                              const SizedBox(width: 4),
-                              const Expanded(
+                              SizedBox(width: 4),
+                              Expanded(
                                 child: Text(
                                   'Lengkapi profil Anda agar AI dapat memberikan rekomendasi yang lebih akurat dan sesuai',
                                   style: TextStyle(
@@ -237,72 +263,109 @@ class _TabProfilState extends State<TabProfil> {
 
           const SizedBox(height: 18),
 
-          // Profile Fields - Inline editing for Nama and Nomor WA
-          _buildProfileField(Icons.photo_camera_outlined, 'Foto profil', hasAvatar: true, isFirst: true),
+          // Profile Fields - Data dari API
+          _buildProfileField(
+            Icons.photo_camera_outlined,
+            'Foto profil',
+            hasAvatar: true,
+            isFirst: true,
+            avatarUrl: profil.fotoProfil,
+          ),
+
           _buildInlineEditableField(
             Icons.person_outline,
             'Nama',
             'nama',
-            _nama,
-            (value) => setState(() => _nama = value),
+            profil.nama ?? '-',
+            (value) {
+              setState(() {
+                _profil = profil.copyWith(nama: value);
+              });
+            },
           ),
-          _buildProfileField(Icons.badge_outlined, 'NIK', value: '21711022050689376'),
-          _buildProfileField(Icons.wc, 'Jenis Kelamin', value: 'Laki-laki'),
-          _buildProfileField(Icons.location_city_outlined, 'Provinsi', value: 'Kepulauan Riau'),
-          _buildProfileField(Icons.location_on_outlined, 'Kabupaten / Kota', value: 'Kota Batam'),
-          _buildProfileField(Icons.home_outlined, 'Alamat', value: 'Jl. Pegangsaan Timur No. 56'),
+
+          _buildProfileField(Icons.badge_outlined, 'NIK', value: profil.nik ?? '-'),
+
+          _buildProfileField(
+            Icons.calendar_today,
+            'Usia',
+            value: profil.usia?.toString() ?? '-',
+          ),
+
+          _buildProfileField(Icons.wc, 'Jenis Kelamin', value: profil.jenisKelamin ?? '-'),
+
+          _buildProfileField(Icons.location_city_outlined, 'Provinsi', value: profil.provinsi ?? '-'),
+
+          _buildProfileField(Icons.location_on_outlined, 'Kabupaten / Kota', value: profil.kabupatenKota ?? '-'),
+
+          _buildProfileField(Icons.home_outlined, 'Alamat', value: profil.alamat ?? '-'),
+
           _buildInlineEditableField(
             Icons.phone_outlined,
             'Nomor Whatsapp',
             'nomorWa',
-            _nomorWa,
-            (value) => setState(() => _nomorWa = value),
+            profil.nomorTelepon ?? '-',
+            (value) {
+              setState(() {
+                _profil = profil.copyWith(nomorTelepon: value);
+              });
+            },
             isLast: true,
           ),
 
           const SizedBox(height: 18),
 
-          // Editable Fields Card - Dialog editing
-          _buildDialogEditableField(
+          // Editable Fields - Sekarang inline edit
+          _buildInlineEditableField(
             Icons.location_searching,
             'Lokasi kerja diinginkan',
-            _lokasiKerja,
-            () => _showEditDialog('Lokasi Kerja', _lokasiKerja, (newValue) {
-              setState(() => _lokasiKerja = newValue);
-            }),
+            'lokasiKerja',
+            profil.lokasiKerjaDiinginkan ?? '-',
+            (value) {
+              setState(() {
+                _profil = profil.copyWith(lokasiKerjaDiinginkan: value);
+              });
+            },
             isFirst: true,
           ),
-          _buildDialogEditableField(
+
+          _buildInlineEditableField(
             Icons.work_outline,
             'Status pekerjaan saat ini',
-            _statusPekerjaan,
-            () => _showEditDialog('Status Pekerjaan', _statusPekerjaan, (newValue) {
-              setState(() => _statusPekerjaan = newValue);
-            }),
+            'statusPekerjaan',
+            profil.statusPekerjaanSaatIni ?? '-',
+            (value) {
+              setState(() {
+                _profil = profil.copyWith(statusPekerjaanSaatIni: value);
+              });
+            },
           ),
-          _buildDialogEditableField(
+
+          _buildInlineEditableField(
             Icons.attach_money,
             'Preferensi gaji',
-            _preferensiGaji,
-            () => _showEditDialog('Preferensi Gaji', _preferensiGaji, (newValue) {
-              setState(() => _preferensiGaji = newValue);
-            }),
+            'preferensiGaji',
+            profil.preferensiGaji != null ? 'Rp. ${_formatCurrency(profil.preferensiGaji!)}' : '-',
+            (value) {
+              final gaji = int.tryParse(value.replaceAll(RegExp(r'[^0-9]'), ''));
+              if (gaji != null) {
+                setState(() {
+                  _profil = profil.copyWith(preferensiGaji: gaji);
+                });
+              }
+            },
+            isNumeric: true,
           ),
-          _buildDialogEditableField(
-            Icons.access_time,
-            'Preferensi jam kerja',
-            _preferensiJamKerja,
-            () => _showEditDialog('Preferensi Jam Kerja', _preferensiJamKerja, (newValue) {
-              setState(() => _preferensiJamKerja = newValue);
-            }),
+
+          // Custom field untuk jam kerja (2 input bersebelahan)
+          _buildJamKerjaField(
+            profil.preferensiJamKerjaMulai ?? '',
+            profil.preferensiJamKerjaSelesai ?? '',
           ),
-          _buildDialogEditableField(
-            Icons.flight_outlined,
-            'Preferensi perjalanan dinas',
-            _preferensiPerjalananDinas,
-            () => _showEditDialog('Preferensi Perjalanan Dinas', _preferensiPerjalananDinas, (newValue) {
-              setState(() => _preferensiPerjalananDinas = newValue);
-            }),
+
+          // Custom field untuk perjalanan dinas (Ya/Tidak)
+          _buildPerjalananDinasField(
+            profil.preferensiPerjalananDinas ?? 'Tidak',
             isLast: true,
           ),
 
@@ -312,7 +375,7 @@ class _TabProfilState extends State<TabProfil> {
     );
   }
 
-  // Inline editable field (for Nama and Nomor WA)
+  // Inline editable field
   Widget _buildInlineEditableField(
     IconData icon,
     String label,
@@ -320,6 +383,8 @@ class _TabProfilState extends State<TabProfil> {
     String currentValue,
     Function(String) onChanged, {
     bool isLast = false,
+    bool isFirst = false,
+    bool isNumeric = false,
   }) {
     final isEditing = _editingField == fieldKey;
     final isPhoneNumber = fieldKey == 'nomorWa';
@@ -332,103 +397,6 @@ class _TabProfilState extends State<TabProfil> {
           });
         }
       },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border(
-            bottom: BorderSide(
-              color: isLast ? Colors.transparent : const Color(0xFFE8E8E8),
-              width: 1,
-            ),
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 24, color: Colors.black54),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      color: Color(0xFF515151),
-                      fontSize: 16,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  if (isEditing)
-                    TextField(
-                      autofocus: true,
-                      controller: TextEditingController(text: currentValue)
-                        ..selection = TextSelection.fromPosition(
-                          TextPosition(offset: currentValue.length),
-                        ),
-                      style: const TextStyle(
-                        color: Color(0xFF515151),
-                        fontSize: 14,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w400,
-                      ),
-                      decoration: const InputDecoration(
-                        border: InputBorder.none,
-                        isDense: true,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      keyboardType: isPhoneNumber ? TextInputType.phone : TextInputType.text,
-                      inputFormatters: isPhoneNumber ? [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(13),
-                        _PhoneNumberFormatter(),
-                      ] : null,
-                      onSubmitted: (value) {
-                        onChanged(value);
-                        setState(() {
-                          _editingField = null;
-                        });
-                      },
-                      onTapOutside: (event) {
-                        setState(() {
-                          _editingField = null;
-                        });
-                      },
-                    )
-                  else
-                    Text(
-                      currentValue,
-                      style: const TextStyle(
-                        color: Color(0xFF515151),
-                        fontSize: 14,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            if (!isEditing)
-              const Icon(Icons.edit, size: 20, color: Colors.black38),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Dialog editable field (for bottom card)
-  Widget _buildDialogEditableField(
-    IconData icon,
-    String label,
-    String value,
-    VoidCallback onTap, {
-    bool isFirst = false,
-    bool isLast = false,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
         decoration: BoxDecoration(
@@ -469,20 +437,320 @@ class _TabProfilState extends State<TabProfil> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      color: Color(0xFF515151),
-                      fontSize: 14,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w400,
+                  if (isEditing)
+                    TextField(
+                      autofocus: true,
+                      controller: TextEditingController(
+                        text: isNumeric ? currentValue.replaceAll(RegExp(r'[^0-9]'), '') : currentValue,
+                      )..selection = TextSelection.fromPosition(
+                          TextPosition(
+                            offset: isNumeric ? currentValue.replaceAll(RegExp(r'[^0-9]'), '').length : currentValue.length,
+                          ),
+                        ),
+                      style: const TextStyle(
+                        color: Color(0xFF515151),
+                        fontSize: 14,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w400,
+                      ),
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      keyboardType: isPhoneNumber
+                          ? TextInputType.phone
+                          : isNumeric
+                              ? TextInputType.number
+                              : TextInputType.text,
+                      inputFormatters: isPhoneNumber
+                          ? [
+                              FilteringTextInputFormatter.digitsOnly,
+                              LengthLimitingTextInputFormatter(13),
+                              _PhoneNumberFormatter(),
+                            ]
+                          : isNumeric
+                              ? [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                  _CurrencyInputFormatter(),
+                                ]
+                              : null,
+                      onSubmitted: (value) {
+                        onChanged(value);
+                        setState(() {
+                          _editingField = null;
+                        });
+                      },
+                      onTapOutside: (event) {
+                        setState(() {
+                          _editingField = null;
+                        });
+                      },
+                    )
+                  else
+                    Text(
+                      currentValue,
+                      style: const TextStyle(
+                        color: Color(0xFF515151),
+                        fontSize: 14,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
-            const Icon(Icons.edit, size: 20, color: Colors.black38),
+            if (!isEditing) const Icon(Icons.edit, size: 20, color: Colors.black38),
           ],
+        ),
+      ),
+    );
+  }
+
+  // Custom field untuk jam kerja (2 input side by side)
+  Widget _buildJamKerjaField(String jamMulai, String jamSelesai) {
+    final isEditing = _editingField == 'jamKerja';
+    final TextEditingController controllerMulai = TextEditingController(text: jamMulai);
+    final TextEditingController controllerSelesai = TextEditingController(text: jamSelesai);
+
+    return GestureDetector(
+      onTap: () {
+        if (!isEditing) {
+          setState(() {
+            _editingField = 'jamKerja';
+          });
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            bottom: BorderSide(color: Color(0xFFE8E8E8), width: 1),
+          ),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.access_time, size: 24, color: Colors.black54),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Preferensi jam kerja',
+                    style: TextStyle(
+                      color: Color(0xFF515151),
+                      fontSize: 16,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  if (isEditing)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: controllerMulai,
+                            autofocus: true,
+                            style: const TextStyle(
+                              color: Color(0xFF515151),
+                              fontSize: 14,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w400,
+                            ),
+                            decoration: const InputDecoration(
+                              hintText: '08:00',
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                            keyboardType: TextInputType.datetime,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(RegExp(r'[0-9:]')),
+                              LengthLimitingTextInputFormatter(5),
+                              _TimeInputFormatter(),
+                            ],
+                            onChanged: (value) {
+                              if (value.length == 5) {
+                                setState(() {
+                                  _profil = _profil!.copyWith(preferensiJamKerjaMulai: value);
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 8),
+                          child: Text(
+                            '-',
+                            style: TextStyle(
+                              color: Color(0xFF515151),
+                              fontSize: 14,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: TextField(
+                            controller: controllerSelesai,
+                            style: const TextStyle(
+                              color: Color(0xFF515151),
+                              fontSize: 14,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w400,
+                            ),
+                            decoration: const InputDecoration(
+                              hintText: '17:00',
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                            keyboardType: TextInputType.datetime,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(RegExp(r'[0-9:]')),
+                              LengthLimitingTextInputFormatter(5),
+                              _TimeInputFormatter(),
+                            ],
+                            onSubmitted: (value) {
+                              setState(() {
+                                _profil = _profil!.copyWith(preferensiJamKerjaSelesai: value);
+                                _editingField = null;
+                              });
+                            },
+                            onTapOutside: (event) {
+                              setState(() {
+                                _editingField = null;
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    Text(
+                      (jamMulai.isNotEmpty && jamSelesai.isNotEmpty) ? '$jamMulai - $jamSelesai' : '-',
+                      style: const TextStyle(
+                        color: Color(0xFF515151),
+                        fontSize: 14,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            if (!isEditing) const Icon(Icons.edit, size: 20, color: Colors.black38),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Custom field untuk perjalanan dinas (Ya/Tidak selector)
+  Widget _buildPerjalananDinasField(String currentValue, {bool isLast = false}) {
+    final isEditing = _editingField == 'perjalananDinas';
+
+    return GestureDetector(
+      onTap: () {
+        if (!isEditing) {
+          setState(() {
+            _editingField = 'perjalananDinas';
+          });
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            bottom: BorderSide(
+              color: isLast ? Colors.transparent : const Color(0xFFE8E8E8),
+              width: 1,
+            ),
+          ),
+          borderRadius: isLast
+              ? const BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
+                )
+              : BorderRadius.zero,
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.flight_outlined, size: 24, color: Colors.black54),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Preferensi perjalanan dinas',
+                    style: TextStyle(
+                      color: Color(0xFF515151),
+                      fontSize: 16,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  if (isEditing)
+                    Row(
+                      children: [
+                        _buildOptionButton('Ya', currentValue == 'Ya'),
+                        const SizedBox(width: 12),
+                        _buildOptionButton('Tidak', currentValue == 'Tidak'),
+                      ],
+                    )
+                  else
+                    Text(
+                      currentValue.isNotEmpty ? currentValue : '-',
+                      style: const TextStyle(
+                        color: Color(0xFF515151),
+                        fontSize: 14,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            if (!isEditing) const Icon(Icons.edit, size: 20, color: Colors.black38),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Helper widget untuk button Ya/Tidak
+  Widget _buildOptionButton(String text, bool isSelected) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _profil = _profil!.copyWith(preferensiPerjalananDinas: text);
+          _editingField = null;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.black : Colors.white,
+          border: Border.all(
+            color: isSelected ? Colors.black : const Color(0xFFE8E8E8),
+            width: 1,
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: isSelected ? Colors.white : const Color(0xFF515151),
+            fontSize: 14,
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ),
     );
@@ -493,6 +761,7 @@ class _TabProfilState extends State<TabProfil> {
     String label, {
     String? value,
     bool hasAvatar = false,
+    String? avatarUrl,
     bool isFirst = false,
     bool isLast = false,
   }) {
@@ -554,16 +823,25 @@ class _TabProfilState extends State<TabProfil> {
             Container(
               width: 50,
               height: 50,
-              decoration: const BoxDecoration(
-                color: Color(0xFFD9D9D9),
+              decoration: BoxDecoration(
+                color: const Color(0xFFD9D9D9),
                 shape: BoxShape.circle,
+                image: avatarUrl != null && avatarUrl.isNotEmpty
+                    ? DecorationImage(
+                        image: NetworkImage(avatarUrl),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
               ),
+              child: avatarUrl == null || avatarUrl.isEmpty ? const Icon(Icons.person, size: 30, color: Colors.white54) : null,
             ),
         ],
       ),
     );
   }
 }
+
+// ==================== FORMATTERS ====================
 
 // Phone number formatter class
 class _PhoneNumberFormatter extends TextInputFormatter {
@@ -573,13 +851,12 @@ class _PhoneNumberFormatter extends TextInputFormatter {
     TextEditingValue newValue,
   ) {
     final text = newValue.text;
-    
+
     if (text.isEmpty) {
       return newValue;
     }
 
     final buffer = StringBuffer();
-    int index = 0;
 
     // Format: 0812-3456-7890
     for (int i = 0; i < text.length; i++) {
@@ -590,7 +867,70 @@ class _PhoneNumberFormatter extends TextInputFormatter {
     }
 
     final formatted = buffer.toString();
-    
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+}
+
+// Currency input formatter
+class _CurrencyInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isEmpty) {
+      return newValue.copyWith(text: '');
+    }
+
+    final value = int.tryParse(newValue.text.replaceAll(RegExp(r'[^0-9]'), ''));
+    if (value == null) {
+      return oldValue;
+    }
+
+    final formatted = 'Rp. ${_formatNumber(value)}';
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+
+  String _formatNumber(int number) {
+    return number.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]}.',
+    );
+  }
+}
+
+// Time input formatter (HH:MM)
+class _TimeInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final text = newValue.text.replaceAll(':', '');
+
+    if (text.isEmpty) {
+      return newValue;
+    }
+
+    final buffer = StringBuffer();
+
+    for (int i = 0; i < text.length && i < 4; i++) {
+      if (i == 2) {
+        buffer.write(':');
+      }
+      buffer.write(text[i]);
+    }
+
+    final formatted = buffer.toString();
+
     return TextEditingValue(
       text: formatted,
       selection: TextSelection.collapsed(offset: formatted.length),

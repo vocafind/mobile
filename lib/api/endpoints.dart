@@ -1,5 +1,5 @@
 class ApiConfig {
-  static const String baseUrl = "http://10.170.11.153:5035/api";  //ganti 10.136.149.51 dengan ip address komputer 
+  static const String baseUrl = "http://172.29.247.51:5035/api";  //ganti 10.136.149.51 dengan ip address komputer 
 
 
   // -------------------------------------------------------------TALENTS
@@ -9,7 +9,7 @@ class ApiConfig {
   //Login
   static const String loginTalent = "$baseUrl/Talents/login";
 
-  //profil / data diri
+  //profil header / data diri
   static const String profilDataDiri = "$baseUrl/Talents/profil/data_diri";
 
 

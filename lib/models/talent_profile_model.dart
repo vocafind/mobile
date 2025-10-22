@@ -2,6 +2,7 @@ class TalentProfileModel {
   final String? fotoProfil;
   final String? nama;
   final String? nik;
+  final int? usia;
   final String? jenisKelamin;
   final String? provinsi;
   final String? kabupatenKota;
@@ -18,6 +19,7 @@ class TalentProfileModel {
     this.fotoProfil,
     this.nama,
     this.nik,
+    this.usia,
     this.jenisKelamin,
     this.provinsi,
     this.kabupatenKota,
@@ -36,6 +38,7 @@ class TalentProfileModel {
       fotoProfil: json['fotoProfil'],
       nama: json['nama'],
       nik: json['nik'],
+      usia: json['usia'],
       jenisKelamin: json['jenisKelamin'] ?? '',
       provinsi: json['provinsi'],
       kabupatenKota: json['kabupatenKota'],
@@ -55,6 +58,7 @@ class TalentProfileModel {
       'fotoProfil': fotoProfil,
       'nama': nama,
       'nik': nik,
+      'usia': usia,
       'jenisKelamin': jenisKelamin,
       'provinsi': provinsi,
       'kabupatenKota': kabupatenKota,
@@ -67,5 +71,47 @@ class TalentProfileModel {
       'preferensiJamKerjaSelesai': preferensiJamKerjaSelesai,
       'preferensiPerjalananDinas': preferensiPerjalananDinas,
     };
+  }
+
+  
+  TalentProfileModel copyWith({
+    String? fotoProfil,
+    String? nama,
+    String? nik,
+    int? usia,
+    String? jenisKelamin,
+    String? provinsi,
+    String? kabupatenKota,
+    String? alamat,
+    String? nomorTelepon,
+    String? lokasiKerjaDiinginkan,
+    String? statusPekerjaanSaatIni,
+    int? preferensiGaji,
+    String? preferensiJamKerjaMulai,
+    String? preferensiJamKerjaSelesai,
+    String? preferensiPerjalananDinas,
+  }) {
+    return TalentProfileModel(
+      fotoProfil: fotoProfil ?? this.fotoProfil,
+      nama: nama ?? this.nama,
+      nik: nik ?? this.nik,
+      usia: usia ?? this.usia,
+      jenisKelamin: jenisKelamin ?? this.jenisKelamin,
+      provinsi: provinsi ?? this.provinsi,
+      kabupatenKota: kabupatenKota ?? this.kabupatenKota,
+      alamat: alamat ?? this.alamat,
+      nomorTelepon: nomorTelepon ?? this.nomorTelepon,
+      lokasiKerjaDiinginkan:
+          lokasiKerjaDiinginkan ?? this.lokasiKerjaDiinginkan,
+      statusPekerjaanSaatIni:
+          statusPekerjaanSaatIni ?? this.statusPekerjaanSaatIni,
+      preferensiGaji: preferensiGaji ?? this.preferensiGaji,
+      preferensiJamKerjaMulai:
+          preferensiJamKerjaMulai ?? this.preferensiJamKerjaMulai,
+      preferensiJamKerjaSelesai:
+          preferensiJamKerjaSelesai ?? this.preferensiJamKerjaSelesai,
+      preferensiPerjalananDinas:
+          preferensiPerjalananDinas ?? this.preferensiPerjalananDinas,
+    );
   }
 }
