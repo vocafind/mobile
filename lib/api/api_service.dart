@@ -7,11 +7,16 @@ import 'package:jobfair/models/loker_umum_model.dart';
 import 'package:jobfair/models/talent_profile_model.dart';
 import 'endpoints.dart';
 import 'dart:convert';
+import 'package:jobfair/models/talent_social_media_model.dart';
+
 
 class ApiService {
-  // --------------------------------------------------------------------------Talents-----------------------------------------------------------
+  
 
-  //Register Talents
+
+
+  // --------------------------------------------------------------------------Talents-----------------------------------------------------------
+  // ================== REGISTER ==================
   Future<http.StreamedResponse> registerTalent(
     Map<String, String> fields,
     String? filePath,
@@ -28,7 +33,7 @@ class ApiService {
     return await request.send();
   }
 
-  // ================== LOGIN TALENT ==================
+  // ================== LOGIN ==================
   Future<Map<String, dynamic>> loginTalent(
     String email,
     String password,
@@ -58,53 +63,52 @@ class ApiService {
     }
   }
 
-  // ================== GET PROFIL TALENT ==================
+
+
+  // ================== GET PROFIL / DATA DIRI ==================
   Future<TalentProfileModel?> getProfilDataDiri() async {
-  final prefs = await SharedPreferences.getInstance();
-  final token = prefs.getString('token');
-  final talentId = prefs.getString('talentId');
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final talentId = prefs.getString('talentId');
 
-  if (token == null || talentId == null) {
-    print("❌ Token atau TalentId tidak ditemukan di SharedPreferences");
-    return null;
-  }
+    if (token == null || talentId == null) {
+      print("❌ Token atau TalentId tidak ditemukan di SharedPreferences");
+      return null;
+    }
 
-  final url = Uri.parse(
-    "${ApiConfig.baseUrl}/Talents/profil/data_diri/$talentId",
-  );
+    final url = Uri.parse(ApiConfig.profilDataDiri(talentId));
 
-  try {
-    final response = await http.get(
-      url,
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-    );
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
 
-      // 🔍 Tambahkan log di sini
       print("URL: $url");
       print("STATUS: ${response.statusCode}");
       print("BODY: ${response.body}");
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
 
-      // Simpan ke SharedPreferences
-      prefs.setString('cachedProfile', response.body);
+        // Simpan cache profil
+        prefs.setString('cachedProfile', response.body);
 
-      return TalentProfileModel.fromJson(data);
-    } else {
-      print("⚠️ Gagal ambil data profil: ${response.body}");
+        return TalentProfileModel.fromJson(data);
+      } else {
+        print("⚠️ Gagal ambil data profil: ${response.body}");
+        return null;
+      }
+    } catch (e) {
+      print("❌ Error ambil profil: $e");
       return null;
     }
-  } catch (e) {
-    print("❌ Error ambil profil: $e");
-    return null;
   }
-}
 
-  // ================== UPDATE PROFIL TALENT (PATCH) ==================
+  // ================== UPDATE PROFIL / DATA DIRI (PATCH) ==================
   Future<Map<String, dynamic>> updateProfilTalent({
     required String talentId,
     File? fotoProfil,
@@ -183,6 +187,205 @@ class ApiService {
       return {"success": false, "message": "Gagal terhubung ke server"};
     }
   }
+
+
+// Tambahkan methods ini ke dalam class ApiService yang sudah ada
+
+  // ================== GET SOCIAL MEDIA ==================
+  Future<List<SocialMediaModel>> getSocialMedia() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final talentId = prefs.getString('talentId');
+
+    if (token == null || talentId == null) {
+      print("❌ Token atau TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    final url = Uri.parse(ApiConfig.getSocialMediaByTalent(talentId));
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      print("GET Social Media - URL: $url");
+      print("GET Social Media - STATUS: ${response.statusCode}");
+      print("GET Social Media - BODY: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => SocialMediaModel.fromJson(json)).toList();
+      } else {
+        print("⚠️ Gagal ambil social media: ${response.body}");
+        throw Exception('Failed to load social media');
+      }
+    } catch (e) {
+      print("❌ Error ambil social media: $e");
+      rethrow;
+    }
+  }
+
+  // ================== CREATE SOCIAL MEDIA ==================
+  Future<Map<String, dynamic>> createSocialMedia(SocialMediaModel socialMedia) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final talentId = prefs.getString('talentId');
+
+    if (token == null || talentId == null) {
+      print("❌ Token atau TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    final url = Uri.parse(ApiConfig.createSocialMedia());
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(socialMedia.toJsonPost(talentId)),
+      );
+
+      print("POST Social Media - URL: $url");
+      print("POST Social Media - STATUS: ${response.statusCode}");
+      print("POST Social Media - BODY: ${response.body}");
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        print("⚠️ Gagal tambah social media: ${response.body}");
+        throw Exception('Failed to create social media');
+      }
+    } catch (e) {
+      print("❌ Error tambah social media: $e");
+      rethrow;
+    }
+  }
+
+  // ================== UPDATE SOCIAL MEDIA ==================
+  Future<Map<String, dynamic>> updateSocialMedia(String socialId, SocialMediaModel socialMedia) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    if (token == null) {
+      print("❌ Token tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    final url = Uri.parse(ApiConfig.updateSocialMedia(socialId));
+
+    try {
+      final response = await http.put(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(socialMedia.toJsonPut()),
+      );
+
+      print("PUT Social Media - URL: $url");
+      print("PUT Social Media - STATUS: ${response.statusCode}");
+      print("PUT Social Media - BODY: ${response.body}");
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        print("⚠️ Gagal update social media: ${response.body}");
+        throw Exception('Failed to update social media');
+      }
+    } catch (e) {
+      print("❌ Error update social media: $e");
+      rethrow;
+    }
+  }
+
+  // ================== DELETE SOCIAL MEDIA ==================
+  Future<Map<String, dynamic>> deleteSocialMedia(String socialId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    if (token == null) {
+      print("❌ Token tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    final url = Uri.parse(ApiConfig.deleteSocialMedia(socialId));
+
+    try {
+      final response = await http.delete(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      print("DELETE Social Media - URL: $url");
+      print("DELETE Social Media - STATUS: ${response.statusCode}");
+      print("DELETE Social Media - BODY: ${response.body}");
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        print("⚠️ Gagal hapus social media: ${response.body}");
+        throw Exception('Failed to delete social media');
+      }
+    } catch (e) {
+      print("❌ Error hapus social media: $e");
+      rethrow;
+    }
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   // --------------------------------------------------------------------------LOKER UMUM-----------------------------------------------------------
 

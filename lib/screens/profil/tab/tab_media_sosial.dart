@@ -1,50 +1,6 @@
 import 'package:flutter/material.dart';
-
-class SocialMedia {
-  final String? id;
-  final String platform;
-  final String username;
-  final String profileUrl;
-
-  SocialMedia({
-    this.id,
-    required this.platform,
-    required this.username,
-    required this.profileUrl,
-  });
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'platform': platform,
-      'username': username,
-      'profileUrl': profileUrl,
-    };
-  }
-
-  factory SocialMedia.fromJson(Map<String, dynamic> json) {
-    return SocialMedia(
-      id: json['id'],
-      platform: json['platform'] ?? '',
-      username: json['username'] ?? '',
-      profileUrl: json['profileUrl'] ?? '',
-    );
-  }
-
-  SocialMedia copyWith({
-    String? id,
-    String? platform,
-    String? username,
-    String? profileUrl,
-  }) {
-    return SocialMedia(
-      id: id ?? this.id,
-      platform: platform ?? this.platform,
-      username: username ?? this.username,
-      profileUrl: profileUrl ?? this.profileUrl,
-    );
-  }
-}
+import 'package:jobfair/models/talent_social_media_model.dart';
+import 'package:jobfair/api/api_service.dart';
 
 class TabMediaSosial extends StatefulWidget {
   const TabMediaSosial({super.key});
@@ -54,8 +10,10 @@ class TabMediaSosial extends StatefulWidget {
 }
 
 class _TabMediaSosialState extends State<TabMediaSosial> {
-  List<SocialMedia> _socialMediaList = [];
+  final ApiService _apiService = ApiService();
+  List<SocialMediaModel> _socialMediaList = [];
   bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -66,143 +24,109 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
   Future<void> _loadSocialMedia() async {
     setState(() {
       _isLoading = true;
+      _errorMessage = null;
     });
 
-    // TODO: Ganti dengan API call
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    // Dummy data untuk testing
-    setState(() {
-      _socialMediaList = [
-        SocialMedia(
-          id: '1',
-          platform: 'Instagram',
-          username: 'pergijauh',
-          profileUrl: 'https://instagram.com/pergijauh',
-        ),
-        SocialMedia(
-          id: '2',
-          platform: 'Facebook',
-          username: 'pergijauh',
-          profileUrl: 'https://facebook.com/pergijauh',
-        ),
-        SocialMedia(
-          id: '3',
-          platform: 'LinkedIn',
-          username: 'pergijauh',
-          profileUrl: 'https://linkedin.com/in/pergijauh',
-        ),
-      ];
-      _isLoading = false;
-    });
-  }
-
-  Future<void> _addSocialMedia(SocialMedia socialMedia) async {
-    // TODO: Ganti dengan API call untuk create
-    await Future.delayed(const Duration(milliseconds: 300));
-
-    setState(() {
-      _socialMediaList.add(
-        socialMedia.copyWith(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-        ),
-      );
-    });
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            'Media sosial berhasil ditambahkan',
-            style: TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.w500,
-              fontFamily: 'Poppins',
-            ),
-          ),
-          backgroundColor: Colors.white,
-          behavior: SnackBarBehavior.floating,
-          elevation: 2,
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
-  }
-
-  Future<void> _updateSocialMedia(SocialMedia socialMedia) async {
-    // TODO: Ganti dengan API call untuk update
-    await Future.delayed(const Duration(milliseconds: 300));
-
-    setState(() {
-      final index = _socialMediaList.indexWhere(
-        (item) => item.id == socialMedia.id,
-      );
-      if (index != -1) {
-        _socialMediaList[index] = socialMedia;
+    try {
+      final socialMedia = await _apiService.getSocialMedia();
+      setState(() {
+        _socialMediaList = socialMedia;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Gagal memuat data: ${e.toString()}';
+      });
+      if (mounted) {
+        _showSnackBar('Gagal memuat data media sosial', isError: true);
       }
-    });
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            'Media sosial berhasil diperbarui',
-            style: TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.w500,
-              fontFamily: 'Poppins',
-            ),
-          ),
-          backgroundColor: Colors.white,
-          behavior: SnackBarBehavior.floating,
-          elevation: 2,
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          duration: const Duration(seconds: 2),
-        ),
-      );
     }
   }
 
-  Future<void> _deleteSocialMedia(String id) async {
-    // TODO: Ganti dengan API call untuk delete
-    await Future.delayed(const Duration(milliseconds: 300));
+  Future<void> _addSocialMedia(SocialMediaModel socialMedia) async {
+    try {
+      await _apiService.createSocialMedia(socialMedia);
+      
+      // Reload data setelah berhasil tambah
+      await _loadSocialMedia();
 
-    setState(() {
-      _socialMediaList.removeWhere((item) => item.id == id);
-    });
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            'Media sosial berhasil dihapus',
-            style: TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.w500,
-              fontFamily: 'Poppins',
-            ),
-          ),
-          backgroundColor: Colors.white,
-          behavior: SnackBarBehavior.floating,
-          elevation: 2,
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      if (mounted) {
+        _showSnackBar('Media sosial berhasil ditambahkan');
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnackBar('Gagal menambahkan media sosial', isError: true);
+      }
     }
   }
 
-  void _showAddEditDialog({SocialMedia? socialMedia}) {
+  Future<void> _updateSocialMedia(SocialMediaModel socialMedia) async {
+    if (socialMedia.socialId == null) {
+      _showSnackBar('ID media sosial tidak valid', isError: true);
+      return;
+    }
+
+    try {
+      await _apiService.updateSocialMedia(
+        socialMedia.socialId!,
+        socialMedia,
+      );
+      
+      // Reload data setelah berhasil update
+      await _loadSocialMedia();
+
+      if (mounted) {
+        _showSnackBar('Media sosial berhasil diperbarui');
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnackBar('Gagal memperbarui media sosial', isError: true);
+      }
+    }
+  }
+
+  Future<void> _deleteSocialMedia(String socialId) async {
+    try {
+      await _apiService.deleteSocialMedia(socialId);
+      
+      // Reload data setelah berhasil hapus
+      await _loadSocialMedia();
+
+      if (mounted) {
+        _showSnackBar('Media sosial berhasil dihapus');
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnackBar('Gagal menghapus media sosial', isError: true);
+      }
+    }
+  }
+
+  void _showSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.w500,
+            fontFamily: 'Poppins',
+          ),
+        ),
+        backgroundColor: isError ? Colors.red[100] : Colors.white,
+        behavior: SnackBarBehavior.floating,
+        elevation: 2,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showAddEditDialog({SocialMediaModel? socialMedia}) {
     final isEdit = socialMedia != null;
     final platformController = TextEditingController(
       text: socialMedia?.platform ?? '',
@@ -211,7 +135,7 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
       text: socialMedia?.username ?? '',
     );
     final urlController = TextEditingController(
-      text: socialMedia?.profileUrl ?? '',
+      text: socialMedia?.url ?? '',
     );
 
     showDialog(
@@ -284,30 +208,24 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
                         if (platformController.text.isEmpty ||
                             usernameController.text.isEmpty ||
                             urlController.text.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Semua field harus diisi'),
-                              backgroundColor: Colors.red,
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
+                          _showSnackBar('Semua field harus diisi', isError: true);
                           return;
                         }
 
-                        final newSocialMedia = SocialMedia(
-                          id: socialMedia?.id,
+                        final newSocialMedia = SocialMediaModel(
+                          socialId: socialMedia?.socialId,
                           platform: platformController.text,
                           username: usernameController.text,
-                          profileUrl: urlController.text,
+                          url: urlController.text,
                         );
+
+                        Navigator.pop(context);
 
                         if (isEdit) {
                           _updateSocialMedia(newSocialMedia);
                         } else {
                           _addSocialMedia(newSocialMedia);
                         }
-
-                        Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1B56FD),
@@ -417,7 +335,7 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
     );
   }
 
-  void _showDeleteConfirmation(SocialMedia socialMedia) {
+  void _showDeleteConfirmation(SocialMediaModel socialMedia) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -455,7 +373,9 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              _deleteSocialMedia(socialMedia.id!);
+              if (socialMedia.socialId != null) {
+                _deleteSocialMedia(socialMedia.socialId!);
+              }
             },
             child: const Text(
               'Hapus',
@@ -475,97 +395,161 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(
+          color: Color(0xFF1B56FD),
+        ),
+      );
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 21, vertical: 20),
-      child: Column(
-        children: [
-          Align(
-            alignment: Alignment.centerRight,
-            child: GestureDetector(
-              onTap: () => _showAddEditDialog(),
-              child: Container(
-                width: 39,
-                height: 39,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFF113CEE)),
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              size: 60,
+              color: Color(0xFFB8B8B8),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Terjadi Kesalahan',
+              style: const TextStyle(
+                fontSize: 16,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF515151),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: Text(
+                _errorMessage!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontFamily: 'Poppins',
+                  color: Color(0xFFB8B8B8),
                 ),
-                child: const Center(
-                  child: Text(
-                    '+',
-                    style: TextStyle(
-                      color: Color(0xFF0C32E8),
-                      fontSize: 16,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w400,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _loadSocialMedia,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Coba Lagi'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1B56FD),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadSocialMedia,
+      color: const Color(0xFF1B56FD),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 21, vertical: 20),
+        child: Column(
+          children: [
+            Align(
+              alignment: Alignment.centerRight,
+              child: GestureDetector(
+                onTap: () => _showAddEditDialog(),
+                child: Container(
+                  width: 39,
+                  height: 39,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFF113CEE)),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      '+',
+                      style: TextStyle(
+                        color: Color(0xFF0C32E8),
+                        fontSize: 16,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-          if (_socialMediaList.isEmpty)
-            Container(
-              padding: const EdgeInsets.all(40),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Column(
-                children: const [
-                  Icon(
-                    Icons.share_outlined,
-                    size: 60,
-                    color: Color(0xFFB8B8B8),
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    'Belum ada media sosial',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF515151),
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Tambahkan media sosial Anda',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontFamily: 'Poppins',
+            const SizedBox(height: 16),
+            if (_socialMediaList.isEmpty)
+              Container(
+                padding: const EdgeInsets.all(40),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  children: const [
+                    Icon(
+                      Icons.share_outlined,
+                      size: 60,
                       color: Color(0xFFB8B8B8),
                     ),
-                  ),
-                ],
+                    SizedBox(height: 16),
+                    Text(
+                      'Belum ada media sosial',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF515151),
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Tambahkan media sosial Anda',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontFamily: 'Poppins',
+                        color: Color(0xFFB8B8B8),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _socialMediaList.length,
+                itemBuilder: (context, index) {
+                  final socialMedia = _socialMediaList[index];
+                  return _buildSocialMediaItem(
+                    socialMedia: socialMedia,
+                    isFirst: index == 0,
+                    isLast: index == _socialMediaList.length - 1,
+                  );
+                },
               ),
-            )
-          else
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _socialMediaList.length,
-              itemBuilder: (context, index) {
-                final socialMedia = _socialMediaList[index];
-                return _buildSocialMediaItem(
-                  socialMedia: socialMedia,
-                  isFirst: index == 0,
-                  isLast: index == _socialMediaList.length - 1,
-                );
-              },
-            ),
-          const SizedBox(height: 80),
-        ],
+            const SizedBox(height: 80),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildSocialMediaItem({
-    required SocialMedia socialMedia,
+    required SocialMediaModel socialMedia,
     bool isFirst = false,
     bool isLast = false,
   }) {
@@ -588,11 +572,11 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
                   topRight: Radius.circular(20),
                 )
               : isLast
-              ? const BorderRadius.only(
-                  bottomLeft: Radius.circular(20),
-                  bottomRight: Radius.circular(20),
-                )
-              : BorderRadius.zero,
+                  ? const BorderRadius.only(
+                      bottomLeft: Radius.circular(20),
+                      bottomRight: Radius.circular(20),
+                    )
+                  : BorderRadius.zero,
         ),
         child: Row(
           children: [
