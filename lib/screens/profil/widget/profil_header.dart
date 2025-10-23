@@ -58,8 +58,8 @@ class _ProfileHeaderState extends State<ProfileHeader>
       final data = TalentProfileModel.fromJson(jsonDecode(cached));
       if (mounted) {
         setState(() {
-          nama = data.nama ?? 'Tanpa Nama';
-          lokasiKerja = data.lokasiKerjaDiinginkan ?? '-';
+          nama = _formatNama(data.nama ?? 'Tanpa Nama');
+          lokasiKerja = _formatLokasiKerja(data.lokasiKerjaDiinginkan ?? '-');
         });
       }
     }
@@ -78,10 +78,36 @@ class _ProfileHeaderState extends State<ProfileHeader>
         }),
       );
       setState(() {
-        nama = latest.nama ?? nama;
-        lokasiKerja = latest.lokasiKerjaDiinginkan ?? lokasiKerja;
+        nama = _formatNama(latest.nama ?? nama);
+        lokasiKerja = _formatLokasiKerja(latest.lokasiKerjaDiinginkan ?? lokasiKerja);
       });
     }
+  }
+
+  String _formatNama(String nama) {
+    if (nama.isEmpty) return 'Tanpa Nama';
+    
+    // Split by space and capitalize first letter of each word
+    return nama
+        .split(' ')
+        .map((word) {
+          if (word.isEmpty) return word;
+          return word[0].toUpperCase() + word.substring(1).toLowerCase();
+        })
+        .join(' ');
+  }
+
+  String _formatLokasiKerja(String lokasi) {
+    if (lokasi.isEmpty || lokasi == '-') return '-';
+    
+    // Split by space and capitalize first letter of each word
+    return lokasi
+        .split(' ')
+        .map((word) {
+          if (word.isEmpty) return word;
+          return word[0].toUpperCase() + word.substring(1).toLowerCase();
+        })
+        .join(' ');
   }
 
   @override
@@ -347,6 +373,7 @@ class _ProfileHeaderState extends State<ProfileHeader>
             TabBar(
               controller: widget.tabController,
               isScrollable: true,
+              tabAlignment: TabAlignment.start,
               indicatorColor: Colors.white,
               indicatorWeight: 3,
               dividerColor: Colors.transparent,
@@ -363,7 +390,9 @@ class _ProfileHeaderState extends State<ProfileHeader>
                 fontFamily: 'SF Pro',
                 fontWeight: FontWeight.w400,
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 23),
+              labelPadding: const EdgeInsets.symmetric(horizontal: 16),
+              indicatorSize: TabBarIndicatorSize.tab,
+              padding: const EdgeInsets.only(left: 23),
               tabs: const [
                 Tab(text: 'Profil'),
                 Tab(text: 'Akademik'),

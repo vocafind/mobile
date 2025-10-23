@@ -60,49 +60,49 @@ class ApiService {
 
   // ================== GET PROFIL TALENT ==================
   Future<TalentProfileModel?> getProfilDataDiri() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
-    final talentId = prefs.getString('talentId');
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('token');
+  final talentId = prefs.getString('talentId');
 
-    if (token == null || talentId == null) {
-      print("❌ Token atau TalentId tidak ditemukan di SharedPreferences");
-      return null;
-    }
+  if (token == null || talentId == null) {
+    print("❌ Token atau TalentId tidak ditemukan di SharedPreferences");
+    return null;
+  }
 
-    final url = Uri.parse(
-      "${ApiConfig.baseUrl}/Talents/profil/data_diri/$talentId",
+  final url = Uri.parse(
+    "${ApiConfig.baseUrl}/Talents/profil/data_diri/$talentId",
+  );
+
+  try {
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
     );
-
-    try {
-      final response = await http.get(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
 
       // 🔍 Tambahkan log di sini
       print("URL: $url");
       print("STATUS: ${response.statusCode}");
       print("BODY: ${response.body}");
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
 
-        // Simpan ke SharedPreferences
-        prefs.setString('cachedProfile', response.body);
+      // Simpan ke SharedPreferences
+      prefs.setString('cachedProfile', response.body);
 
-        return TalentProfileModel.fromJson(data);
-      } else {
-        print("⚠️ Gagal ambil data profil: ${response.body}");
-        return null;
-      }
-    } catch (e) {
-      print("❌ Error ambil profil: $e");
+      return TalentProfileModel.fromJson(data);
+    } else {
+      print("⚠️ Gagal ambil data profil: ${response.body}");
       return null;
     }
+  } catch (e) {
+    print("❌ Error ambil profil: $e");
+    return null;
   }
+}
 
   // ================== UPDATE PROFIL TALENT (PATCH) ==================
   Future<Map<String, dynamic>> updateProfilTalent({

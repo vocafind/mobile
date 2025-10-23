@@ -115,17 +115,17 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
           content: const Text(
             'Media sosial berhasil ditambahkan',
             style: TextStyle(
-              color: Colors.black, // teks hitam
+              color: Colors.black,
               fontWeight: FontWeight.w500,
               fontFamily: 'Poppins',
             ),
           ),
-          backgroundColor: Colors.white, // bg putih
+          backgroundColor: Colors.white,
           behavior: SnackBarBehavior.floating,
           elevation: 2,
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12), // radius lembut
+            borderRadius: BorderRadius.circular(12),
           ),
           duration: const Duration(seconds: 2),
         ),
@@ -152,17 +152,17 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
           content: const Text(
             'Media sosial berhasil diperbarui',
             style: TextStyle(
-              color: Colors.black, // teks hitam
+              color: Colors.black,
               fontWeight: FontWeight.w500,
               fontFamily: 'Poppins',
             ),
           ),
-          backgroundColor: Colors.white, // bg putih lembut
+          backgroundColor: Colors.white,
           behavior: SnackBarBehavior.floating,
           elevation: 2,
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12), // radius lembut
+            borderRadius: BorderRadius.circular(12),
           ),
           duration: const Duration(seconds: 2),
         ),
@@ -184,17 +184,17 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
           content: const Text(
             'Media sosial berhasil dihapus',
             style: TextStyle(
-              color: Colors.black, // teks hitam
+              color: Colors.black,
               fontWeight: FontWeight.w500,
               fontFamily: 'Poppins',
             ),
           ),
-          backgroundColor: Colors.white, // bg putih lembut
+          backgroundColor: Colors.white,
           behavior: SnackBarBehavior.floating,
           elevation: 2,
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12), // radius lembut
+            borderRadius: BorderRadius.circular(12),
           ),
           duration: const Duration(seconds: 2),
         ),
@@ -219,7 +219,8 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
       builder: (context) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         backgroundColor: Colors.white,
-        child: Padding(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -328,7 +329,6 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
                   ),
                 ],
               ),
-              // 🧨 Tambahkan tombol hapus di bawah tombol simpan
               if (isEdit) ...[
                 const SizedBox(height: 16),
                 Center(
@@ -370,7 +370,7 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
             fontSize: 14,
             fontFamily: 'Poppins',
             fontWeight: FontWeight.w500,
-            color: Color(0xFF515151), // Label abu tua
+            color: Color(0xFF515151),
           ),
         ),
         const SizedBox(height: 8),
@@ -389,7 +389,7 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
               color: Color(0xFFB8B8B8),
             ),
             filled: true,
-            fillColor: Colors.white, // background putih
+            fillColor: Colors.white,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 12,
@@ -402,12 +402,12 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(
                 color: Color(0xFF98AFFF),
-              ), // border biru muda
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(
-                color: Color(0xFF1548F5), // border biru tua saat fokus
+                color: Color(0xFF1548F5),
                 width: 2,
               ),
             ),
@@ -422,7 +422,7 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        backgroundColor: Colors.white, // 🟢 tambahkan ini biar modal putih
+        backgroundColor: Colors.white,
         title: const Text(
           'Hapus Media Sosial',
           style: TextStyle(
@@ -482,7 +482,6 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
       padding: const EdgeInsets.symmetric(horizontal: 21, vertical: 20),
       child: Column(
         children: [
-          // Add Button
           Align(
             alignment: Alignment.centerRight,
             child: GestureDetector(
@@ -509,8 +508,6 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
             ),
           ),
           const SizedBox(height: 16),
-
-          // Social Media List
           if (_socialMediaList.isEmpty)
             Container(
               padding: const EdgeInsets.all(40),
@@ -561,7 +558,6 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
                 );
               },
             ),
-
           const SizedBox(height: 80),
         ],
       ),
@@ -629,7 +625,7 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
               ),
             ),
             const Icon(
-              Icons.chevron_right, // panah ke kanan
+              Icons.chevron_right,
               size: 24,
               color: Color(0xFF515151),
             ),
