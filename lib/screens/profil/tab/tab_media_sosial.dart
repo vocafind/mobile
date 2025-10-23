@@ -182,7 +182,7 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
       context: context,
       builder: (context) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        backgroundColor: Colors.white, // 🟢 tambahkan ini biar modal putih
+        backgroundColor: Colors.white,
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -273,7 +273,7 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
                         Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF1B56FD),
+                        backgroundColor: const Color(0xFF1B56FD),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -292,6 +292,27 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
                   ),
                 ],
               ),
+              // 🧨 Tambahkan tombol hapus di bawah tombol simpan
+              if (isEdit) ...[
+                const SizedBox(height: 16),
+                Center(
+                  child: TextButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _showDeleteConfirmation(socialMedia);
+                    },
+                    icon: const Icon(Icons.delete_outline, color: Colors.red),
+                    label: const Text(
+                      'Hapus Media Sosial',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -516,81 +537,68 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
     bool isFirst = false,
     bool isLast = false,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: isLast ? Colors.transparent : const Color(0xFFE8E8E8),
-            width: 1,
-          ),
-        ),
-        borderRadius: isFirst
-            ? const BorderRadius.only(
-                topLeft: Radius.circular(20),
-                topRight: Radius.circular(20),
-              )
-            : isLast
-            ? const BorderRadius.only(
-                bottomLeft: Radius.circular(20),
-                bottomRight: Radius.circular(20),
-              )
-            : BorderRadius.zero,
-      ),
-      child: Row(
-        children: [
-          _buildSocialIcon(socialMedia.platform),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  socialMedia.platform,
-                  style: const TextStyle(
-                    color: Color(0xFF515151),
-                    fontSize: 16,
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  socialMedia.username,
-                  style: const TextStyle(
-                    color: Color(0xFF515151),
-                    fontSize: 14,
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
+    return InkWell(
+      onTap: () => _showAddEditDialog(socialMedia: socialMedia),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            bottom: BorderSide(
+              color: isLast ? Colors.transparent : const Color(0xFFE8E8E8),
+              width: 1,
             ),
           ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              GestureDetector(
-                onTap: () => _showAddEditDialog(socialMedia: socialMedia),
-                child: const Icon(
-                  Icons.edit_outlined,
-                  size: 20,
-                  color: Colors.black54,
-                ),
+          borderRadius: isFirst
+              ? const BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                )
+              : isLast
+              ? const BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
+                )
+              : BorderRadius.zero,
+        ),
+        child: Row(
+          children: [
+            _buildSocialIcon(socialMedia.platform),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    socialMedia.platform,
+                    style: const TextStyle(
+                      color: Color(0xFF515151),
+                      fontSize: 16,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    socialMedia.username,
+                    style: const TextStyle(
+                      color: Color(0xFF515151),
+                      fontSize: 14,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 16),
-              GestureDetector(
-                onTap: () => _showDeleteConfirmation(socialMedia),
-                child: const Icon(
-                  Icons.delete_outline,
-                  size: 20,
-                  color: Colors.red,
-                ),
-              ),
-            ],
-          ),
-        ],
+            ),
+            const Icon(
+              Icons.chevron_right, // panah ke kanan
+              size: 24,
+              color: Color(0xFF515151),
+            ),
+          ],
+        ),
       ),
     );
   }
