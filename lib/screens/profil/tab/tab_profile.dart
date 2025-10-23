@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:jobfair/models/talent_profile_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'tab_media_sosial.dart';
 import 'tab_minat_karir.dart';
 import 'tab_referensi.dart';
@@ -20,6 +21,7 @@ class _TabProfilState extends State<TabProfil> {
   TalentProfileModel? _profil;
   bool _isLoading = true;
   String? _editingField;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -46,11 +48,93 @@ class _TabProfilState extends State<TabProfil> {
     }
   }
 
+  Future<void> _saveField() async {
+    if (_profil == null || _isSaving) return;
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    final prefs = await SharedPreferences.getInstance();
+    final talentId = prefs.getString('talentId');
+
+    if (talentId == null) {
+      _showSnackBar('Error: ID talent tidak ditemukan', isError: true);
+      setState(() {
+        _isSaving = false;
+      });
+      return;
+    }
+
+    // Format jam kerja dengan detik :00
+    String? jamMulai = _profil!.preferensiJamKerjaMulai;
+    String? jamSelesai = _profil!.preferensiJamKerjaSelesai;
+
+    if (jamMulai != null && jamMulai.isNotEmpty && jamMulai.length == 5) {
+      jamMulai = '$jamMulai:00';
+    }
+    if (jamSelesai != null && jamSelesai.isNotEmpty && jamSelesai.length == 5) {
+      jamSelesai = '$jamSelesai:00';
+    }
+
+    final result = await ApiService().updateProfilTalent(
+      talentId: talentId,
+      nama: _profil!.nama,
+      alamat: _profil!.alamat,
+      nomorTelepon: _profil!.nomorTelepon,
+      lokasiKerjaDiinginkan: _profil!.lokasiKerjaDiinginkan,
+      statusPekerjaanSaatIni: _profil!.statusPekerjaanSaatIni,
+      preferensiGaji: _profil!.preferensiGaji,
+      preferensiJamKerjaMulai: jamMulai,
+      preferensiJamKerjaSelesai: jamSelesai,
+      preferensiPerjalananDinas: _profil!.preferensiPerjalananDinas,
+    );
+
+    setState(() {
+      _isSaving = false;
+    });
+
+    if (result['success'] == true) {
+      _showSnackBar('Profil berhasil diperbarui');
+      await _loadProfil();
+    } else {
+      _showSnackBar(
+        result['message'] ?? 'Gagal memperbarui profil',
+        isError: true,
+      );
+    }
+  }
+
+  void _showSnackBar(String message, {bool isError = false}) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(
+            color: Colors.black, // teks hitam
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        backgroundColor: isError
+            ? Colors.red.shade100
+            : Colors.white, // bg putih / merah lembut
+        behavior: SnackBarBehavior.floating,
+        elevation: 2,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12), // radius lembut
+        ),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Sub Tabs
         Container(
           height: 50,
           color: const Color(0xFFF0F4F9),
@@ -70,22 +154,16 @@ class _TabProfilState extends State<TabProfil> {
             ),
           ),
         ),
-
-        // Content based on selected sub-tab
-        Expanded(
-          child: _buildContent(),
-        ),
+        Expanded(child: _buildContent()),
       ],
     );
   }
 
   Widget _buildContent() {
-    // Tampilkan loading saat data belum siap
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    // Tampilkan error jika data gagal dimuat
     if (_profil == null) {
       return Center(
         child: Column(
@@ -157,7 +235,6 @@ class _TabProfilState extends State<TabProfil> {
     );
   }
 
-  // Helper untuk format currency
   String _formatCurrency(int amount) {
     return amount.toString().replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
@@ -172,7 +249,6 @@ class _TabProfilState extends State<TabProfil> {
       padding: const EdgeInsets.symmetric(horizontal: 21, vertical: 20),
       child: Column(
         children: [
-          // Profile Completion Card
           Container(
             padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
@@ -236,7 +312,11 @@ class _TabProfilState extends State<TabProfil> {
                           const SizedBox(height: 8),
                           Row(
                             children: const [
-                              Icon(Icons.info_outline, size: 15, color: Colors.black54),
+                              Icon(
+                                Icons.info_outline,
+                                size: 15,
+                                color: Colors.black54,
+                              ),
                               SizedBox(width: 4),
                               Expanded(
                                 child: Text(
@@ -260,10 +340,7 @@ class _TabProfilState extends State<TabProfil> {
               ],
             ),
           ),
-
           const SizedBox(height: 18),
-
-          // Profile Fields - Data dari API
           _buildProfileField(
             Icons.photo_camera_outlined,
             'Foto profil',
@@ -271,7 +348,6 @@ class _TabProfilState extends State<TabProfil> {
             isFirst: true,
             avatarUrl: profil.fotoProfil,
           ),
-
           _buildInlineEditableField(
             Icons.person_outline,
             'Nama',
@@ -281,24 +357,47 @@ class _TabProfilState extends State<TabProfil> {
               setState(() {
                 _profil = profil.copyWith(nama: value);
               });
+              _saveField();
             },
           ),
-
-          _buildProfileField(Icons.badge_outlined, 'NIK', value: profil.nik ?? '-'),
-
+          _buildProfileField(
+            Icons.badge_outlined,
+            'NIK',
+            value: profil.nik ?? '-',
+          ),
           _buildProfileField(
             Icons.calendar_today,
             'Usia',
             value: profil.usia?.toString() ?? '-',
           ),
-
-          _buildProfileField(Icons.wc, 'Jenis Kelamin', value: profil.jenisKelamin ?? '-'),
-
-          _buildProfileField(Icons.location_city_outlined, 'Provinsi', value: profil.provinsi ?? '-'),
-
-          _buildProfileField(Icons.location_on_outlined, 'Kabupaten / Kota', value: profil.kabupatenKota ?? '-'),
-
-          _buildProfileField(Icons.home_outlined, 'Alamat', value: profil.alamat ?? '-'),
+          _buildProfileField(
+            Icons.wc,
+            'Jenis Kelamin',
+            value: profil.jenisKelamin ?? '-',
+          ),
+          _buildProfileField(
+            Icons.location_city_outlined,
+            'Provinsi',
+            value: profil.provinsi ?? '-',
+          ),
+          _buildProfileField(
+            Icons.location_on_outlined,
+            'Kabupaten / Kota',
+            value: profil.kabupatenKota ?? '-',
+          ),
+          _buildInlineEditableField(
+            Icons.home_outlined,
+            'Alamat',
+            'alamat',
+            profil.alamat ?? '-',
+            (value) {
+              setState(() {
+                _profil = profil.copyWith(alamat: value);
+              });
+              _saveField();
+            },
+            maxLines: 1, // ← ubah ini
+          ),
 
           _buildInlineEditableField(
             Icons.phone_outlined,
@@ -309,13 +408,11 @@ class _TabProfilState extends State<TabProfil> {
               setState(() {
                 _profil = profil.copyWith(nomorTelepon: value);
               });
+              _saveField();
             },
             isLast: true,
           ),
-
           const SizedBox(height: 18),
-
-          // Editable Fields - Sekarang inline edit
           _buildInlineEditableField(
             Icons.location_searching,
             'Lokasi kerja diinginkan',
@@ -325,10 +422,10 @@ class _TabProfilState extends State<TabProfil> {
               setState(() {
                 _profil = profil.copyWith(lokasiKerjaDiinginkan: value);
               });
+              _saveField();
             },
             isFirst: true,
           ),
-
           _buildInlineEditableField(
             Icons.work_outline,
             'Status pekerjaan saat ini',
@@ -338,53 +435,53 @@ class _TabProfilState extends State<TabProfil> {
               setState(() {
                 _profil = profil.copyWith(statusPekerjaanSaatIni: value);
               });
+              _saveField();
             },
           ),
-
           _buildInlineEditableField(
             Icons.attach_money,
             'Preferensi gaji',
             'preferensiGaji',
-            profil.preferensiGaji != null ? 'Rp. ${_formatCurrency(profil.preferensiGaji!)}' : '-',
+            profil.preferensiGaji != null
+                ? 'Rp. ${_formatCurrency(profil.preferensiGaji!)}'
+                : '-',
             (value) {
-              final gaji = int.tryParse(value.replaceAll(RegExp(r'[^0-9]'), ''));
+              final gaji = int.tryParse(
+                value.replaceAll(RegExp(r'[^0-9]'), ''),
+              );
               if (gaji != null) {
                 setState(() {
                   _profil = profil.copyWith(preferensiGaji: gaji);
                 });
+                _saveField();
               }
             },
             isNumeric: true,
           ),
-
-          // Custom field untuk jam kerja (2 input bersebelahan)
           _buildJamKerjaField(
             profil.preferensiJamKerjaMulai ?? '',
             profil.preferensiJamKerjaSelesai ?? '',
           ),
-
-          // Custom field untuk perjalanan dinas (Ya/Tidak)
           _buildPerjalananDinasField(
             profil.preferensiPerjalananDinas ?? 'Tidak',
             isLast: true,
           ),
-
-          const SizedBox(height: 80),
+          const SizedBox(height: 30),
         ],
       ),
     );
   }
 
-  // Inline editable field
   Widget _buildInlineEditableField(
     IconData icon,
     String label,
     String fieldKey,
     String currentValue,
-    Function(String) onChanged, {
+    Function(String) onSave, {
     bool isLast = false,
     bool isFirst = false,
     bool isNumeric = false,
+    int maxLines = 1,
   }) {
     final isEditing = _editingField == fieldKey;
     final isPhoneNumber = fieldKey == 'nomorWa';
@@ -413,15 +510,19 @@ class _TabProfilState extends State<TabProfil> {
                   topRight: Radius.circular(20),
                 )
               : isLast
-                  ? const BorderRadius.only(
-                      bottomLeft: Radius.circular(20),
-                      bottomRight: Radius.circular(20),
-                    )
-                  : BorderRadius.zero,
+              ? const BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
+                )
+              : BorderRadius.zero,
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, size: 24, color: Colors.black54),
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Icon(icon, size: 24, color: Colors.black54),
+            ),
             const SizedBox(width: 20),
             Expanded(
               child: Column(
@@ -440,13 +541,25 @@ class _TabProfilState extends State<TabProfil> {
                   if (isEditing)
                     TextField(
                       autofocus: true,
-                      controller: TextEditingController(
-                        text: isNumeric ? currentValue.replaceAll(RegExp(r'[^0-9]'), '') : currentValue,
-                      )..selection = TextSelection.fromPosition(
-                          TextPosition(
-                            offset: isNumeric ? currentValue.replaceAll(RegExp(r'[^0-9]'), '').length : currentValue.length,
-                          ),
-                        ),
+                      maxLines: maxLines,
+                      controller:
+                          TextEditingController(
+                              text: isNumeric
+                                  ? currentValue.replaceAll(
+                                      RegExp(r'[^0-9]'),
+                                      '',
+                                    )
+                                  : currentValue,
+                            )
+                            ..selection = TextSelection.fromPosition(
+                              TextPosition(
+                                offset: isNumeric
+                                    ? currentValue
+                                          .replaceAll(RegExp(r'[^0-9]'), '')
+                                          .length
+                                    : currentValue.length,
+                              ),
+                            ),
                       style: const TextStyle(
                         color: Color(0xFF515151),
                         fontSize: 14,
@@ -461,8 +574,10 @@ class _TabProfilState extends State<TabProfil> {
                       keyboardType: isPhoneNumber
                           ? TextInputType.phone
                           : isNumeric
-                              ? TextInputType.number
-                              : TextInputType.text,
+                          ? TextInputType.number
+                          : maxLines > 1
+                          ? TextInputType.multiline
+                          : TextInputType.text,
                       inputFormatters: isPhoneNumber
                           ? [
                               FilteringTextInputFormatter.digitsOnly,
@@ -470,13 +585,13 @@ class _TabProfilState extends State<TabProfil> {
                               _PhoneNumberFormatter(),
                             ]
                           : isNumeric
-                              ? [
-                                  FilteringTextInputFormatter.digitsOnly,
-                                  _CurrencyInputFormatter(),
-                                ]
-                              : null,
+                          ? [
+                              FilteringTextInputFormatter.digitsOnly,
+                              _CurrencyInputFormatter(),
+                            ]
+                          : null,
                       onSubmitted: (value) {
-                        onChanged(value);
+                        onSave(value);
                         setState(() {
                           _editingField = null;
                         });
@@ -500,18 +615,46 @@ class _TabProfilState extends State<TabProfil> {
                 ],
               ),
             ),
-            if (!isEditing) const Icon(Icons.edit, size: 20, color: Colors.black38),
+            if (!isEditing)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: const Icon(Icons.edit, size: 20, color: Colors.black38),
+              ),
+            if (isEditing && _isSaving)
+              const Padding(
+                padding: EdgeInsets.only(top: 2),
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
     );
   }
 
-  // Custom field untuk jam kerja (2 input side by side)
   Widget _buildJamKerjaField(String jamMulai, String jamSelesai) {
     final isEditing = _editingField == 'jamKerja';
-    final TextEditingController controllerMulai = TextEditingController(text: jamMulai);
-    final TextEditingController controllerSelesai = TextEditingController(text: jamSelesai);
+
+    // Format tampilan (hapus :00 di belakang kalau ada)
+    String displayJamMulai = jamMulai.length > 5
+        ? jamMulai.substring(0, 5)
+        : jamMulai;
+    String displayJamSelesai = jamSelesai.length > 5
+        ? jamSelesai.substring(0, 5)
+        : jamSelesai;
+
+    final TextEditingController controllerMulai = TextEditingController(
+      text: displayJamMulai,
+    );
+    final TextEditingController controllerSelesai = TextEditingController(
+      text: displayJamSelesai,
+    );
 
     return GestureDetector(
       onTap: () {
@@ -568,14 +711,18 @@ class _TabProfilState extends State<TabProfil> {
                             ),
                             keyboardType: TextInputType.datetime,
                             inputFormatters: [
-                              FilteringTextInputFormatter.allow(RegExp(r'[0-9:]')),
+                              FilteringTextInputFormatter.allow(
+                                RegExp(r'[0-9:]'),
+                              ),
                               LengthLimitingTextInputFormatter(5),
                               _TimeInputFormatter(),
                             ],
                             onChanged: (value) {
                               if (value.length == 5) {
                                 setState(() {
-                                  _profil = _profil!.copyWith(preferensiJamKerjaMulai: value);
+                                  _profil = _profil!.copyWith(
+                                    preferensiJamKerjaMulai: value,
+                                  );
                                 });
                               }
                             },
@@ -610,20 +757,35 @@ class _TabProfilState extends State<TabProfil> {
                             ),
                             keyboardType: TextInputType.datetime,
                             inputFormatters: [
-                              FilteringTextInputFormatter.allow(RegExp(r'[0-9:]')),
+                              FilteringTextInputFormatter.allow(
+                                RegExp(r'[0-9:]'),
+                              ),
                               LengthLimitingTextInputFormatter(5),
                               _TimeInputFormatter(),
                             ],
+                            onChanged: (value) {
+                              if (value.length == 5) {
+                                setState(() {
+                                  _profil = _profil!.copyWith(
+                                    preferensiJamKerjaSelesai: value,
+                                  );
+                                });
+                              }
+                            },
                             onSubmitted: (value) {
                               setState(() {
-                                _profil = _profil!.copyWith(preferensiJamKerjaSelesai: value);
+                                _profil = _profil!.copyWith(
+                                  preferensiJamKerjaSelesai: value,
+                                );
                                 _editingField = null;
                               });
+                              _saveField();
                             },
                             onTapOutside: (event) {
                               setState(() {
                                 _editingField = null;
                               });
+                              _saveField();
                             },
                           ),
                         ),
@@ -631,7 +793,10 @@ class _TabProfilState extends State<TabProfil> {
                     )
                   else
                     Text(
-                      (jamMulai.isNotEmpty && jamSelesai.isNotEmpty) ? '$jamMulai - $jamSelesai' : '-',
+                      (displayJamMulai.isNotEmpty &&
+                              displayJamSelesai.isNotEmpty)
+                          ? '$displayJamMulai - $displayJamSelesai'
+                          : '-',
                       style: const TextStyle(
                         color: Color(0xFF515151),
                         fontSize: 14,
@@ -642,15 +807,27 @@ class _TabProfilState extends State<TabProfil> {
                 ],
               ),
             ),
-            if (!isEditing) const Icon(Icons.edit, size: 20, color: Colors.black38),
+            if (!isEditing)
+              const Icon(Icons.edit, size: 20, color: Colors.black38),
+            if (isEditing && _isSaving)
+              const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.black,
+                ),
+              ),
           ],
         ),
       ),
     );
   }
 
-  // Custom field untuk perjalanan dinas (Ya/Tidak selector)
-  Widget _buildPerjalananDinasField(String currentValue, {bool isLast = false}) {
+  Widget _buildPerjalananDinasField(
+    String currentValue, {
+    bool isLast = false,
+  }) {
     final isEditing = _editingField == 'perjalananDinas';
 
     return GestureDetector(
@@ -717,14 +894,23 @@ class _TabProfilState extends State<TabProfil> {
                 ],
               ),
             ),
-            if (!isEditing) const Icon(Icons.edit, size: 20, color: Colors.black38),
+            if (!isEditing)
+              const Icon(Icons.edit, size: 20, color: Colors.black38),
+            if (isEditing && _isSaving)
+              const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.black,
+                ),
+              ),
           ],
         ),
       ),
     );
   }
 
-  // Helper widget untuk button Ya/Tidak
   Widget _buildOptionButton(String text, bool isSelected) {
     return GestureDetector(
       onTap: () {
@@ -732,6 +918,7 @@ class _TabProfilState extends State<TabProfil> {
           _profil = _profil!.copyWith(preferensiPerjalananDinas: text);
           _editingField = null;
         });
+        _saveField();
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -781,11 +968,11 @@ class _TabProfilState extends State<TabProfil> {
                 topRight: Radius.circular(20),
               )
             : isLast
-                ? const BorderRadius.only(
-                    bottomLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(20),
-                  )
-                : BorderRadius.zero,
+            ? const BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              )
+            : BorderRadius.zero,
       ),
       child: Row(
         children: [
@@ -833,7 +1020,9 @@ class _TabProfilState extends State<TabProfil> {
                       )
                     : null,
               ),
-              child: avatarUrl == null || avatarUrl.isEmpty ? const Icon(Icons.person, size: 30, color: Colors.white54) : null,
+              child: avatarUrl == null || avatarUrl.isEmpty
+                  ? const Icon(Icons.person, size: 30, color: Colors.white54)
+                  : null,
             ),
         ],
       ),
@@ -843,7 +1032,6 @@ class _TabProfilState extends State<TabProfil> {
 
 // ==================== FORMATTERS ====================
 
-// Phone number formatter class
 class _PhoneNumberFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
@@ -858,7 +1046,6 @@ class _PhoneNumberFormatter extends TextInputFormatter {
 
     final buffer = StringBuffer();
 
-    // Format: 0812-3456-7890
     for (int i = 0; i < text.length; i++) {
       if (i == 4 || i == 8) {
         buffer.write('-');
@@ -875,7 +1062,6 @@ class _PhoneNumberFormatter extends TextInputFormatter {
   }
 }
 
-// Currency input formatter
 class _CurrencyInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
@@ -907,7 +1093,6 @@ class _CurrencyInputFormatter extends TextInputFormatter {
   }
 }
 
-// Time input formatter (HH:MM)
 class _TimeInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(

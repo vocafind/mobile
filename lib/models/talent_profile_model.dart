@@ -1,3 +1,5 @@
+
+
 class TalentProfileModel {
   final String? fotoProfil;
   final String? nama;
@@ -52,6 +54,7 @@ class TalentProfileModel {
       preferensiPerjalananDinas: json['preferensiPerjalananDinas'],
     );
   }
+
 
   Map<String, dynamic> toJson() {
     return {
@@ -114,4 +117,6 @@ class TalentProfileModel {
           preferensiPerjalananDinas ?? this.preferensiPerjalananDinas,
     );
   }
+
+
 }

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:jobfair/models/loker_umum_detail_model.dart';
@@ -7,7 +9,6 @@ import 'endpoints.dart';
 import 'dart:convert';
 
 class ApiService {
-  
   // --------------------------------------------------------------------------Talents-----------------------------------------------------------
 
   //Register Talents
@@ -101,27 +102,85 @@ class ApiService {
     }
   }
 
+  // ================== UPDATE PROFIL TALENT (PATCH) ==================
+  Future<Map<String, dynamic>> updateProfilTalent({
+    required String talentId,
+    File? fotoProfil,
+    String? nama,
+    String? alamat,
+    String? nomorTelepon,
+    String? lokasiKerjaDiinginkan,
+    String? statusPekerjaanSaatIni,
+    int? preferensiGaji,
+    String? preferensiJamKerjaMulai,
+    String? preferensiJamKerjaSelesai,
+    String? preferensiPerjalananDinas,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
 
+    if (token == null) {
+      return {"success": false, "message": "Token tidak ditemukan"};
+    }
 
+    final url = Uri.parse(ApiConfig.updateTalent(talentId));
+    var request = http.MultipartRequest('PATCH', url);
 
+    // Add authorization header
+    request.headers['Authorization'] = 'Bearer $token';
 
+    // Add fields yang tidak null
+    if (nama != null) request.fields['Nama'] = nama;
+    if (alamat != null) request.fields['Alamat'] = alamat;
+    if (nomorTelepon != null) {
+      // Hapus format dash dari nomor telepon sebelum dikirim
+      final cleanNumber = nomorTelepon.replaceAll('-', '');
+      request.fields['NomorTelepon'] = cleanNumber;
+    }
+    if (lokasiKerjaDiinginkan != null) {
+      request.fields['LokasiKerjaDiinginkan'] = lokasiKerjaDiinginkan;
+    }
+    if (statusPekerjaanSaatIni != null) {
+      request.fields['StatusPekerjaanSaatIni'] = statusPekerjaanSaatIni;
+    }
+    if (preferensiGaji != null) {
+      request.fields['PreferensiGaji'] = preferensiGaji.toString();
+    }
+    if (preferensiJamKerjaMulai != null && preferensiJamKerjaMulai.isNotEmpty) {
+      request.fields['PreferensiJamKerjaMulai'] = preferensiJamKerjaMulai;
+    }
+    if (preferensiJamKerjaSelesai != null &&
+        preferensiJamKerjaSelesai.isNotEmpty) {
+      request.fields['PreferensiJamKerjaSelesai'] = preferensiJamKerjaSelesai;
+    }
+    if (preferensiPerjalananDinas != null) {
+      request.fields['PreferensiPerjalananDinas'] = preferensiPerjalananDinas;
+    }
 
+    // Add foto profil jika ada
+    if (fotoProfil != null) {
+      request.files.add(
+        await http.MultipartFile.fromPath('FotoProfil', fotoProfil.path),
+      );
+    }
 
+    try {
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
 
+      print("STATUS UPDATE: ${response.statusCode}");
+      print("RESPONSE UPDATE: ${response.body}");
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+      if (response.statusCode == 200) {
+        return {"success": true, "message": "Profil berhasil diperbarui"};
+      } else {
+        return {"success": false, "message": "Gagal memperbarui profil"};
+      }
+    } catch (e) {
+      print("ERROR UPDATE: $e");
+      return {"success": false, "message": "Gagal terhubung ke server"};
+    }
+  }
 
   // --------------------------------------------------------------------------LOKER UMUM-----------------------------------------------------------
 
