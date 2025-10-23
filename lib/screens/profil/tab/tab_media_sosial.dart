@@ -148,11 +148,23 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Media sosial berhasil diperbarui'),
-          backgroundColor: Colors.green,
+        SnackBar(
+          content: const Text(
+            'Media sosial berhasil diperbarui',
+            style: TextStyle(
+              color: Colors.black, // teks hitam
+              fontWeight: FontWeight.w500,
+              fontFamily: 'Poppins',
+            ),
+          ),
+          backgroundColor: Colors.white, // bg putih lembut
           behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 2),
+          elevation: 2,
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12), // radius lembut
+          ),
+          duration: const Duration(seconds: 2),
         ),
       );
     }
@@ -168,11 +180,23 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Media sosial berhasil dihapus'),
-          backgroundColor: Colors.green,
+        SnackBar(
+          content: const Text(
+            'Media sosial berhasil dihapus',
+            style: TextStyle(
+              color: Colors.black, // teks hitam
+              fontWeight: FontWeight.w500,
+              fontFamily: 'Poppins',
+            ),
+          ),
+          backgroundColor: Colors.white, // bg putih lembut
           behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 2),
+          elevation: 2,
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12), // radius lembut
+          ),
+          duration: const Duration(seconds: 2),
         ),
       );
     }
