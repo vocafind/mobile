@@ -27,8 +27,8 @@ class JobFairApp extends StatelessWidget {
       title: 'JobFair',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFFFFF8F8),
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: const Color.fromARGB(255, 255, 255, 255),
         primaryColor: const Color(0xFF1747A2),
         fontFamily: 'Poppins',
       ),
