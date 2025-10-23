@@ -82,6 +82,8 @@ class ApiService {
         },
       );
 
+      // 🔍 Tambahkan log di sini
+      print("URL: $url");
       print("STATUS: ${response.statusCode}");
       print("BODY: ${response.body}");
 
