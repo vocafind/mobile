@@ -5,6 +5,7 @@ import 'package:jobfair/screens/halaman_jobfair.dart';
 import 'package:jobfair/screens/profil/halaman_profil.dart';
 import 'package:jobfair/screens/halaman_lamaran.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'dart:ui'; // ✅ Import untuk BackdropFilter
 
 class BottomNavBar extends StatefulWidget {
   final int currentIndex;
@@ -99,41 +100,53 @@ class _BottomNavBarState extends State<BottomNavBar>
     return Container(
       margin: const EdgeInsets.only(left: 28, right: 28, bottom: 20),
       height: 68,
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.5),
+      child: ClipRRect(
         borderRadius: BorderRadius.circular(60),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _buildNavButton(
-              index: 0,
-              svgPath: 'assets/icons/home.svg',
-              label: 'Beranda',
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10), // ✅ Efek blur
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.3), // ✅ Lebih transparan
+              borderRadius: BorderRadius.circular(60),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.1), // ✅ Border subtle
+                width: 1,
+              ),
             ),
-            _buildNavButton(
-              index: 1,
-              svgPath: 'assets/icons/search.svg',
-              label: 'Cari Loker',
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildNavButton(
+                    index: 0,
+                    svgPath: 'assets/icons/home.svg',
+                    label: 'Beranda',
+                  ),
+                  _buildNavButton(
+                    index: 1,
+                    svgPath: 'assets/icons/search.svg',
+                    label: 'Cari Loker',
+                  ),
+                  _buildNavButton(
+                    index: 2,
+                    svgPath: 'assets/icons/jobfairIcon.svg',
+                    label: 'Jobfair',
+                  ),
+                  _buildNavButton(
+                    index: 3,
+                    svgPath: 'assets/icons/lamaran.svg',
+                    label: 'Lamaran',
+                  ),
+                  _buildNavButton(
+                    index: 4,
+                    svgPath: 'assets/icons/profile.svg',
+                    label: 'Profile',
+                  ),
+                ],
+              ),
             ),
-            _buildNavButton(
-              index: 2,
-              svgPath: 'assets/icons/jobfairIcon.svg',
-              label: 'Jobfair',
-            ),
-            _buildNavButton(
-              index: 3,
-              svgPath: 'assets/icons/lamaran.svg',
-              label: 'Lamaran',
-            ),
-            _buildNavButton(
-              index: 4,
-              svgPath: 'assets/icons/profile.svg',
-              label: 'Profile',
-            ),
-          ],
+          ),
         ),
       ),
     );

@@ -33,6 +33,7 @@ class _HalamanProfilState extends State<HalamanProfil>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F4F9),
+      extendBody: true, // ✅ Membuat body extend di bawah navbar
       body: Column(
         children: [
           ProfileHeader(tabController: _tabController),
@@ -49,7 +50,7 @@ class _HalamanProfilState extends State<HalamanProfil>
           ),
         ],
       ),
-      bottomNavigationBar: BottomNavBar(currentIndex: 4),
+      bottomNavigationBar: const BottomNavBar(currentIndex: 4),
     );
   }
 }

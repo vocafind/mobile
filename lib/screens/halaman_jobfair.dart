@@ -25,7 +25,7 @@ class HalamanJobfair extends StatelessWidget {
                 children: [
                   _buildJobFairCard(
                     context: context,
-                    imagePath: 'assets/images/image10.png',
+                    imagePath: 'assets/images/iphone14bg.jpg',
                     title: 'Tech Career Expo 2025',
                     location: 'Politeknik Negeri Batam',
                     date: '19 Sep 2025 - 20 Sep 2025',
@@ -37,7 +37,7 @@ class HalamanJobfair extends StatelessWidget {
                   const SizedBox(height: 15),
                   _buildJobFairCard(
                     context: context,
-                    imagePath: 'assets/images/image10.png',
+                    imagePath: 'assets/images/iphone14bg.jpg',
                     title: 'Tech Career Expo 2025',
                     location: 'Politeknik Negeri Batam',
                     date: '19 Sep 2025 - 20 Sep 2025',

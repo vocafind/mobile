@@ -231,7 +231,7 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
                         backgroundColor: const Color(0xFF1B56FD),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                       child: Text(
@@ -490,7 +490,7 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 0), // Ubah dari 16 menjadi 25
             if (_socialMediaList.isEmpty)
               Container(
                 padding: const EdgeInsets.all(40),

@@ -293,12 +293,14 @@ class _ProfileHeaderState extends State<ProfileHeader>
         ),
       ),
       child: SafeArea(
+        bottom: false, // ✅ Hilangkan padding bottom dari SafeArea
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
+            // ✅ Header dengan nama dan lokasi - padding dikurangi
             Padding(
-              padding: const EdgeInsets.fromLTRB(23, 13, 23, 0),
+              padding: const EdgeInsets.fromLTRB(23, 8, 23, 0), // ✅ Top padding dari 13 ke 8
               child: Row(
                 children: [
                   Expanded(
@@ -309,7 +311,7 @@ class _ProfileHeaderState extends State<ProfileHeader>
                           nama,
                           style: const TextStyle(
                             color: Color(0xFFFFF8F8),
-                            fontSize: 36,
+                            fontSize: 32, // ✅ Font size dari 36 ke 32
                             fontFamily: 'SF Pro',
                             fontWeight: FontWeight.w900,
                             height: 1.1,
@@ -317,7 +319,7 @@ class _ProfileHeaderState extends State<ProfileHeader>
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2), // ✅ Height dari 4 ke 2
                         Row(
                           children: [
                             const Icon(Icons.location_on,
@@ -328,7 +330,7 @@ class _ProfileHeaderState extends State<ProfileHeader>
                                 lokasiKerja,
                                 style: const TextStyle(
                                   color: Color(0xFFFFF8F8),
-                                  fontSize: 14,
+                                  fontSize: 13, // ✅ Font size dari 14 ke 13
                                   fontFamily: 'SF Pro',
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -342,7 +344,7 @@ class _ProfileHeaderState extends State<ProfileHeader>
                     ),
                   ),
                   Transform.translate(
-                    offset: const Offset(0, -10),
+                    offset: const Offset(0, -8), // ✅ Offset dari -10 ke -8
                     child: InkWell(
                       key: _settingButtonKey,
                       onTap: _showSettingMenu,
@@ -369,7 +371,8 @@ class _ProfileHeaderState extends State<ProfileHeader>
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 12), // ✅ Height dari 20 ke 12
+            // ✅ TabBar
             TabBar(
               controller: widget.tabController,
               isScrollable: true,
@@ -381,18 +384,18 @@ class _ProfileHeaderState extends State<ProfileHeader>
               unselectedLabelColor:
                   const Color(0xFFFFF8F8).withValues(alpha: 0.7),
               labelStyle: const TextStyle(
-                fontSize: 16,
+                fontSize: 15, // ✅ Font size dari 16 ke 15
                 fontFamily: 'SF Pro',
                 fontWeight: FontWeight.w600,
               ),
               unselectedLabelStyle: const TextStyle(
-                fontSize: 16,
+                fontSize: 15, // ✅ Font size dari 16 ke 15
                 fontFamily: 'SF Pro',
                 fontWeight: FontWeight.w400,
               ),
               labelPadding: const EdgeInsets.symmetric(horizontal: 16),
               indicatorSize: TabBarIndicatorSize.tab,
-              padding: const EdgeInsets.only(left: 23),
+              padding: const EdgeInsets.only(left: 23, bottom: 8), // ✅ Tambah bottom padding 8
               tabs: const [
                 Tab(text: 'Profil'),
                 Tab(text: 'Akademik'),

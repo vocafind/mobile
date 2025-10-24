@@ -406,7 +406,7 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 0),
 
           // Career Interest Items
           if (_careerInterests.isEmpty)

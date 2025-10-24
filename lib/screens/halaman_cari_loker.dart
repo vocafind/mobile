@@ -39,6 +39,7 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: true,
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
