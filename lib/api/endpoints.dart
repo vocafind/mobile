@@ -37,6 +37,22 @@ class ApiConfig {
 
 
 
+  // ------------------------------------------------------------- TALENTS PROFIL / REFERENSI
+  
+  static String getReferenceByTalent(String talentId) => "$baseUrl/Talents/profil/referensi/$talentId"; /// GET: Ambil semua referensi talent berdasarkan talentId
+  static String createReference() => "$baseUrl/Talents/profil/referensi/"; // POST: Tambah referensi baru
+  static String updateReference(String minatId) => "$baseUrl/Talents/profil/referensi/$minatId"; // PUT: Update referensi berdasarkan minatId
+  static String deleteReference(String minatId) => "$baseUrl/Talents/profil/referensi/$minatId"; // DELETE: Hapus referensi berdasarkan minatId
+
+
+
+
+
+
+
+
+
+
 
 
 

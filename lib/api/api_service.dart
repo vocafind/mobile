@@ -9,6 +9,7 @@ import 'endpoints.dart';
 import 'dart:convert';
 import 'package:jobfair/models/talent_social_media_model.dart';
 import 'package:jobfair/models/talent_career_interest_model.dart';
+import 'package:jobfair/models/talent_reference_model.dart';
 
 
 class ApiService {
@@ -63,6 +64,7 @@ class ApiService {
       return {"message": "Gagal terhubung ke server"};
     }
   }
+
 
 
 
@@ -508,6 +510,163 @@ class ApiService {
 
 
 
+
+
+
+
+
+  // ================== GET REFERENSI ==================
+  Future<List<ReferenceModel>> getReference() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final talentId = prefs.getString('talentId');
+
+    if (token == null || talentId == null) {
+      print("❌ Token atau TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    final url = Uri.parse(ApiConfig.getReferenceByTalent(talentId));
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      print("GET Reference - URL: $url");
+      print("GET Reference - STATUS: ${response.statusCode}");
+      print("GET Reference - BODY: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => ReferenceModel.fromJson(json)).toList();
+      } else {
+        print("⚠️ Gagal ambil referensi: ${response.body}");
+        throw Exception('Failed to load reference');
+      }
+    } catch (e) {
+      print("❌ Error ambil referensi: $e");
+      rethrow;
+    }
+  }
+
+  // ================== CREATE REFERENSI ==================
+  Future<Map<String, dynamic>> createReference(ReferenceModel reference) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final talentId = prefs.getString('talentId');
+
+    if (token == null || talentId == null) {
+      print("❌ Token atau TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    final url = Uri.parse(ApiConfig.createReference());
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(reference.toJsonPost(talentId)),
+      );
+
+      print("POST Reference - URL: $url");
+      print("POST Reference - STATUS: ${response.statusCode}");
+      print("POST Reference - BODY: ${response.body}");
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        print("⚠️ Gagal tambah referensi: ${response.body}");
+        throw Exception('Failed to create reference');
+      }
+    } catch (e) {
+      print("❌ Error tambah referensi: $e");
+      rethrow;
+    }
+  }
+
+  // ================== UPDATE REFERENSI ==================
+  Future<Map<String, dynamic>> updateReference(String referenceId, ReferenceModel reference) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    if (token == null) {
+      print("❌ Token tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    final url = Uri.parse(ApiConfig.updateReference(referenceId));
+
+    try {
+      final response = await http.put(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(reference.toJsonPut()),
+      );
+
+      print("PUT Reference - URL: $url");
+      print("PUT Reference - STATUS: ${response.statusCode}");
+      print("PUT Reference - BODY: ${response.body}");
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        print("⚠️ Gagal update referensi: ${response.body}");
+        throw Exception('Failed to update reference');
+      }
+    } catch (e) {
+      print("❌ Error update referensi: $e");
+      rethrow;
+    }
+  }
+
+  // ================== DELETE REFERENSI ==================
+  Future<Map<String, dynamic>> deleteReference(String referenceId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    if (token == null) {
+      print("❌ Token tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    final url = Uri.parse(ApiConfig.deleteReference(referenceId));
+
+    try {
+      final response = await http.delete(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      print("DELETE Reference - URL: $url");
+      print("DELETE Reference - STATUS: ${response.statusCode}");
+      print("DELETE Reference - BODY: ${response.body}");
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        print("⚠️ Gagal hapus referensi: ${response.body}");
+        throw Exception('Failed to delete reference');
+      }
+    } catch (e) {
+      print("❌ Error hapus referensi: $e");
+      rethrow;
+    }
+  }
 
 
 
