@@ -8,6 +8,7 @@ import 'package:jobfair/models/talent_profile_model.dart';
 import 'endpoints.dart';
 import 'dart:convert';
 import 'package:jobfair/models/talent_social_media_model.dart';
+import 'package:jobfair/models/talent_career_interest_model.dart';
 
 
 class ApiService {
@@ -189,7 +190,7 @@ class ApiService {
   }
 
 
-// Tambahkan methods ini ke dalam class ApiService yang sudah ada
+
 
   // ================== GET SOCIAL MEDIA ==================
   Future<List<SocialMediaModel>> getSocialMedia() async {
@@ -343,6 +344,167 @@ class ApiService {
       rethrow;
     }
   }
+
+
+
+
+
+
+  // ================== GET MINAT KARIR ==================
+  Future<List<CareerInterestModel>> getCareerInterest() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final talentId = prefs.getString('talentId');
+
+    if (token == null || talentId == null) {
+      print("❌ Token atau TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    final url = Uri.parse(ApiConfig.getCareerInterestByTalent(talentId));
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      print("GET Career Interest - URL: $url");
+      print("GET Career Interest - STATUS: ${response.statusCode}");
+      print("GET Career Interest - BODY: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => CareerInterestModel.fromJson(json)).toList();
+      } else {
+        print("⚠️ Gagal ambil minat karir: ${response.body}");
+        throw Exception('Failed to load career interest');
+      }
+    } catch (e) {
+      print("❌ Error ambil minat karir: $e");
+      rethrow;
+    }
+  }
+
+  // ================== CREATE MINAT KARIR ==================
+  Future<Map<String, dynamic>> createCareerInterest(CareerInterestModel careerInterest) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final talentId = prefs.getString('talentId');
+
+    if (token == null || talentId == null) {
+      print("❌ Token atau TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    final url = Uri.parse(ApiConfig.createCareerInterest());
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(careerInterest.toJsonPost(talentId)),
+      );
+
+      print("POST Career Interest - URL: $url");
+      print("POST Career Interest - STATUS: ${response.statusCode}");
+      print("POST Career Interest - BODY: ${response.body}");
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        print("⚠️ Gagal tambah minat karir: ${response.body}");
+        throw Exception('Failed to create career interest');
+      }
+    } catch (e) {
+      print("❌ Error tambah minat karir: $e");
+      rethrow;
+    }
+  }
+
+  // ================== UPDATE MINAT KARIR ==================
+  Future<Map<String, dynamic>> updateCareerInterest(String careerInterestId, CareerInterestModel careerInterest) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    if (token == null) {
+      print("❌ Token tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    final url = Uri.parse(ApiConfig.updateCareerInterest(careerInterestId));
+
+    try {
+      final response = await http.put(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(careerInterest.toJsonPut()),
+      );
+
+      print("PUT Career Interest - URL: $url");
+      print("PUT Career Interest - STATUS: ${response.statusCode}");
+      print("PUT Career Interest - BODY: ${response.body}");
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        print("⚠️ Gagal update minat karir: ${response.body}");
+        throw Exception('Failed to update career interest');
+      }
+    } catch (e) {
+      print("❌ Error update minat karir: $e");
+      rethrow;
+    }
+  }
+
+  // ================== DELETE MINAT KARIR ==================
+  Future<Map<String, dynamic>> deleteCareerInterest(String careerInterestId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    if (token == null) {
+      print("❌ Token tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    final url = Uri.parse(ApiConfig.deleteCareerInterest(careerInterestId));
+
+    try {
+      final response = await http.delete(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      print("DELETE Career Interest - URL: $url");
+      print("DELETE Career Interest - STATUS: ${response.statusCode}");
+      print("DELETE Career Interest - BODY: ${response.body}");
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        print("⚠️ Gagal hapus minat karir: ${response.body}");
+        throw Exception('Failed to delete career interest');
+      }
+    } catch (e) {
+      print("❌ Error hapus minat karir: $e");
+      rethrow;
+    }
+  }
+
+
+
 
 
 

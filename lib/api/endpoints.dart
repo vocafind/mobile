@@ -1,41 +1,46 @@
 class ApiConfig {
   // Ganti IP dengan IP komputer server kamu
-  static const String baseUrl = "http://192.168.1.3:5035/api";
+  static const String baseUrl = "http://10.136.148.111:5035/api";
 
   // ------------------------------------------------------------- TALENTS AUTH
-  // Register
-  static const String registerTalent = "$baseUrl/Talents/register";
 
-  // Login
-  static const String loginTalent = "$baseUrl/Talents/login";
+  static const String registerTalent = "$baseUrl/Talents/register";   // Register
+  static const String loginTalent = "$baseUrl/Talents/login";   // Login
+
+
 
   // ------------------------------------------------------------- TALENTS PROFIL / DATA DIRI
-  // Profil header / data diri (GET / PATCH pakai ID)
-  static String profilDataDiri(String id) =>
-      "$baseUrl/Talents/profil/data_diri/$id";
+  
+  static String profilDataDiri(String id) => "$baseUrl/Talents/profil/data_diri/$id"; // headerprofil / data diri
+  static String updateTalent(String id) => "$baseUrl/Talents/$id"; // Update profil data diri (PATCH)
 
-  // Update profil data diri (PATCH)
-  static String updateTalent(String id) => "$baseUrl/Talents/$id";
+
 
   // ------------------------------------------------------------- TALENTS PROFIL / MEDIA SOSIAL
-  // GET: Ambil semua social media talent berdasarkan talentId
-  // Endpoint: GET /api/Talents/profil/media_sosial/{talentId}
-  static String getSocialMediaByTalent(String talentId) =>
-      "$baseUrl/social/$talentId";
+  
+  static String getSocialMediaByTalent(String talentId) => "$baseUrl/Talents/profil/media_sosial/$talentId"; /// GET: Ambil semua social media talent berdasarkan talentId
+  static String createSocialMedia() => "$baseUrl/Talents/profil/media_sosial/"; // POST: Tambah akun sosial media baru
+  static String updateSocialMedia(String socialId) => "$baseUrl/Talents/profil/media_sosial/$socialId"; // PUT: Update akun sosial berdasarkan socialId
+  static String deleteSocialMedia(String socialId) => "$baseUrl/Talents/profil/media_sosial/$socialId"; // DELETE: Hapus akun sosial berdasarkan socialId
 
-  // POST: Tambah akun sosial media baru
-  // Endpoint: POST /api/Talents/profil/media_sosial/
-  static String createSocialMedia() => "$baseUrl/social/";
 
-  // PUT: Update akun sosial berdasarkan socialId
-  // Endpoint: PUT /api/Talents/profil/media_sosial/{id}
-  static String updateSocialMedia(String socialId) =>
-      "$baseUrl/social/$socialId";
 
-  // DELETE: Hapus akun sosial berdasarkan socialId
-  // Endpoint: DELETE /api/Talents/profil/media_sosial/{id}
-  static String deleteSocialMedia(String socialId) =>
-      "$baseUrl/social/$socialId";
+
+  // ------------------------------------------------------------- TALENTS PROFIL / MINAT KARIR
+  
+  static String getCareerInterestByTalent(String talentId) => "$baseUrl/Talents/profil/minat_karir/$talentId"; /// GET: Ambil semua minat karir talent berdasarkan talentId
+  static String createCareerInterest() => "$baseUrl/Talents/profil/minat_karir/"; // POST: Tambah minat karir baru
+  static String updateCareerInterest(String minatId) => "$baseUrl/Talents/profil/minat_karir/$minatId"; // PUT: Update minat karir berdasarkan minatId
+  static String deleteCareerInterest(String minatId) => "$baseUrl/Talents/profil/minat_karir/$minatId"; // DELETE: Hapus minat karir berdasarkan minatId
+
+
+
+
+
+
+
+
+
 
   // ------------------------------------------------------------- LOKER UMUM
   // Get all Loker Umum

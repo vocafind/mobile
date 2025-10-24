@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:jobfair/api/api_service.dart';
+import 'package:jobfair/models/talent_career_interest_model.dart';
 
 class TabMinatKarir extends StatefulWidget {
   const TabMinatKarir({super.key});
@@ -8,23 +10,98 @@ class TabMinatKarir extends StatefulWidget {
 }
 
 class _TabMinatKarirState extends State<TabMinatKarir> {
-  // Contoh data minat karir
-  List<CareerInterest> _careerInterests = [
-    CareerInterest(
-      id: '1',
-      title: 'Teknologi',
-      level: 'Tinggi',
-      description:
-          'Alasan saya berminat di bidang ini karena saya suka teknologi, di era digital ini teknologi sangat berkembang pesat.',
-    ),
-    CareerInterest(
-      id: '2',
-      title: 'Teknologi',
-      level: 'Sedang',
-      description:
-          'Alasan saya berminat di bidang ini karena saya suka teknologi, di era digital ini teknologi sangat berkembang pesat.',
-    ),
-  ];
+  final ApiService _apiService = ApiService();
+  List<CareerInterestModel> _careerInterests = [];
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCareerInterests();
+  }
+
+  Future<void> _loadCareerInterests() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final careerInterests = await _apiService.getCareerInterest();
+      setState(() {
+        _careerInterests = careerInterests;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Gagal memuat data: ${e.toString()}';
+      });
+      if (mounted) {
+        _showSnackBar('Gagal memuat data minat karir', isError: true);
+      }
+    }
+  }
+
+  Future<void> _addCareerInterest(CareerInterestModel careerInterest) async {
+    try {
+      await _apiService.createCareerInterest(careerInterest);
+      
+      // Reload data setelah berhasil tambah
+      await _loadCareerInterests();
+
+      if (mounted) {
+        _showSnackBar('Minat karir berhasil ditambahkan');
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnackBar('Gagal menambahkan minat karir', isError: true);
+      }
+    }
+  }
+
+  Future<void> _updateCareerInterest(CareerInterestModel careerInterest) async {
+    if (careerInterest.careerinterestId == null) {
+      _showSnackBar('ID minat karir tidak valid', isError: true);
+      return;
+    }
+
+    try {
+      await _apiService.updateCareerInterest(
+        careerInterest.careerinterestId!,
+        careerInterest,
+      );
+      
+      // Reload data setelah berhasil update
+      await _loadCareerInterests();
+
+      if (mounted) {
+        _showSnackBar('Minat karir berhasil diperbarui');
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnackBar('Gagal memperbarui minat karir', isError: true);
+      }
+    }
+  }
+
+  Future<void> _deleteCareerInterest(String careerInterestId) async {
+    try {
+      await _apiService.deleteCareerInterest(careerInterestId);
+      
+      // Reload data setelah berhasil hapus
+      await _loadCareerInterests();
+
+      if (mounted) {
+        _showSnackBar('Minat karir berhasil dihapus');
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnackBar('Gagal menghapus minat karir', isError: true);
+      }
+    }
+  }
 
   void _showSnackBar(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -49,19 +126,16 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
     );
   }
 
-  void _showAddEditDialog({CareerInterest? careerInterest}) {
+  void _showAddEditDialog({CareerInterestModel? careerInterest}) {
     final isEdit = careerInterest != null;
     final titleController = TextEditingController(
-      text: careerInterest?.title ?? '',
-    );
-    final levelController = TextEditingController(
-      text: careerInterest?.level ?? '',
+      text: careerInterest?.bidangKetertarikan ?? '',
     );
     final descriptionController = TextEditingController(
-      text: careerInterest?.description ?? '',
+      text: careerInterest?.alasan ?? '',
     );
 
-    String selectedLevel = careerInterest?.level ?? 'Tinggi';
+    String selectedLevel = careerInterest?.tingkatKetertarikan ?? 'Tinggi';
 
     showDialog(
       context: context,
@@ -181,35 +255,26 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
                             return;
                           }
 
-                          final newCareerInterest = CareerInterest(
-                            id: careerInterest?.id ?? DateTime.now().toString(),
-                            title: titleController.text,
-                            level: selectedLevel,
-                            description: descriptionController.text,
+                          final newCareerInterest = CareerInterestModel(
+                            careerinterestId: careerInterest?.careerinterestId,
+                            tingkatKetertarikan: selectedLevel,
+                            alasan: descriptionController.text,
+                            bidangKetertarikan: titleController.text,
                           );
 
-                          setState(() {
-                            if (isEdit) {
-                              final index = _careerInterests.indexWhere(
-                                (item) => item.id == careerInterest.id,
-                              );
-                              if (index != -1) {
-                                _careerInterests[index] = newCareerInterest;
-                              }
-                              _showSnackBar('Minat karir berhasil diperbarui');
-                            } else {
-                              _careerInterests.add(newCareerInterest);
-                              _showSnackBar('Minat karir berhasil ditambahkan');
-                            }
-                          });
-
                           Navigator.pop(context);
+
+                          if (isEdit) {
+                            _updateCareerInterest(newCareerInterest);
+                          } else {
+                            _addCareerInterest(newCareerInterest);
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF1B56FD),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(10),
                           ),
                         ),
                         child: Text(
@@ -316,7 +381,7 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
     );
   }
 
-  void _showDeleteConfirmation(CareerInterest careerInterest) {
+  void _showDeleteConfirmation(CareerInterestModel careerInterest) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -331,7 +396,7 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
           ),
         ),
         content: Text(
-          'Apakah Anda yakin ingin menghapus ${careerInterest.title}?',
+          'Apakah Anda yakin ingin menghapus ${careerInterest.bidangKetertarikan}?',
           style: const TextStyle(
             fontSize: 14,
             fontFamily: 'Poppins',
@@ -353,11 +418,10 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
           ),
           TextButton(
             onPressed: () {
-              setState(() {
-                _careerInterests.removeWhere((item) => item.id == careerInterest.id);
-              });
               Navigator.pop(context);
-              _showSnackBar('Minat karir berhasil dihapus');
+              if (careerInterest.careerinterestId != null) {
+                _deleteCareerInterest(careerInterest.careerinterestId!);
+              }
             },
             child: const Text(
               'Hapus',
@@ -376,98 +440,166 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 21, vertical: 20),
-      child: Column(
-        children: [
-          // Add Button
-          Align(
-            alignment: Alignment.centerRight,
-            child: GestureDetector(
-              onTap: () => _showAddEditDialog(),
-              child: Container(
-                width: 39,
-                height: 39,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFF113CEE)),
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(
+          color: Color(0xFF1B56FD),
+        ),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              size: 60,
+              color: Color(0xFFB8B8B8),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Terjadi Kesalahan',
+              style: const TextStyle(
+                fontSize: 16,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF515151),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: Text(
+                _errorMessage!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontFamily: 'Poppins',
+                  color: Color(0xFFB8B8B8),
                 ),
-                child: const Center(
-                  child: Text(
-                    '+',
-                    style: TextStyle(
-                      color: Color(0xFF0C32E8),
-                      fontSize: 16,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w400,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _loadCareerInterests,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Coba Lagi'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1B56FD),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadCareerInterests,
+      color: const Color(0xFF1B56FD),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 21, vertical: 20),
+        child: Column(
+          children: [
+            // Add Button
+            Align(
+              alignment: Alignment.centerRight,
+              child: GestureDetector(
+                onTap: () => _showAddEditDialog(),
+                child: Container(
+                  width: 39,
+                  height: 39,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFF113CEE)),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      '+',
+                      style: TextStyle(
+                        color: Color(0xFF0C32E8),
+                        fontSize: 16,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 0),
+            const SizedBox(height: 0),
 
-          // Career Interest Items
-          if (_careerInterests.isEmpty)
-            Container(
-              padding: const EdgeInsets.all(40),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Column(
-                children: const [
-                  Icon(
-                    Icons.work_outline,
-                    size: 60,
-                    color: Color(0xFFB8B8B8),
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    'Belum ada minat karir',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF515151),
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Tambahkan minat karir Anda',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontFamily: 'Poppins',
+            // Career Interest Items
+            if (_careerInterests.isEmpty)
+              Container(
+                padding: const EdgeInsets.all(40),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  children: const [
+                    Icon(
+                      Icons.work_outline,
+                      size: 60,
                       color: Color(0xFFB8B8B8),
                     ),
-                  ),
-                ],
+                    SizedBox(height: 16),
+                    Text(
+                      'Belum ada minat karir',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF515151),
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Tambahkan minat karir Anda',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontFamily: 'Poppins',
+                        color: Color(0xFFB8B8B8),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _careerInterests.length,
+                itemBuilder: (context, index) {
+                  final careerInterest = _careerInterests[index];
+                  return _buildCareerInterestItem(
+                    careerInterest: careerInterest,
+                    isFirst: index == 0,
+                    isLast: index == _careerInterests.length - 1,
+                  );
+                },
               ),
-            )
-          else
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _careerInterests.length,
-              itemBuilder: (context, index) {
-                final careerInterest = _careerInterests[index];
-                return _buildCareerInterestItem(
-                  careerInterest: careerInterest,
-                  isFirst: index == 0,
-                  isLast: index == _careerInterests.length - 1,
-                );
-              },
-            ),
 
-          const SizedBox(height: 80),
-        ],
+            const SizedBox(height: 80),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildCareerInterestItem({
-    required CareerInterest careerInterest,
+    required CareerInterestModel careerInterest,
     bool isFirst = false,
     bool isLast = false,
   }) {
@@ -505,13 +637,15 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        careerInterest.title,
-                        style: const TextStyle(
-                          color: Color(0xFF515151),
-                          fontSize: 16,
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w500,
+                      Expanded(
+                        child: Text(
+                          careerInterest.bidangKetertarikan,
+                          style: const TextStyle(
+                            color: Color(0xFF515151),
+                            fontSize: 16,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                       Container(
@@ -525,7 +659,7 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
                           border: Border.all(color: const Color(0xFFE2E2E2)),
                         ),
                         child: Text(
-                          careerInterest.level,
+                          careerInterest.tingkatKetertarikan,
                           style: const TextStyle(
                             color: Color(0xFF464E5E),
                             fontSize: 10,
@@ -538,9 +672,9 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    careerInterest.description.length > 80
-                        ? '${careerInterest.description.substring(0, 80)}....'
-                        : careerInterest.description,
+                    careerInterest.alasan.length > 63
+                        ? '${careerInterest.alasan.substring(0, 63)}....'
+                        : careerInterest.alasan,
                     style: const TextStyle(
                       color: Color(0xFF515151),
                       fontSize: 14,
@@ -563,19 +697,4 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
       ),
     );
   }
-}
-
-// Model class untuk Minat Karir
-class CareerInterest {
-  final String id;
-  final String title;
-  final String level;
-  final String description;
-
-  CareerInterest({
-    required this.id,
-    required this.title,
-    required this.level,
-    required this.description,
-  });
 }
