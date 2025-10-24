@@ -1,6 +1,6 @@
 class ApiConfig {
   // Ganti IP dengan IP komputer server kamu
-  static const String baseUrl = "http://10.136.143.248:5035/api";
+  static const String baseUrl = "http://192.168.1.3:5035/api";
 
   // ------------------------------------------------------------- TALENTS AUTH
   // Register
@@ -21,21 +21,21 @@ class ApiConfig {
   // GET: Ambil semua social media talent berdasarkan talentId
   // Endpoint: GET /api/Talents/profil/media_sosial/{talentId}
   static String getSocialMediaByTalent(String talentId) =>
-      "$baseUrl/Talents/profil/media_sosial/$talentId";
+      "$baseUrl/social/$talentId";
 
   // POST: Tambah akun sosial media baru
   // Endpoint: POST /api/Talents/profil/media_sosial/
-  static String createSocialMedia() => "$baseUrl/Talents/profil/media_sosial/";
+  static String createSocialMedia() => "$baseUrl/social/";
 
   // PUT: Update akun sosial berdasarkan socialId
   // Endpoint: PUT /api/Talents/profil/media_sosial/{id}
   static String updateSocialMedia(String socialId) =>
-      "$baseUrl/Talents/profil/media_sosial/$socialId";
+      "$baseUrl/social/$socialId";
 
   // DELETE: Hapus akun sosial berdasarkan socialId
   // Endpoint: DELETE /api/Talents/profil/media_sosial/{id}
   static String deleteSocialMedia(String socialId) =>
-      "$baseUrl/Talents/profil/media_sosial/$socialId";
+      "$baseUrl/social/$socialId";
 
   // ------------------------------------------------------------- LOKER UMUM
   // Get all Loker Umum
