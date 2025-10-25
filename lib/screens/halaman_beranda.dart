@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '/widget/bottom_navbar.dart';
 import 'halaman_notifikasi.dart';
-import 'dart:ui';
-import 'package:flutter_svg/flutter_svg.dart';
+
+
 
 class HalamanBeranda extends StatefulWidget {
   const HalamanBeranda({super.key});
@@ -13,7 +13,9 @@ class HalamanBeranda extends StatefulWidget {
 
 class _HalamanBerandaState extends State<HalamanBeranda> {
   final ScrollController _scrollController = ScrollController();
-  double _scrollOffset = 0.0;
+  
+  // ✅ ValueNotifier untuk scroll offset (tidak rebuild seluruh widget)
+  final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
 
   @override
   void initState() {
@@ -21,175 +23,75 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
     _scrollController.addListener(_onScroll);
   }
 
+  // ✅ Update ValueNotifier, bukan setState
   void _onScroll() {
-    setState(() {
-      _scrollOffset = _scrollController.offset;
-    });
+    _scrollOffset.value = _scrollController.offset;
   }
 
   @override
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _scrollOffset.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool showSearchOnly = _scrollOffset > 100;
     final double topPadding = MediaQuery.of(context).padding.top;
-    
-    final double headerHeight = showSearchOnly 
-        ? topPadding + 25 + 50 + 16
-        : topPadding + 12 + 120 + 44 + 30;
 
     return Scaffold(
       body: Stack(
         children: [
-          SingleChildScrollView(
-            controller: _scrollController,
-            child: Container(
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('assets/images/frame15.jpg'),
-                  fit: BoxFit.cover,
-                   alignment: Alignment(0, -0.9),
+          // ✅ RepaintBoundary untuk isolasi scroll content
+          RepaintBoundary(
+            child: SingleChildScrollView(
+              controller: _scrollController,
+              child: Container(
+                decoration: const BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('assets/images/frame15.jpg'),
+                    fit: BoxFit.cover,
+                    alignment: Alignment(0, -0.9),
+                  ),
                 ),
-              ),
-              child: Column(
-                children: [
-                  SizedBox(height: 220),
-                  _buildCocokUntukKamuSection(),
-                  const SizedBox(height: 50),
-                  const AyoTemuiMerekaSection(), // Widget baru dengan animasi
-                  const SizedBox(height: 60),
-                  _buildJobFairSection(),
-                  const SizedBox(height: 60),
-                  _buildKesepatanSegeraSection(),
-                  const SizedBox(height: 0),
-                ],
+                child: Column(
+                  children: const [
+                    SizedBox(height: 220),
+                    _CocokUntukKamuSection(),
+                    SizedBox(height: 50),
+                    AyoTemuiMerekaSection(),
+                    SizedBox(height: 60),
+                    _JobFairSection(),
+                    SizedBox(height: 60),
+                    _KesepatanSegeraSection(),
+                    SizedBox(height: 0),
+                  ],
+                ),
               ),
             ),
           ),
 
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: headerHeight,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topRight,
-                  colors: [Color(0xFF0118D8), Color(0xFF1B56FD)],
-                ),
-                boxShadow: showSearchOnly
-                    ? [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        )
-                      ]
-                    : null,
-              ),
-              child: SafeArea(
-                bottom: false,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: EdgeInsets.only(
-                    left: 20,
-                    right: 20,
-                    top: showSearchOnly ? 12 : 16,
-                    bottom: 16,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      AnimatedOpacity(
-                        opacity: showSearchOnly ? 0.0 : 1.0,
-                        duration: const Duration(milliseconds: 200),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          height: showSearchOnly ? 0 : null,
-                          child: const Padding(
-                            padding: EdgeInsets.only(bottom: 24),
-                            child: Text(
-                              'Hai! Aku siap bantu cari pekerjaan terbaik buat kamu.',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 26,
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w600,
-                                height: 1.15,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
+          // ✅ Header dengan ValueListenableBuilder (hanya rebuild header)
+          ValueListenableBuilder<double>(
+            valueListenable: _scrollOffset,
+            builder: (context, offset, child) {
+              final bool showSearchOnly = offset > 100;
+              final double headerHeight = showSearchOnly 
+                  ? topPadding + 25 + 50 + 16
+                  : topPadding + 12 + 120 + 44 + 30;
 
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(50),
-                              ),
-                              child: const Row(
-                                children: [
-                                  SizedBox(width: 20),
-                                  Icon(Icons.search,
-                                      color: Colors.white, size: 20),
-                                  SizedBox(width: 12),
-                                  Text(
-                                    'Cari lowongan kerja...',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontFamily: 'Poppins',
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const NotificationPage(),
-                                ),
-                              );
-                            },
-                            child: Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.notifications_outlined,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+              return Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: headerHeight,
+                child: _AnimatedHeader(
+                  showSearchOnly: showSearchOnly,
+                  topPadding: topPadding,
                 ),
-              ),
-            ),
+              );
+            },
           ),
 
           const Positioned(
@@ -202,14 +104,143 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
       ),
     );
   }
+}
 
-  Widget _buildCocokUntukKamuSection() {
+// ✅ Extract Header sebagai widget terpisah
+class _AnimatedHeader extends StatelessWidget {
+  final bool showSearchOnly;
+  final double topPadding;
+
+  const _AnimatedHeader({
+    required this.showSearchOnly,
+    required this.topPadding,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(top: 0),
-      height: 610,
-      child: Stack(
-        children: [
-          Positioned.fill(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.bottomCenter,
+          end: Alignment.topRight,
+          colors: [Color(0xFF0118D8), Color(0xFF1B56FD)],
+        ),
+        boxShadow: showSearchOnly
+            ? [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                )
+              ]
+            : null,
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: showSearchOnly ? 12 : 16,
+            bottom: 16,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ✅ Gunakan Visibility untuk hide/show
+              Visibility(
+                visible: !showSearchOnly,
+                child: const Padding(
+                  padding: EdgeInsets.only(bottom: 24),
+                  child: Text(
+                    'Hai! Aku siap bantu cari pekerjaan terbaik buat kamu.',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 26,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w600,
+                      height: 1.15,
+                    ),
+                  ),
+                ),
+              ),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(50),
+                      ),
+                      child: const Row(
+                        children: [
+                          SizedBox(width: 20),
+                          Icon(Icons.search, color: Colors.white, size: 20),
+                          SizedBox(width: 12),
+                          Text(
+                            'Cari lowongan kerja...',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const NotificationPage(),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.notifications_outlined,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ✅ Extract section sebagai StatelessWidget
+class _CocokUntukKamuSection extends StatelessWidget {
+  const _CocokUntukKamuSection();
+
+  @override
+Widget build(BuildContext context) {
+  return SizedBox(
+    height: 610,
+    child: Stack(
+      children: [
+        // ✅ Positioned.fill di luar, RepaintBoundary di dalam
+        Positioned.fill(
+          child: RepaintBoundary(
             child: ShaderMask(
               shaderCallback: (bounds) {
                 return LinearGradient(
@@ -217,13 +248,12 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
                   end: Alignment.bottomCenter,
                   colors: [
                     Colors.white,
-                    Colors.white, 
-                    Colors.white, 
-                    Colors.white, 
-                    Colors.white.withOpacity(0.5),
-                    Colors.white.withOpacity(0.0),
+                    Colors.white,
+                    Colors.white,
+                    Colors.white.withValues(alpha:0.5),
+                    Colors.white.withValues(alpha:0.0),
                   ],
-                  stops: const [0.0,0.0,0.4, 0.7, 0.85, 1.0],
+                  stops: const [0.0, 0.0, 0.7, 0.85, 1.0],
                 ).createShader(bounds);
               },
               blendMode: BlendMode.dstIn,
@@ -233,88 +263,225 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
               ),
             ),
           ),
-          
+        ),
+
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 60),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
-                  child: Text(
-                    'Cocok untuk kamu',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 26,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w600,
-                    ),
+          padding: const EdgeInsets.symmetric(vertical: 60),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  'Cocok untuk kamu',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 26,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.only(left: 20, bottom: 5),
-                    itemCount: 3,
-                    itemBuilder: (context, index) {
-                      return const Padding(
-                        padding: EdgeInsets.only(right: 16),
-                        child: _CocokUntukKamuCard(),
-                      );
-                    },
-                  ),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.only(left: 20, bottom: 5),
+                  itemCount: 3,
+                  itemExtent: 354,
+                  itemBuilder: (context, index) {
+                    return const _CocokUntukKamuCard();
+                  },
                 ),
-              ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+}
+
+// Widget untuk bagian "Ayo Temui Mereka" dengan auto-scroll looping
+class AyoTemuiMerekaSection extends StatefulWidget {
+  const AyoTemuiMerekaSection({Key? key}) : super(key: key);
+
+  @override
+  State<AyoTemuiMerekaSection> createState() => _AyoTemuiMerekaSectionState();
+}
+
+class _AyoTemuiMerekaSectionState extends State<AyoTemuiMerekaSection> {
+  late ScrollController _scrollController;
+  bool _isAutoScrolling = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _startAutoScroll();
+  }
+
+  void _startAutoScroll() async {
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    while (mounted && _isAutoScrolling) {
+      if (_scrollController.hasClients) {
+        final maxScroll = _scrollController.position.maxScrollExtent;
+
+        await _scrollController.animateTo(
+          maxScroll,
+          duration: const Duration(seconds: 10),
+          curve: Curves.linear,
+        );
+
+        if (mounted && _isAutoScrolling) {
+          _scrollController.jumpTo(0);
+          await Future.delayed(const Duration(milliseconds: 100));
+        }
+      } else {
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _isAutoScrolling = false;
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20),
+          child: Text(
+            'Ayo Temui Mereka',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 26,
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w600,
             ),
           ),
-        ],
+        ),
+        const SizedBox(height: 16),
+        // ✅ RepaintBoundary untuk isolasi animasi scroll
+        RepaintBoundary(
+          child: GestureDetector(
+            onHorizontalDragStart: (_) {
+              setState(() {
+                _isAutoScrolling = false;
+              });
+            },
+            onHorizontalDragEnd: (_) {
+              setState(() {
+                _isAutoScrolling = true;
+                _startAutoScroll();
+              });
+            },
+            child: Container(
+              height: 113,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(34),
+              ),
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              child: ListView.builder(
+                controller: _scrollController,
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 28),
+                itemCount: 15,
+                // ✅ Tambahkan itemExtent
+                itemExtent: 97, // 62 width + 35 padding
+                itemBuilder: (context, index) {
+                  return const _CompanyLogo();
+                },
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ✅ Extract logo sebagai widget terpisah dengan const
+class _CompanyLogo extends StatelessWidget {
+  const _CompanyLogo();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 62,
+      height: 56,
+      child: Image.asset(
+        'assets/icons/poltek.png',
+        width: 62,
+        height: 56,
+        fit: BoxFit.contain,
+        // ✅ Cache image
+        cacheWidth: 124, // 2x untuk retina
+        cacheHeight: 112,
       ),
     );
   }
+}
 
-  Widget _buildJobFairSection() {
-  final List<String> backgrounds = [
+class _JobFairSection extends StatelessWidget {
+  const _JobFairSection();
+
+  static const List<String> backgrounds = [
     'assets/images/biru.png',
     'assets/images/kuning.png',
     'assets/images/pink.png',
   ];
 
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20),
-        child: Text(
-          'Jelajahi Kesempatan Karier',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 26,
-            fontFamily: 'Poppins',
-            fontWeight: FontWeight.w600,
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20),
+          child: Text(
+            'Jelajahi Kesempatan Karier',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 26,
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
-      ),
-      const SizedBox(height: 16),
-      SizedBox(
-        height: 335,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.only(left: 20, bottom: 5),
-          itemCount: 3,
-          itemBuilder: (context, index) {
-            return Padding(
-              padding: EdgeInsets.only(right: 16),
-              child: _JobFairCard(backgroundImage: backgrounds[index]),
-            );
-          },
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 335,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.only(left: 20, bottom: 5),
+            itemCount: 3,
+            // ✅ Tambahkan itemExtent
+            itemExtent: 354, // 338 width + 16 padding
+            itemBuilder: (context, index) {
+              return _JobFairCard(backgroundImage: backgrounds[index]);
+            },
+          ),
         ),
-      ),
-    ],
-  );
+      ],
+    );
+  }
 }
 
-  Widget _buildKesepatanSegeraSection() {
+class _KesepatanSegeraSection extends StatelessWidget {
+  const _KesepatanSegeraSection();
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -352,124 +519,6 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
   }
 }
 
-// Widget untuk bagian "Ayo Temui Mereka" dengan auto-scroll looping
-class AyoTemuiMerekaSection extends StatefulWidget {
-  const AyoTemuiMerekaSection({Key? key}) : super(key: key);
-
-  @override
-  State<AyoTemuiMerekaSection> createState() => _AyoTemuiMerekaSectionState();
-}
-
-class _AyoTemuiMerekaSectionState extends State<AyoTemuiMerekaSection> {
-  late ScrollController _scrollController;
-  bool _isAutoScrolling = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController = ScrollController();
-    _startAutoScroll();
-  }
-
-  void _startAutoScroll() async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    
-    while (mounted && _isAutoScrolling) {
-      if (_scrollController.hasClients) {
-        final maxScroll = _scrollController.position.maxScrollExtent;
-        
-        // Scroll ke kanan sampai akhir
-        await _scrollController.animateTo(
-          maxScroll,
-          duration: const Duration(seconds: 10),
-          curve: Curves.linear,
-        );
-        
-        // Instant jump ke awal tanpa animasi
-        if (mounted && _isAutoScrolling) {
-          _scrollController.jumpTo(0);
-          await Future.delayed(const Duration(milliseconds: 100));
-        }
-      } else {
-        await Future.delayed(const Duration(milliseconds: 100));
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _isAutoScrolling = false;
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20),
-          child: Text(
-            'Ayo Temui Mereka',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 26,
-              fontFamily: 'Poppins',
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        GestureDetector(
-          onHorizontalDragStart: (_) {
-            setState(() {
-              _isAutoScrolling = false;
-            });
-          },
-          onHorizontalDragEnd: (_) {
-            setState(() {
-              _isAutoScrolling = true;
-              _startAutoScroll();
-            });
-          },
-          child: Container(
-            height: 113,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(34),
-            ),
-            margin: const EdgeInsets.symmetric(horizontal: 20),
-            child: ListView.builder(
-              controller: _scrollController,
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 28),
-              itemCount: 15, // Lebih banyak item untuk looping smooth
-              itemBuilder: (context, index) {
-                return Padding(
-                  padding: EdgeInsets.only(right: index < 14 ? 35 : 0),
-                  child: Container(
-                    width: 62,
-                    height: 56,
-                    child: Center(
-                      child: Image.asset(
-                        'assets/icons/poltek.png',
-                        width: 62,
-                        height: 56,
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 // Card untuk "Cocok untuk kamu" dengan animasi bookmark
 class _CocokUntukKamuCard extends StatefulWidget {
   const _CocokUntukKamuCard();
@@ -483,151 +532,159 @@ class _CocokUntukKamuCardState extends State<_CocokUntukKamuCard> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 338,
-      height: 410,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(34),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(34),
-                  topRight: Radius.circular(34),
-                ),
-                child: Container(
-                  width: 338,
-                  height: 236,
-                  color: const Color(0xFFE8F0FE),
-                  child: Image.asset(
-                    'assets/images/job.png',
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              Positioned(
-                right: 0,
-                top: 22,
-                child: Container(
-                  width: 153,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.5),
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(22),
-                      bottomLeft: Radius.circular(22),
-                    ),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'Kecocokan 76 %',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 17,
-                        fontFamily: 'SF Pro',
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.only(right: 16),
+      child: Container(
+        width: 338,
+        height: 410,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.85),
+          borderRadius: BorderRadius.circular(34),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
               children: [
-                const Text(
-                  'Fulltime Backend Develop...',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 22,
-                    fontFamily: 'SF Pro',
-                    fontWeight: FontWeight.w700,
+                ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(34),
+                    topRight: Radius.circular(34),
+                  ),
+                  child: Container(
+                    width: 338,
+                    height: 236,
+                    color: const Color(0xFFE8F0FE),
+                    child: Image.asset(
+                      'assets/images/job.png',
+                      fit: BoxFit.cover,
+                      // ✅ Cache image
+                      cacheWidth: 676,
+                      cacheHeight: 472,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Kota Batam',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 12,
-                    fontFamily: 'SF Pro',
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                const Text(
-                  'Rp. 9.000.000',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 12,
-                    fontFamily: 'SF Pro',
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  height: 0.5,
-                  color: Colors.black.withValues(alpha: 0.36),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Image.asset(
-                        'assets/icons/poltek.png',
-                        fit: BoxFit.contain,
+                Positioned(
+                  right: 0,
+                  top: 22,
+                  child: Container(
+                    width: 153,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(22),
+                        bottomLeft: Radius.circular(22),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Perusahaan',
-                            style: TextStyle(
-                              color: Colors.black.withValues(alpha: 0.6),
-                              fontSize: 11,
-                              fontFamily: 'SF Pro',
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const Text(
-                            'Inforsys Indonesia',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 13,
-                              fontFamily: 'SF Pro',
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
+                    child: const Center(
+                      child: Text(
+                        'Kecocokan 76 %',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 17,
+                          fontFamily: 'SF Pro',
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ],
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Fulltime Backend Develop...',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 22,
+                      fontFamily: 'SF Pro',
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Kota Batam',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 12,
+                      fontFamily: 'SF Pro',
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  const Text(
+                    'Rp. 9.000.000',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 12,
+                      fontFamily: 'SF Pro',
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    height: 0.5,
+                    color: Colors.black.withValues(alpha: 0.36),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Image.asset(
+                          'assets/icons/poltek.png',
+                          fit: BoxFit.contain,
+                          cacheWidth: 56,
+                          cacheHeight: 56,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Perusahaan',
+                              style: TextStyle(
+                                color: Colors.black.withValues(alpha: 0.6),
+                                fontSize: 11,
+                                fontFamily: 'SF Pro',
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const Text(
+                              'Inforsys Indonesia',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 13,
+                                fontFamily: 'SF Pro',
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -635,221 +692,223 @@ class _CocokUntukKamuCardState extends State<_CocokUntukKamuCard> {
 
 class _JobFairCard extends StatelessWidget {
   final String backgroundImage;
-  
+
   const _JobFairCard({required this.backgroundImage});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 338,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(34),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
-                    Text(
-                      'Tech Career Expo 2025',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 16,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w500,
+    return Padding(
+      padding: const EdgeInsets.only(right: 16),
+      child: Container(
+        width: 338,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(34),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Tech Career Expo 2025',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 16,
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
-                    Text(
-                      '3 hari lagi',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 12,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w400,
+                      Text(
+                        '3 hari lagi',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 12,
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
+                    ],
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Politeknik Negeri Batam',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 13,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w400,
                     ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Politeknik Negeri Batam',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 13,
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w400,
                   ),
-                ),
-              ],
-            ),
-          ),
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(34),
-                  bottomRight: Radius.circular(34),
-                ),
-                child: Container(
-                  width: 338,
-                  height: 236,
-                  color: const Color(0xFFE8F0FE),
-                  child: Image.asset(
-                    backgroundImage, // Menggunakan background dinamis
-                    fit: BoxFit.cover,
-                  ),
-                ),
+                ],
               ),
-              Container(
-                width: 338,
-                height: 236,
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.1),
+            ),
+            Stack(
+              children: [
+                ClipRRect(
                   borderRadius: const BorderRadius.only(
                     bottomLeft: Radius.circular(34),
                     bottomRight: Radius.circular(34),
                   ),
+                  child: Container(
+                    width: 338,
+                    height: 236,
+                    color: const Color(0xFFE8F0FE),
+                    child: Image.asset(
+                      backgroundImage,
+                      fit: BoxFit.cover,
+                      cacheWidth: 676,
+                      cacheHeight: 472,
+                    ),
+                  ),
                 ),
-              ),
-              Positioned(
-                left: 24,
-                top: 24,
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(45),
-                        border: Border.all(
-                          color:
-                              const Color(0xFFF3F6F9).withValues(alpha: 0.4),
-                        ),
-                      ),
-                      child: const Text(
-                        '10 Lowongan',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(45),
-                        border: Border.all(
-                          color:
-                              const Color(0xFFF3F6F9).withValues(alpha: 0.4),
-                        ),
-                      ),
-                      child: const Text(
-                        '3 Perusahaan',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Positioned(
-                left: 24,
-                bottom: 110,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: const [
-                        Icon(Icons.location_on, color: Colors.white, size: 14),
-                        SizedBox(width: 4),
-                        Text(
-                          'Batam Kota',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: const [
-                        Icon(Icons.calendar_today,
-                            color: Colors.white, size: 12),
-                        SizedBox(width: 6),
-                        Text(
-                          '19 Sep 2025 - 20 Sep 2025',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Pendaftaran : 7 Sep 2025 - 19 Sep 2025',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Positioned(
-                left: 24,
-                right: 24,
-                bottom: 14,
-                child: Container(
-                  height: 40,
+                Container(
+                  width: 338,
+                  height: 236,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(45),
-                    border: Border.all(
-                      color: const Color(0xFFF3F6F9).withValues(alpha: 0.4),
+                    color: Colors.black.withValues(alpha: 0.1),
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(34),
+                      bottomRight: Radius.circular(34),
                     ),
                   ),
-                  child: const Center(
-                    child: Text(
-                      'Daftar Sekarang',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w500,
+                ),
+                Positioned(
+                  left: 24,
+                  top: 24,
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(45),
+                          border: Border.all(
+                            color: const Color(0xFFF3F6F9).withValues(alpha: 0.4),
+                          ),
+                        ),
+                        child: const Text(
+                          '10 Lowongan',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(45),
+                          border: Border.all(
+                            color: const Color(0xFFF3F6F9).withValues(alpha: 0.4),
+                          ),
+                        ),
+                        child: const Text(
+                          '3 Perusahaan',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Positioned(
+                  left: 24,
+                  bottom: 110,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.location_on, color: Colors.white, size: 14),
+                          SizedBox(width: 4),
+                          Text(
+                            'Batam Kota',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(Icons.calendar_today, color: Colors.white, size: 12),
+                          SizedBox(width: 6),
+                          Text(
+                            '19 Sep 2025 - 20 Sep 2025',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Pendaftaran : 7 Sep 2025 - 19 Sep 2025',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  left: 24,
+                  right: 24,
+                  bottom: 14,
+                  child: Container(
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(45),
+                      border: Border.all(
+                        color: const Color(0xFFF3F6F9).withValues(alpha: 0.4),
+                      ),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'Daftar Sekarang',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -862,7 +921,8 @@ class _UrgentJobCard extends StatefulWidget {
   State<_UrgentJobCard> createState() => _UrgentJobCardState();
 }
 
-class _UrgentJobCardState extends State<_UrgentJobCard> with SingleTickerProviderStateMixin {
+class _UrgentJobCardState extends State<_UrgentJobCard>
+    with SingleTickerProviderStateMixin {
   bool isSaved = false;
   late AnimationController _bookmarkController;
   late Animation<double> _bookmarkScale;
@@ -904,10 +964,11 @@ class _UrgentJobCardState extends State<_UrgentJobCard> with SingleTickerProvide
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(34),
+          // ✅ Ganti BoxShadow dengan elevation-like effect
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 8,
               offset: const Offset(0, 2),
             ),
           ],
@@ -928,13 +989,10 @@ class _UrgentJobCardState extends State<_UrgentJobCard> with SingleTickerProvide
                     bottomRight: Radius.circular(90),
                   ),
                 ),
-                child: Row(
-                  children: const [
+                child: const Row(
+                  children: [
                     SizedBox(width: 16),
-                    Icon(Icons.bolt, 
-                      color: Color(0xFFFFCC00), 
-                      size: 18
-                    ),
+                    Icon(Icons.bolt, color: Color(0xFFFFCC00), size: 18),
                     SizedBox(width: 4),
                     Text(
                       'Dibutuhkan segera',
@@ -963,17 +1021,19 @@ class _UrgentJobCardState extends State<_UrgentJobCard> with SingleTickerProvide
                 child: Image.asset(
                   'assets/icons/poltek.png',
                   fit: BoxFit.contain,
+                  cacheWidth: 80,
+                  cacheHeight: 72,
                 ),
               ),
             ),
             // Job title and company
-            Positioned(
+            const Positioned(
               left: 66,
               top: 47,
               right: 66,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
                     'Fulltime Backend Developer',
                     style: TextStyle(
@@ -1004,7 +1064,7 @@ class _UrgentJobCardState extends State<_UrgentJobCard> with SingleTickerProvide
                 onTap: _toggleBookmark,
                 child: ScaleTransition(
                   scale: _bookmarkScale,
-                  child: Container(
+                  child: SizedBox(
                     width: 32,
                     height: 32,
                     child: AnimatedSwitcher(
@@ -1034,11 +1094,11 @@ class _UrgentJobCardState extends State<_UrgentJobCard> with SingleTickerProvide
               ),
             ),
             // Description
-            Positioned(
+            const Positioned(
               left: 16,
               top: 125,
               right: 16,
-              child: const Text(
+              child: Text(
                 'Bertanggung jawab dalam  mengelola, dan mengoptimal siste . . .',
                 style: TextStyle(
                   color: Color(0xFF404040),
@@ -1050,11 +1110,11 @@ class _UrgentJobCardState extends State<_UrgentJobCard> with SingleTickerProvide
               ),
             ),
             // Salary
-            Positioned(
+            const Positioned(
               left: 16,
               top: 172,
-              child: RichText(
-                text: const TextSpan(
+              child: Text.rich(
+                TextSpan(
                   children: [
                     TextSpan(
                       text: 'Rp',
@@ -1103,10 +1163,8 @@ class _UrgentJobCardState extends State<_UrgentJobCard> with SingleTickerProvide
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12, 
-                      vertical: 2
-                    ),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(24),
@@ -1125,10 +1183,8 @@ class _UrgentJobCardState extends State<_UrgentJobCard> with SingleTickerProvide
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12, 
-                      vertical: 2
-                    ),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(24),
@@ -1149,10 +1205,10 @@ class _UrgentJobCardState extends State<_UrgentJobCard> with SingleTickerProvide
               ),
             ),
             // Time ago
-            Positioned(
+            const Positioned(
               right: 16,
               bottom: 18,
-              child: const Text(
+              child: Text(
                 '1 hari lalu',
                 style: TextStyle(
                   color: Color(0xFF464E5E),

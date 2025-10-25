@@ -318,7 +318,7 @@ class _AnimatedTextFieldState extends State<AnimatedTextField> {
         boxShadow: _isFocused
             ? [
                 BoxShadow(
-                  color: const Color(0xFF1548F5).withOpacity(0.15),
+                  color: const Color(0xFF1548F5).withValues(alpha:0.15),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 ),
@@ -452,7 +452,7 @@ class _AnimatedPasswordFieldState extends State<AnimatedPasswordField> {
         boxShadow: _isFocused
             ? [
                 BoxShadow(
-                  color: const Color(0xFF1548F5).withOpacity(0.15),
+                  color: const Color(0xFF1548F5).withValues(alpha:0.15),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 ),
