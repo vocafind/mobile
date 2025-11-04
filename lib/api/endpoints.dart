@@ -1,6 +1,6 @@
 class ApiConfig {
   // Ganti IP dengan IP komputer server kamu
-  static const String baseUrl = "http://10.136.148.111:5035/api";
+  static const String baseUrl = "http://10.136.146.125:5035/api";
 
   // ------------------------------------------------------------- TALENTS AUTH
 
