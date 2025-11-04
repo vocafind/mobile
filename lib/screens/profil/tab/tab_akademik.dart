@@ -21,10 +21,11 @@ class _TabAkademikState extends State<TabAkademik> {
         Container(
           height: 50,
           color: const Color(0xFFF0F4F9),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 21, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 21, vertical: 8),
+          child: Align(
+            alignment: Alignment.centerLeft,
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 _buildSubTab('Pendidikan', 0),
                 const SizedBox(width: 8),
@@ -66,7 +67,7 @@ class _TabAkademikState extends State<TabAkademik> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected ? Colors.black : const Color(0x80475664),
           borderRadius: BorderRadius.circular(20),

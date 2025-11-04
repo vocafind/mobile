@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'tab_sertifikasi.dart';
 import 'tab_pelatihan.dart';
 import 'tab_soft_skill.dart';
-import 'tab_skill_tambahan.dart';
 
 class TabKompetensi extends StatefulWidget {
   const TabKompetensi({super.key});
@@ -22,18 +21,17 @@ class _TabKompetensiState extends State<TabKompetensi> {
         Container(
           height: 50,
           color: const Color(0xFFF0F4F9),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 21, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 21, vertical: 8),
+          child: Align(
+            alignment: Alignment.centerLeft,
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 _buildSubTab('Sertifikasi', 0),
                 const SizedBox(width: 8),
                 _buildSubTab('Pelatihan', 1),
                 const SizedBox(width: 8),
                 _buildSubTab('Soft skill', 2),
-                const SizedBox(width: 8),
-                _buildSubTab('Skill tambahan', 3),
               ],
             ),
           ),
@@ -55,8 +53,6 @@ class _TabKompetensiState extends State<TabKompetensi> {
         return const TabPelatihan();
       case 2:
         return const TabSoftSkill();
-      case 3:
-        return const TabSkillTambahan();
       default:
         return const TabSertifikasi();
     }
@@ -71,7 +67,7 @@ class _TabKompetensiState extends State<TabKompetensi> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected ? Colors.black : const Color(0x80475664),
           borderRadius: BorderRadius.circular(20),

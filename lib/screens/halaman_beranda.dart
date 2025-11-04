@@ -305,7 +305,7 @@ Widget build(BuildContext context) {
 
 // Widget untuk bagian "Ayo Temui Mereka" dengan auto-scroll looping
 class AyoTemuiMerekaSection extends StatefulWidget {
-  const AyoTemuiMerekaSection({Key? key}) : super(key: key);
+  const AyoTemuiMerekaSection({super.key});
 
   @override
   State<AyoTemuiMerekaSection> createState() => _AyoTemuiMerekaSectionState();
