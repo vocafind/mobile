@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'tab_pengalaman_kerja.dart';
 import 'tab_riwayat_pekerjaan.dart';
 import 'tab_proyek.dart';
 import 'tab_portofolio.dart';
@@ -22,18 +21,17 @@ class _TabPengalamanState extends State<TabPengalaman> {
         Container(
           height: 50,
           color: const Color(0xFFF0F4F9),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          child: Align(
+            alignment: Alignment.centerLeft,
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                _buildSubTab('Pengalaman kerja', 0),
+                _buildSubTab('Riwayat pekerjaan', 0),
                 const SizedBox(width: 8),
-                _buildSubTab('Riwayat pekerjaan', 1),
+                _buildSubTab('Proyek', 1),
                 const SizedBox(width: 8),
-                _buildSubTab('Proyek', 2),
-                const SizedBox(width: 8),
-                _buildSubTab('Portofolio', 3),
+                _buildSubTab('Portofolio', 2),
               ],
             ),
           ),
@@ -50,15 +48,13 @@ class _TabPengalamanState extends State<TabPengalaman> {
   Widget _buildContent() {
     switch (_selectedSubTab) {
       case 0:
-        return const TabPengalamanKerja();
-      case 1:
         return const TabRiwayatPekerjaan();
-      case 2:
+      case 1:
         return const TabProyek();
-      case 3:
+      case 2:
         return const TabPortofolio();
       default:
-        return const TabPengalamanKerja();
+        return const TabRiwayatPekerjaan();
     }
   }
 
@@ -71,7 +67,7 @@ class _TabPengalamanState extends State<TabPengalaman> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected ? Colors.black : const Color(0x80475664),
           borderRadius: BorderRadius.circular(20),

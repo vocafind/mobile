@@ -15,10 +15,28 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
   bool _isLoading = false;
   String? _errorMessage;
 
+  // Controllers
+  final _bidangController = TextEditingController();
+  final _alasanController = TextEditingController();
+  String _selectedLevel = 'Tinggi';
+
   @override
   void initState() {
     super.initState();
     _loadCareerInterests();
+  }
+
+  @override
+  void dispose() {
+    _bidangController.dispose();
+    _alasanController.dispose();
+    super.dispose();
+  }
+
+  void _clearControllers() {
+    _bidangController.clear();
+    _alasanController.clear();
+    _selectedLevel = 'Tinggi';
   }
 
   Future<void> _loadCareerInterests() async {
@@ -47,8 +65,6 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
   Future<void> _addCareerInterest(CareerInterestModel careerInterest) async {
     try {
       await _apiService.createCareerInterest(careerInterest);
-      
-      // Reload data setelah berhasil tambah
       await _loadCareerInterests();
 
       if (mounted) {
@@ -72,8 +88,6 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
         careerInterest.careerinterestId!,
         careerInterest,
       );
-      
-      // Reload data setelah berhasil update
       await _loadCareerInterests();
 
       if (mounted) {
@@ -89,8 +103,6 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
   Future<void> _deleteCareerInterest(String careerInterestId) async {
     try {
       await _apiService.deleteCareerInterest(careerInterestId);
-      
-      // Reload data setelah berhasil hapus
       await _loadCareerInterests();
 
       if (mounted) {
@@ -126,254 +138,358 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
     );
   }
 
-  void _showAddEditDialog({CareerInterestModel? careerInterest}) {
+  void _showAddEditModal({CareerInterestModel? careerInterest}) {
     final isEdit = careerInterest != null;
-    final titleController = TextEditingController(
-      text: careerInterest?.bidangKetertarikan ?? '',
-    );
-    final descriptionController = TextEditingController(
-      text: careerInterest?.alasan ?? '',
-    );
+    
+    if (careerInterest != null) {
+      _bidangController.text = careerInterest.bidangKetertarikan;
+      _alasanController.text = careerInterest.alasan;
+      _selectedLevel = careerInterest.tingkatKetertarikan;
+    } else {
+      _clearControllers();
+    }
 
-    String selectedLevel = careerInterest?.tingkatKetertarikan ?? 'Tinggi';
-
-    showDialog(
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          backgroundColor: Colors.white,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isEdit ? 'Edit Minat Karir' : 'Tambah Minat Karir',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF515151),
+        builder: (context, setModalState) => Container(
+          height: MediaQuery.of(context).size.height * 0.8,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: Colors.grey.shade200),
                   ),
                 ),
-                const SizedBox(height: 24),
-                _buildDialogTextField(
-                  controller: titleController,
-                  label: 'Bidang Minat',
-                  hint: 'Contoh: Teknologi, Kesehatan, Bisnis',
-                ),
-                const SizedBox(height: 16),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    const Text(
-                      'Tingkat Minat',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF515151),
-                      ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
                     ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFF98AFFF)),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: selectedLevel,
-                          isExpanded: true,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontFamily: 'Poppins',
-                            color: Color(0xFF515151),
-                          ),
-                          items: ['Tinggi', 'Sedang', 'Rendah']
-                              .map((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
-                            );
-                          }).toList(),
-                          onChanged: (String? newValue) {
-                            if (newValue != null) {
-                              setDialogState(() {
-                                selectedLevel = newValue;
-                              });
-                            }
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                _buildDialogTextField(
-                  controller: descriptionController,
-                  label: 'Alasan Minat',
-                  hint: 'Jelaskan alasan Anda berminat di bidang ini',
-                  maxLines: 4,
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
                     Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          side: const BorderSide(color: Color(0xFFE8E8E8)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Batal',
-                          style: TextStyle(
-                            color: Color(0xFF515151),
-                            fontSize: 16,
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          if (titleController.text.isEmpty ||
-                              descriptionController.text.isEmpty) {
-                            _showSnackBar('Semua field harus diisi', isError: true);
-                            return;
-                          }
-
-                          final newCareerInterest = CareerInterestModel(
-                            careerinterestId: careerInterest?.careerinterestId,
-                            tingkatKetertarikan: selectedLevel,
-                            alasan: descriptionController.text,
-                            bidangKetertarikan: titleController.text,
-                          );
-
-                          Navigator.pop(context);
-
-                          if (isEdit) {
-                            _updateCareerInterest(newCareerInterest);
-                          } else {
-                            _addCareerInterest(newCareerInterest);
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1B56FD),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: Text(
-                          isEdit ? 'Simpan' : 'Tambah',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                if (isEdit) ...[
-                  const SizedBox(height: 16),
-                  Center(
-                    child: TextButton.icon(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _showDeleteConfirmation(careerInterest);
-                      },
-                      icon: const Icon(Icons.delete_outline, color: Colors.red),
-                      label: const Text(
-                        'Hapus Minat Karir',
-                        style: TextStyle(
-                          color: Colors.red,
-                          fontFamily: 'Poppins',
+                      child: Text(
+                        isEdit ? 'Edit Minat Karir' : 'Tambah Minat Karir',
+                        style: const TextStyle(
+                          fontSize: 18,
                           fontWeight: FontWeight.w600,
+                          fontFamily: 'Poppins',
                         ),
                       ),
                     ),
+                    TextButton(
+                      onPressed: () {
+                        if (_bidangController.text.isEmpty ||
+                            _alasanController.text.isEmpty) {
+                          _showSnackBar('Semua field harus diisi', isError: true);
+                          return;
+                        }
+
+                        final newCareerInterest = CareerInterestModel(
+                          careerinterestId: careerInterest?.careerinterestId,
+                          tingkatKetertarikan: _selectedLevel,
+                          alasan: _alasanController.text,
+                          bidangKetertarikan: _bidangController.text,
+                        );
+
+                        Navigator.pop(context);
+
+                        if (isEdit) {
+                          _updateCareerInterest(newCareerInterest);
+                        } else {
+                          _addCareerInterest(newCareerInterest);
+                        }
+                      },
+                      child: const Text(
+                        'Simpan',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Form
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Keterangan
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF3E0),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFFFB74D)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(
+                              Icons.info_outline,
+                              color: Color(0xFFE65100),
+                              size: 20,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Tambahkan bidang karir yang Anda minati. Informasi ini membantu perusahaan menemukan kandidat yang sesuai.',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.orange.shade900,
+                                  fontFamily: 'Poppins',
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      _buildTextField(
+                        controller: _bidangController,
+                        label: 'Bidang Minat',
+                        hint: 'Contoh: Teknologi Informasi, Marketing',
+                        icon: Icons.work_outline,
+                        required: true,
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Tingkat Minat Dropdown
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: const [
+                              Text(
+                                'Tingkat Ketertarikan',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  fontFamily: 'Poppins',
+                                  color: Color(0xFF515151),
+                                ),
+                              ),
+                              Text(
+                                ' *',
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: _selectedLevel,
+                                isExpanded: true,
+                                icon: Icon(Icons.arrow_drop_down, color: Colors.grey.shade600),
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontFamily: 'Poppins',
+                                  color: Color(0xFF515151),
+                                ),
+                                items: ['Tinggi', 'Sedang', 'Rendah'].map((String value) {
+                                  return DropdownMenuItem<String>(
+                                    value: value,
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          _getInterestIcon(value),
+                                          size: 18,
+                                          color: _getInterestColor(value),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(value),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (String? newValue) {
+                                  if (newValue != null) {
+                                    setModalState(() {
+                                      _selectedLevel = newValue;
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      _buildTextField(
+                        controller: _alasanController,
+                        label: 'Alasan Minat',
+                        hint: 'Jelaskan mengapa Anda tertarik dengan bidang ini...',
+                        icon: Icons.description_outlined,
+                        maxLines: 5,
+                        required: true,
+                        helperText: 'Minimal 50 karakter untuk penjelasan yang baik',
+                      ),
+
+                      // Tombol Hapus (hanya untuk edit)
+                      if (isEdit) ...[
+                        const SizedBox(height: 32),
+                        Center(
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              _showDeleteConfirmation(careerInterest);
+                            },
+                            icon: const Icon(Icons.delete_outline, color: Colors.red),
+                            label: const Text(
+                              'Hapus Minat Karir',
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Colors.red),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                ],
-              ],
-            ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildDialogTextField({
+  IconData _getInterestIcon(String level) {
+    switch (level) {
+      case 'Tinggi':
+        return Icons.trending_up;
+      case 'Sedang':
+        return Icons.trending_flat;
+      case 'Rendah':
+        return Icons.trending_down;
+      default:
+        return Icons.circle;
+    }
+  }
+
+  Color _getInterestColor(String level) {
+    switch (level) {
+      case 'Tinggi':
+        return Colors.green;
+      case 'Sedang':
+        return Colors.orange;
+      case 'Rendah':
+        return Colors.grey;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  Widget _buildTextField({
     required TextEditingController controller,
     required String label,
     required String hint,
+    required IconData icon,
     int maxLines = 1,
+    TextInputType? keyboardType,
+    bool required = false,
+    String? helperText,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontFamily: 'Poppins',
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF515151),
-          ),
+        Row(
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                fontFamily: 'Poppins',
+                color: Color(0xFF515151),
+              ),
+            ),
+            if (required)
+              const Text(
+                ' *',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+          ],
         ),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
           maxLines: maxLines,
-          style: const TextStyle(
-            fontSize: 14,
-            fontFamily: 'Poppins',
-            color: Color(0xFF515151),
-          ),
+          keyboardType: keyboardType,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(
+            hintStyle: TextStyle(
+              color: Colors.grey.shade400,
               fontSize: 14,
               fontFamily: 'Poppins',
-              color: Color(0xFFB8B8B8),
             ),
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
+            prefixIcon: Icon(icon, color: Colors.grey.shade600, size: 20),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF98AFFF)),
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.grey.shade300),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: Color(0xFF98AFFF),
-              ),
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.grey.shade300),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: Color(0xFF1548F5),
-                width: 2,
-              ),
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFF113CEE), width: 2),
+            ),
+            filled: true,
+            fillColor: Colors.grey.shade50,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            helperText: helperText,
+            helperStyle: TextStyle(
+              fontSize: 11,
+              color: Colors.grey.shade600,
+              fontFamily: 'Poppins',
             ),
           ),
         ),
@@ -459,9 +575,9 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
               color: Color(0xFFB8B8B8),
             ),
             const SizedBox(height: 16),
-            Text(
+            const Text(
               'Terjadi Kesalahan',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontFamily: 'Poppins',
                 fontWeight: FontWeight.w500,
@@ -511,11 +627,11 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
         padding: const EdgeInsets.symmetric(horizontal: 21, vertical: 20),
         child: Column(
           children: [
-            // Add Button
+            // Tombol Tambah
             Align(
               alignment: Alignment.centerRight,
               child: GestureDetector(
-                onTap: () => _showAddEditDialog(),
+                onTap: () => _showAddEditModal(),
                 child: Container(
                   width: 39,
                   height: 39,
@@ -537,9 +653,9 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
                 ),
               ),
             ),
-            const SizedBox(height: 0),
+            const SizedBox(height: 21),
 
-            // Career Interest Items
+            // List atau Empty State
             if (_careerInterests.isEmpty)
               Container(
                 padding: const EdgeInsets.all(40),
@@ -547,8 +663,8 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Column(
-                  children: const [
+                child: const Column(
+                  children: [
                     Icon(
                       Icons.work_outline,
                       size: 60,
@@ -603,11 +719,10 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
     bool isFirst = false,
     bool isLast = false,
   }) {
-    return InkWell(
-      onTap: () => _showAddEditDialog(careerInterest: careerInterest),
-      borderRadius: BorderRadius.circular(20),
+    return GestureDetector(
+      onTap: () => _showAddEditModal(careerInterest: careerInterest),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
           border: Border(
@@ -629,13 +744,13 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
                   : BorderRadius.zero,
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
                         child: Text(
@@ -648,10 +763,11 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
                           ),
                         ),
                       ),
+                      const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
-                          vertical: 2,
+                          vertical: 4,
                         ),
                         decoration: BoxDecoration(
                           color: Colors.white,
@@ -663,34 +779,34 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
                           style: const TextStyle(
                             color: Color(0xFF464E5E),
                             fontSize: 10,
-                            fontFamily: 'SF Pro',
+                            fontFamily: 'Poppins',
                             fontWeight: FontWeight.w400,
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   Text(
-                    careerInterest.alasan.length > 63
-                        ? '${careerInterest.alasan.substring(0, 63)}....'
+                    careerInterest.alasan.length > 80
+                        ? '${careerInterest.alasan.substring(0, 80)}...'
                         : careerInterest.alasan,
                     style: const TextStyle(
                       color: Color(0xFF515151),
                       fontSize: 14,
                       fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w400,
-                      height: 1.5,
+                      fontWeight: FontWeight.w300,
+                      height: 1.4,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 12),
-            const Icon(
-              Icons.chevron_right,
-              size: 24,
-              color: Color(0xFF515151),
+            const SizedBox(width: 16),
+            Icon(
+              Icons.edit_outlined,
+              size: 20,
+              color: Colors.black.withValues(alpha: 0.62),
             ),
           ],
         ),

@@ -330,7 +330,7 @@ class _ProfileHeaderState extends State<ProfileHeader>
                                 lokasiKerja,
                                 style: const TextStyle(
                                   color: Color(0xFFFFF8F8),
-                                  fontSize: 13, // ✅ Font size dari 14 ke 13
+                                  fontSize: 14, // ✅ Font size dari 14 ke 13
                                   fontFamily: 'SF Pro',
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -384,12 +384,12 @@ class _ProfileHeaderState extends State<ProfileHeader>
               unselectedLabelColor:
                   const Color(0xFFFFF8F8).withValues(alpha: 0.7),
               labelStyle: const TextStyle(
-                fontSize: 15, // ✅ Font size dari 16 ke 15
+                fontSize: 16, 
                 fontFamily: 'SF Pro',
                 fontWeight: FontWeight.w600,
               ),
               unselectedLabelStyle: const TextStyle(
-                fontSize: 15, // ✅ Font size dari 16 ke 15
+                fontSize: 16, 
                 fontFamily: 'SF Pro',
                 fontWeight: FontWeight.w400,
               ),
