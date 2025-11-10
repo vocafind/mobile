@@ -80,7 +80,11 @@ class _TabSertifikasiState extends State<TabSertifikasi> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
+     builder: (context) => Padding(  
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Container(  // ← Container langsung di dalam Padding
         height: MediaQuery.of(context).size.height * 0.85,
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -260,6 +264,7 @@ class _TabSertifikasiState extends State<TabSertifikasi> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

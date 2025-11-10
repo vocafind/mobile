@@ -40,7 +40,11 @@ class _TabPortofolioState extends State<TabPortofolio> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
+      builder: (context) => Padding(  // ← TAMBAHKAN INI
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: StatefulBuilder(  // ← StatefulBuilder dipindah ke dalam Padding
         builder: (context, setModalState) => Container(
           height: MediaQuery.of(context).size.height * 0.85,
           decoration: const BoxDecoration(
@@ -276,6 +280,7 @@ class _TabPortofolioState extends State<TabPortofolio> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

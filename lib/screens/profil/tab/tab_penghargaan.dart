@@ -36,22 +36,26 @@ class _TabPenghargaanState extends State<TabPenghargaan> {
   }
 
   void _showAddEditModal({Map<String, dynamic>? data, bool isEdit = false}) {
-    if (data != null) {
-      _judulPenghargaanController.text = data['judul'] ?? '';
-      _institusiController.text = data['institusi'] ?? '';
-      _tahunController.text = data['tahun'] ?? '';
-      _deskripsiController.text = data['deskripsi'] ?? '';
-      _selectedBadge = data['badge'] ?? 'International';
-      _urlSertifikatController.text = data['urlSertifikat'] ?? '';
-    } else {
-      _clearControllers();
-    }
+  if (data != null) {
+    _judulPenghargaanController.text = data['judul'] ?? '';
+    _institusiController.text = data['institusi'] ?? '';
+    _tahunController.text = data['tahun'] ?? '';
+    _deskripsiController.text = data['deskripsi'] ?? '';
+    _selectedBadge = data['badge'] ?? 'International';
+    _urlSertifikatController.text = data['urlSertifikat'] ?? '';
+  } else {
+    _clearControllers();
+  }
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => Padding( 
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: StatefulBuilder(  // ← StatefulBuilder di dalam Padding
         builder: (context, setModalState) => Container(
           height: MediaQuery.of(context).size.height * 0.8,
           decoration: const BoxDecoration(
@@ -301,8 +305,9 @@ class _TabPenghargaanState extends State<TabPenghargaan> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildTextField({
     required TextEditingController controller,

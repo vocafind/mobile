@@ -50,338 +50,343 @@ class _TabPelatihanState extends State<TabPelatihan> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          height: MediaQuery.of(context).size.height * 0.85,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: Colors.grey.shade200),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: StatefulBuilder(
+          builder: (context, setModalState) => Container(
+            height: MediaQuery.of(context).size.height * 0.85,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              children: [
+                // Header
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: Colors.grey.shade200),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      Expanded(
+                        child: Text(
+                          isEdit ? 'Edit Pelatihan' : 'Tambah Pelatihan',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          // TODO: Simpan data ke database/state management
+                          Navigator.pop(context);
+                        },
+                        child: const Text(
+                          'Simpan',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    Expanded(
-                      child: Text(
-                        isEdit ? 'Edit Pelatihan' : 'Tambah Pelatihan',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        // TODO: Simpan data ke database/state management
-                        Navigator.pop(context);
-                      },
-                      child: const Text(
-                        'Simpan',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
 
-              // Form
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Keterangan
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE3F2FD),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFF90CAF9)),
+                // Form
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Keterangan
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE3F2FD),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFF90CAF9)),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(
+                                Icons.info_outline,
+                                color: Color(0xFF1976D2),
+                                size: 20,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Tambahkan pelatihan, sertifikasi, atau kursus yang pernah Anda ikuti untuk memperkuat profil Anda.',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.blue.shade900,
+                                    fontFamily: 'Poppins',
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                        child: Row(
+                        const SizedBox(height: 24),
+
+                        _buildTextField(
+                          controller: _namaPelatihanController,
+                          label: 'Nama Pelatihan',
+                          hint: 'Contoh: Google UX Design Certificate',
+                          icon: Icons.school_outlined,
+                          required: true,
+                        ),
+                        const SizedBox(height: 16),
+
+                        _buildTextField(
+                          controller: _penyelenggaraController,
+                          label: 'Penyelenggara',
+                          hint: 'Contoh: Google Career Certificates',
+                          icon: Icons.business_outlined,
+                          required: true,
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Tanggal Mulai
+                        Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(
-                              Icons.info_outline,
-                              color: Color(0xFF1976D2),
-                              size: 20,
+                            Row(
+                              children: const [
+                                Text(
+                                  'Tanggal Mulai',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    fontFamily: 'Poppins',
+                                    color: Color(0xFF515151),
+                                  ),
+                                ),
+                                Text(
+                                  ' *',
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                'Tambahkan pelatihan, sertifikasi, atau kursus yang pernah Anda ikuti untuk memperkuat profil Anda.',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.blue.shade900,
-                                  fontFamily: 'Poppins',
-                                  height: 1.4,
+                            const SizedBox(height: 8),
+                            GestureDetector(
+                              onTap: () async {
+                                final date = await showDatePicker(
+                                  context: context,
+                                  initialDate: _tanggalMulai ?? DateTime.now(),
+                                  firstDate: DateTime(1900),
+                                  lastDate: DateTime.now(),
+                                  builder: (context, child) {
+                                    return Theme(
+                                      data: Theme.of(context).copyWith(
+                                        colorScheme: const ColorScheme.light(
+                                          primary: Color(0xFF113CEE),
+                                        ),
+                                      ),
+                                      child: child!,
+                                    );
+                                  },
+                                );
+                                if (date != null) {
+                                  setModalState(() {
+                                    _tanggalMulai = date;
+                                  });
+                                }
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade50,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: Colors.grey.shade300),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.calendar_today_outlined, 
+                                      color: Colors.grey.shade600, 
+                                      size: 20
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      _tanggalMulai != null
+                                          ? '${_tanggalMulai!.day}/${_tanggalMulai!.month}/${_tanggalMulai!.year}'
+                                          : 'Pilih tanggal mulai',
+                                      style: TextStyle(
+                                        color: _tanggalMulai != null 
+                                          ? const Color(0xFF515151)
+                                          : Colors.grey.shade400,
+                                        fontSize: 14,
+                                        fontFamily: 'Poppins',
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
                           ],
                         ),
-                      ),
-                      const SizedBox(height: 24),
+                        const SizedBox(height: 16),
 
-                      _buildTextField(
-                        controller: _namaPelatihanController,
-                        label: 'Nama Pelatihan',
-                        hint: 'Contoh: Google UX Design Certificate',
-                        icon: Icons.school_outlined,
-                        required: true,
-                      ),
-                      const SizedBox(height: 16),
-
-                      _buildTextField(
-                        controller: _penyelenggaraController,
-                        label: 'Penyelenggara',
-                        hint: 'Contoh: Google Career Certificates',
-                        icon: Icons.business_outlined,
-                        required: true,
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Tanggal Mulai
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: const [
-                              Text(
-                                'Tanggal Mulai',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  fontFamily: 'Poppins',
-                                  color: Color(0xFF515151),
+                        // Tanggal Selesai
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: const [
+                                Text(
+                                  'Tanggal Selesai',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    fontFamily: 'Poppins',
+                                    color: Color(0xFF515151),
+                                  ),
                                 ),
-                              ),
-                              Text(
-                                ' *',
-                                style: TextStyle(
-                                  color: Colors.red,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
+                                Text(
+                                  ' *',
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          GestureDetector(
-                            onTap: () async {
-                              final date = await showDatePicker(
-                                context: context,
-                                initialDate: _tanggalMulai ?? DateTime.now(),
-                                firstDate: DateTime(1900),
-                                lastDate: DateTime.now(),
-                                builder: (context, child) {
-                                  return Theme(
-                                    data: Theme.of(context).copyWith(
-                                      colorScheme: const ColorScheme.light(
-                                        primary: Color(0xFF113CEE),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            GestureDetector(
+                              onTap: () async {
+                                final date = await showDatePicker(
+                                  context: context,
+                                  initialDate: _tanggalSelesai ?? DateTime.now(),
+                                  firstDate: _tanggalMulai ?? DateTime(1900),
+                                  lastDate: DateTime.now(),
+                                  builder: (context, child) {
+                                    return Theme(
+                                      data: Theme.of(context).copyWith(
+                                        colorScheme: const ColorScheme.light(
+                                          primary: Color(0xFF113CEE),
+                                        ),
+                                      ),
+                                      child: child!,
+                                    );
+                                  },
+                                );
+                                if (date != null) {
+                                  setModalState(() {
+                                    _tanggalSelesai = date;
+                                  });
+                                }
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade50,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: Colors.grey.shade300),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.calendar_today_outlined, 
+                                      color: Colors.grey.shade600, 
+                                      size: 20
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      _tanggalSelesai != null
+                                          ? '${_tanggalSelesai!.day}/${_tanggalSelesai!.month}/${_tanggalSelesai!.year}'
+                                          : 'Pilih tanggal selesai',
+                                      style: TextStyle(
+                                        color: _tanggalSelesai != null 
+                                          ? const Color(0xFF515151)
+                                          : Colors.grey.shade400,
+                                        fontSize: 14,
+                                        fontFamily: 'Poppins',
                                       ),
                                     ),
-                                    child: child!,
-                                  );
-                                },
-                              );
-                              if (date != null) {
-                                setModalState(() {
-                                  _tanggalMulai = date;
-                                });
-                              }
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade50,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: Colors.grey.shade300),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.calendar_today_outlined, 
-                                    color: Colors.grey.shade600, 
-                                    size: 20
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    _tanggalMulai != null
-                                        ? '${_tanggalMulai!.day}/${_tanggalMulai!.month}/${_tanggalMulai!.year}'
-                                        : 'Pilih tanggal mulai',
-                                    style: TextStyle(
-                                      color: _tanggalMulai != null 
-                                        ? const Color(0xFF515151)
-                                        : Colors.grey.shade400,
-                                      fontSize: 14,
-                                      fontFamily: 'Poppins',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Tanggal Selesai
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: const [
-                              Text(
-                                'Tanggal Selesai',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  fontFamily: 'Poppins',
-                                  color: Color(0xFF515151),
+                                  ],
                                 ),
                               ),
-                              Text(
-                                ' *',
-                                style: TextStyle(
-                                  color: Colors.red,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          GestureDetector(
-                            onTap: () async {
-                              final date = await showDatePicker(
-                                context: context,
-                                initialDate: _tanggalSelesai ?? DateTime.now(),
-                                firstDate: _tanggalMulai ?? DateTime(1900),
-                                lastDate: DateTime.now(),
-                                builder: (context, child) {
-                                  return Theme(
-                                    data: Theme.of(context).copyWith(
-                                      colorScheme: const ColorScheme.light(
-                                        primary: Color(0xFF113CEE),
-                                      ),
-                                    ),
-                                    child: child!,
-                                  );
-                                },
-                              );
-                              if (date != null) {
-                                setModalState(() {
-                                  _tanggalSelesai = date;
-                                });
-                              }
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade50,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: Colors.grey.shade300),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.calendar_today_outlined, 
-                                    color: Colors.grey.shade600, 
-                                    size: 20
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    _tanggalSelesai != null
-                                        ? '${_tanggalSelesai!.day}/${_tanggalSelesai!.month}/${_tanggalSelesai!.year}'
-                                        : 'Pilih tanggal selesai',
-                                    style: TextStyle(
-                                      color: _tanggalSelesai != null 
-                                        ? const Color(0xFF515151)
-                                        : Colors.grey.shade400,
-                                      fontSize: 14,
-                                      fontFamily: 'Poppins',
-                                    ),
-                                  ),
-                                ],
-                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-
-                      _buildTextField(
-                        controller: _urlSertifikatController,
-                        label: 'URL Sertifikat',
-                        hint: 'https://example.com/certificate',
-                        icon: Icons.link_outlined,
-                        keyboardType: TextInputType.url,
-                        maxLength: 255,
-                        helperText: '0 / 255 karakter',
-                      ),
-                      const SizedBox(height: 16),
-
-                      _buildTextField(
-                        controller: _deskripsiController,
-                        label: 'Deskripsi',
-                        hint: 'Jelaskan apa yang Anda pelajari dari pelatihan ini...',
-                        icon: Icons.description_outlined,
-                        maxLines: 5,
-                      ),
-
-                      // Tombol Hapus (hanya untuk edit)
-                      if (isEdit) ...[
-                        const SizedBox(height: 32),
-                        Center(
-                          child: OutlinedButton.icon(
-                            onPressed: () {
-                              Navigator.pop(context);
-                              _showDeleteConfirmation(data!);
-                            },
-                            icon: const Icon(Icons.delete_outline, color: Colors.red),
-                            label: const Text(
-                              'Hapus Pelatihan',
-                              style: TextStyle(
-                                color: Colors.red,
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: Colors.red),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 12,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
+                          ],
                         ),
+                        const SizedBox(height: 16),
+
+                        _buildTextField(
+                          controller: _urlSertifikatController,
+                          label: 'URL Sertifikat',
+                          hint: 'https://example.com/certificate',
+                          icon: Icons.link_outlined,
+                          keyboardType: TextInputType.url,
+                          maxLength: 255,
+                          helperText: '0 / 255 karakter',
+                        ),
+                        const SizedBox(height: 16),
+
+                        _buildTextField(
+                          controller: _deskripsiController,
+                          label: 'Deskripsi',
+                          hint: 'Jelaskan apa yang Anda pelajari dari pelatihan ini...',
+                          icon: Icons.description_outlined,
+                          maxLines: 5,
+                        ),
+
+                        // Tombol Hapus (hanya untuk edit)
+                        if (isEdit) ...[
+                          const SizedBox(height: 32),
+                          Center(
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _showDeleteConfirmation(data!);
+                              },
+                              icon: const Icon(Icons.delete_outline, color: Colors.red),
+                              label: const Text(
+                                'Hapus Pelatihan',
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontFamily: 'Poppins',
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Colors.red),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
