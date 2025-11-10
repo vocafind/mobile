@@ -160,7 +160,7 @@ class _ProfileHeaderState extends State<ProfileHeader>
                       children: [
                         _buildMenuItem(
                           icon: Icons.security,
-                          title: 'Keamanan dan Privasi',
+                          title: 'pengaturan Akun',
                           onTap: () {
                             _removeOverlay();
                             Navigator.push(
