@@ -58,6 +58,12 @@ class ApiConfig {
   static String deleteEducation(String educationId) => "$baseUrl/Talents/profil/pendidikan/$educationId";                // Hapus pendidikan
 
 
+  // ------------------------------------------------------------------------------------------ BAHASA
+  
+  static String getLanguageByTalent(String talentId) => "$baseUrl/Talents/profil/bahasa/$talentId";         // GET bahasa
+  static String createLanguage() => "$baseUrl/Talents/profil/bahasa/";                                      // POST bahasa
+  static String updateLanguage(String languageId) => "$baseUrl/Talents/profil/bahasa/$languageId";                // Update bahasa
+  static String deleteLanguage(String languageId) => "$baseUrl/Talents/profil/bahasa/$languageId";                // Hapus bahasa
 
 
 

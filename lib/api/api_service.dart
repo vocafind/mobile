@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:jobfair/api/api_client.dart';
 import 'package:jobfair/models/talent_education_model.dart';
+import 'package:jobfair/models/talent_language_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:jobfair/models/loker_umum_detail_model.dart';
@@ -133,8 +134,6 @@ class ApiService {
       return false;
     }
   }
-
-  // PROFIL -------------------------------------PROFIL -------------------------------PROFIL
 
   //  -----------------------------------------------------------------------Data Diri
 
@@ -531,8 +530,6 @@ class ApiService {
     }
   }
 
-  // AKADEMIK -------------------------------------AKADEMIK -------------------------------AKADEMIK
-
   //  -----------------------------------------------------------------------PENDIDIKAN
 
   // ================== GET PENDIDIKAN ==================
@@ -644,6 +641,114 @@ class ApiService {
   }
 
   //  -----------------------------------------------------------------------BAHASA
+
+  //  -----------------------------------------------------------------------BAHASA
+
+  // ================== GET BAHASA ==================
+  Future<List<LanguageModel>> getLanguages() async {
+    final prefs = await SharedPreferences.getInstance();
+    final talentId = prefs.getString('talentId');
+
+    if (talentId == null) {
+      print("❌ TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      final response = await _dio.get(ApiConfig.getLanguageByTalent(talentId));
+
+      print("GET Language - STATUS: ${response.statusCode}");
+      print("GET Language - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        return data.map((json) => LanguageModel.fromJson(json)).toList();
+      } else {
+        print("⚠️ Gagal ambil data bahasa: ${response.data}");
+        throw Exception('Failed to load language');
+      }
+    } on DioException catch (e) {
+      print("❌ Error ambil bahasa: ${e.message}");
+      rethrow;
+    }
+  }
+
+  // ================== CREATE BAHASA ==================
+  Future<Map<String, dynamic>> createLanguage(LanguageModel language) async {
+    final prefs = await SharedPreferences.getInstance();
+    final talentId = prefs.getString('talentId');
+
+    if (talentId == null) {
+      print("❌ TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      final response = await _dio.post(
+        ApiConfig.createLanguage(),
+        data: language.toJsonPost(talentId),
+      );
+
+      print("POST Language - STATUS: ${response.statusCode}");
+      print("POST Language - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        print("⚠️ Gagal tambah bahasa: ${response.data}");
+        throw Exception('Failed to create language');
+      }
+    } on DioException catch (e) {
+      print("❌ Error tambah bahasa: ${e.message}");
+      rethrow;
+    }
+  }
+
+  // ================== UPDATE BAHASA ==================
+  Future<Map<String, dynamic>> updateLanguage(
+    String languageId,
+    LanguageModel language,
+  ) async {
+    try {
+      final response = await _dio.put(
+        ApiConfig.updateLanguage(languageId),
+        data: language.toJsonPut(),
+      );
+
+      print("PUT Language - STATUS: ${response.statusCode}");
+      print("PUT Language - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        print("⚠️ Gagal update bahasa: ${response.data}");
+        throw Exception('Failed to update language');
+      }
+    } on DioException catch (e) {
+      print("❌ Error update bahasa: ${e.message}");
+      rethrow;
+    }
+  }
+
+  // ================== DELETE BAHASA ==================
+  Future<Map<String, dynamic>> deleteLanguage(String languageId) async {
+    try {
+      final response = await _dio.delete(ApiConfig.deleteLanguage(languageId));
+
+      print("DELETE Language - STATUS: ${response.statusCode}");
+      print("DELETE Language - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        print("⚠️ Gagal hapus bahasa: ${response.data}");
+        throw Exception('Failed to delete language');
+      }
+    } on DioException catch (e) {
+      print("❌ Error hapus bahasa: ${e.message}");
+      rethrow;
+    }
+  }
 
   //  -----------------------------------------------------------------------PENGHARGAAN
 

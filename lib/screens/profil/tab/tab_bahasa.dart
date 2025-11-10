@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:jobfair/api/api_service.dart';
+import 'package:jobfair/models/talent_language_model.dart';
 
 class TabBahasa extends StatefulWidget {
   const TabBahasa({super.key});
@@ -8,292 +10,458 @@ class TabBahasa extends StatefulWidget {
 }
 
 class _TabBahasaState extends State<TabBahasa> {
-  // Controllers
-  final _namaBahasaController = TextEditingController();
-  final _sertifikatController = TextEditingController();
-  final _skorController = TextEditingController();
-  final _urlSertifikatController = TextEditingController();
-  String _selectedLevel = 'Beginner';
+  final ApiService _apiService = ApiService();
+  List<LanguageModel> _languages = [];
+  bool _isLoading = true;
 
   @override
-  void dispose() {
-    _namaBahasaController.dispose();
-    _sertifikatController.dispose();
-    _skorController.dispose();
-    _urlSertifikatController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _loadLanguages();
   }
 
-  void _clearControllers() {
-    _namaBahasaController.clear();
-    _sertifikatController.clear();
-    _skorController.clear();
-    _urlSertifikatController.clear();
-    _selectedLevel = 'Beginner';
+  Future<void> _loadLanguages() async {
+    setState(() => _isLoading = true);
+    try {
+      final languages = await _apiService.getLanguages();
+      setState(() {
+        _languages = languages;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      _showSnackBar('Gagal memuat data bahasa', isError: true);
+      print("Error load languages: $e");
+    }
   }
 
- void _showAddEditModal({Map<String, dynamic>? data, bool isEdit = false}) {
-  if (data != null) {
-    _namaBahasaController.text = data['bahasa'] ?? '';
-    _selectedLevel = data['level'] ?? 'Beginner';
-    _sertifikatController.text = data['sertifikat'] ?? '';
-    _skorController.text = data['skor'] ?? '';
-    _urlSertifikatController.text = data['urlSertifikat'] ?? '';
-  } else {
-    _clearControllers();
-  }
-
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) => Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: StatefulBuilder(  
-        builder: (context, setModalState) => Container(  // ← setModalState di sini
-          height: MediaQuery.of(context).size.height * 0.85,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+  void _showSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.w500,
+            fontFamily: 'Poppins',
           ),
-          child: Column(
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: Colors.grey.shade200),
+        ),
+        backgroundColor: isError ? Colors.red[100] : Colors.white,
+        behavior: SnackBarBehavior.floating,
+        elevation: 2,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showAddEditModal({LanguageModel? language}) {
+    final isEdit = language != null;
+    bool isSaving = false;
+
+    // Controller form
+    final TextEditingController namaBahasaController = TextEditingController(
+      text: language?.namaBahasa ?? '',
+    );
+    final TextEditingController sertifikatController = TextEditingController(
+      text: language?.sertifikat ?? '',
+    );
+    final TextEditingController skorController = TextEditingController(
+      text: language?.skor ?? '',
+    );
+    String selectedProfisiensi = language?.profisiensi ?? 'Beginner';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: StatefulBuilder(
+          builder: (context, setModalState) => Container(
+            height: MediaQuery.of(context).size.height * 0.85,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              children: [
+                // === HEADER ===
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: Colors.grey.shade200),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: isSaving ? null : () => Navigator.pop(context),
+                      ),
+                      Expanded(
+                        child: Text(
+                          isEdit ? 'Edit Bahasa' : 'Tambah Bahasa',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: isSaving
+                            ? null
+                            : () async {
+                                final namaBahasa = namaBahasaController.text.trim();
+                                final sertifikat = sertifikatController.text.trim();
+                                final skor = skorController.text.trim();
+                                
+                                if (namaBahasa.isEmpty) {
+                                  _showSnackBar(
+                                    "Nama bahasa wajib diisi",
+                                    isError: true,
+                                  );
+                                  return;
+                                }
+
+                                setModalState(() => isSaving = true);
+
+                                final lang = LanguageModel(
+                                  languageId: language?.languageId,
+                                  talentId: language?.talentId,
+                                  namaBahasa: namaBahasa,
+                                  profisiensi: selectedProfisiensi,
+                                  sertifikat: sertifikat,
+                                  skor: skor,
+                                );
+
+                                try {
+                                  if (isEdit) {
+                                    await _apiService.updateLanguage(
+                                      language!.languageId!,
+                                      lang,
+                                    );
+                                    _showSnackBar('Berhasil memperbarui bahasa');
+                                  } else {
+                                    await _apiService.createLanguage(lang);
+                                    _showSnackBar('Berhasil menambah bahasa');
+                                  }
+
+                                  await _loadLanguages();
+                                  Navigator.pop(context);
+                                } catch (e) {
+                                  setModalState(() => isSaving = false);
+                                  _showSnackBar(
+                                    'Gagal menyimpan data',
+                                    isError: true,
+                                  );
+                                  print("❌ Error submit language: $e");
+                                }
+                              },
+                        child: isSaving
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Text(
+                                'Simpan',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: 'Poppins',
+                                ),
+                              ),
+                      ),
+                    ],
                   ),
                 ),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    Expanded(
-                      child: Text(
-                        isEdit ? 'Edit Bahasa' : 'Tambah Bahasa',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        // TODO: Simpan data ke database/state management
-                        Navigator.pop(context);
-                      },
-                      child: const Text(
-                        'Simpan',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
 
-              // Form
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Keterangan
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE8F5E9),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFF81C784)),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Icon(
-                              Icons.info_outline,
-                              color: Color(0xFF388E3C),
-                              size: 20,
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                'Tambahkan kemampuan bahasa yang Anda kuasai. Sertakan sertifikat jika ada untuk meningkatkan kredibilitas.',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.green.shade900,
-                                  fontFamily: 'Poppins',
-                                  height: 1.4,
-                                ),
+                // === FORM ===
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Keterangan
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE8F5E9),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFF81C784)),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(
+                                Icons.info_outline,
+                                color: Color(0xFF388E3C),
+                                size: 20,
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      _buildTextField(
-                        controller: _namaBahasaController,
-                        label: 'Nama Bahasa',
-                        hint: 'Contoh: English, Mandarin, Japanese',
-                        icon: Icons.language,
-                        required: true,
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Tingkat Kemampuan
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: const [
-                              Text(
-                                'Tingkat Kemampuan',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  fontFamily: 'Poppins',
-                                  color: Color(0xFF515151),
-                                ),
-                              ),
-                              Text(
-                                ' *',
-                                style: TextStyle(
-                                  color: Colors.red,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Tambahkan kemampuan bahasa yang Anda kuasai. Sertakan sertifikat jika ada untuk meningkatkan kredibilitas.',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.green.shade900,
+                                    fontFamily: 'Poppins',
+                                    height: 1.4,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 12),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: ['Beginner', 'Intermediate', 'Advanced', 'Fluent', 'Native']
-                                .map((level) {
-                              final isSelected = _selectedLevel == level;
-                              return GestureDetector(
-                                onTap: () {
-                                  setModalState(() {  // ← Sekarang setModalState sudah ada
-                                    _selectedLevel = level;
-                                  });
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 10,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? const Color(0xFF113CEE)
-                                        : Colors.grey.shade50,
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color: isSelected
-                                          ? const Color(0xFF113CEE)
-                                          : Colors.grey.shade300,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    level,
-                                    style: TextStyle(
-                                      color: isSelected
-                                          ? Colors.white
-                                          : const Color(0xFF515151),
-                                      fontSize: 14,
-                                      fontFamily: 'Poppins',
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        _buildTextField(
+                          controller: namaBahasaController,
+                          label: 'Nama Bahasa',
+                          hint: 'Contoh: English, Mandarin, Japanese',
+                          icon: Icons.language,
+                          required: true,
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Tingkat Kemampuan (Profisiensi)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: const [
+                                Text(
+                                  'Tingkat Kemampuan',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    fontFamily: 'Poppins',
+                                    color: Color(0xFF515151),
                                   ),
                                 ),
-                              );
-                            }).toList(),
+                                Text(
+                                  ' *',
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                'Beginner',
+                                'Intermediate',
+                                'Advanced',
+                                'Fluent',
+                                'Native',
+                              ].map((level) {
+                                final isSelected = selectedProfisiensi == level;
+                                return GestureDetector(
+                                  onTap: () {
+                                    setModalState(() {
+                                      selectedProfisiensi = level;
+                                    });
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 10,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? const Color(0xFF113CEE)
+                                          : Colors.grey.shade50,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? const Color(0xFF113CEE)
+                                            : Colors.grey.shade300,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      level,
+                                      style: TextStyle(
+                                        color: isSelected
+                                            ? Colors.white
+                                            : const Color(0xFF515151),
+                                        fontSize: 14,
+                                        fontFamily: 'Poppins',
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        _buildTextField(
+                          controller: sertifikatController,
+                          label: 'Url Sertifikat',
+                          hint: 'Contoh: TOEFL, IELTS, JLPT N1',
+                          icon: Icons.link,
+                          helperText: 'Opsional - Nama sertifikat bahasa',
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        _buildTextField(
+                          controller: skorController,
+                          label: 'Skor/Nilai',
+                          hint: 'Contoh: 550, 7.5, Band 8',
+                          icon: Icons.grade_outlined,
+                          keyboardType: TextInputType.text,
+                          helperText: 'Opsional - Skor dari sertifikat',
+                        ),
+
+                        // Tombol Hapus (hanya untuk edit)
+                        if (isEdit) ...[
+                          const SizedBox(height: 32),
+                          Center(
+                            child: OutlinedButton.icon(
+                              onPressed: isSaving
+                                  ? null
+                                  : () {
+                                      Navigator.pop(context);
+                                      _showDeleteConfirmation(language!);
+                                    },
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.red,
+                              ),
+                              label: const Text(
+                                'Hapus Bahasa',
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontFamily: 'Poppins',
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Colors.red),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
                           ),
                         ],
-                      ),
-                      const SizedBox(height: 16),
-
-                      _buildTextField(
-                        controller: _sertifikatController,
-                        label: 'Nama Sertifikat',
-                        hint: 'Contoh: TOEFL, IELTS, JLPT N3',
-                        icon: Icons.workspace_premium_outlined,
-                        helperText: 'Opsional - Tambahkan jika memiliki sertifikat',
-                      ),
-                      const SizedBox(height: 16),
-
-                      _buildTextField(
-                        controller: _skorController,
-                        label: 'Skor/Nilai',
-                        hint: 'Contoh: 550, 7.5, Band 8',
-                        icon: Icons.grade_outlined,
-                        keyboardType: TextInputType.text,
-                        helperText: 'Opsional - Skor dari sertifikat',
-                      ),
-                      const SizedBox(height: 16),
-
-                      _buildTextField(
-                        controller: _urlSertifikatController,
-                        label: 'URL Sertifikat',
-                        hint: 'Contoh: https://drive.google.com/file/xxx',
-                        icon: Icons.link,
-                        keyboardType: TextInputType.url,
-                        helperText: 'Opsional - Link menuju file sertifikat',
-                      ),
-
-                      // Tombol Hapus (hanya untuk edit)
-                      if (isEdit) ...[
-                        const SizedBox(height: 32),
-                        Center(
-                          child: OutlinedButton.icon(
-                            onPressed: () {
-                              Navigator.pop(context);
-                              _showDeleteConfirmation(data!);
-                            },
-                            icon: const Icon(Icons.delete_outline, color: Colors.red),
-                            label: const Text(
-                              'Hapus Bahasa',
-                              style: TextStyle(
-                                color: Colors.red,
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: Colors.red),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 12,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        ),
                       ],
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
+
+  void _showDeleteConfirmation(LanguageModel language) {
+    bool isDeleting = false;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          backgroundColor: Colors.white,
+          title: const Text(
+            'Hapus Bahasa',
+            style: TextStyle(
+              fontSize: 18,
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          content: Text(
+            'Apakah Anda yakin ingin menghapus ${language.namaBahasa}?',
+            style: const TextStyle(
+              fontSize: 14,
+              fontFamily: 'Poppins',
+              color: Color(0xFF515151),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: isDeleting ? null : () => Navigator.pop(context),
+              child: const Text(
+                'Batal',
+                style: TextStyle(
+                  color: Color(0xFF515151),
+                  fontSize: 14,
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: isDeleting
+                  ? null
+                  : () async {
+                      setDialogState(() => isDeleting = true);
+                      try {
+                        await _apiService.deleteLanguage(
+                          language.languageId!,
+                        );
+                        await _loadLanguages();
+                        Navigator.pop(context);
+                        _showSnackBar('Bahasa berhasil dihapus');
+                      } catch (e) {
+                        setDialogState(() => isDeleting = false);
+                        _showSnackBar(
+                          'Gagal menghapus bahasa',
+                          isError: true,
+                        );
+                        print("Error delete language: $e");
+                      }
+                    },
+              child: isDeleting
+                  ? const SizedBox(
+                      height: 14,
+                      width: 14,
+                      child: CircularProgressIndicator(
+                        color: Colors.red,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text(
+                      'Hapus',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontSize: 14,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildTextField({
     required TextEditingController controller,
@@ -357,7 +525,10 @@ class _TabBahasaState extends State<TabBahasa> {
             ),
             filled: true,
             fillColor: Colors.grey.shade50,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
             helperText: helperText,
             helperStyle: TextStyle(
               fontSize: 11,
@@ -370,137 +541,81 @@ class _TabBahasaState extends State<TabBahasa> {
     );
   }
 
-  void _showDeleteConfirmation(Map<String, dynamic> data) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        backgroundColor: Colors.white,
-        title: const Text(
-          'Hapus Bahasa',
-          style: TextStyle(
-            fontSize: 18,
-            fontFamily: 'Poppins',
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        content: Text(
-          'Apakah Anda yakin ingin menghapus ${data['bahasa']}?',
-          style: const TextStyle(
-            fontSize: 14,
-            fontFamily: 'Poppins',
-            color: Color(0xFF515151),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Batal',
-              style: TextStyle(
-                color: Color(0xFF515151),
-                fontSize: 14,
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              // TODO: Hapus data dari database/state management
-              Navigator.pop(context);
-            },
-            child: const Text(
-              'Hapus',
-              style: TextStyle(
-                color: Colors.red,
-                fontSize: 14,
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 21, vertical: 20),
-      child: Column(
-        children: [
-          // Tombol Tambah
-          Align(
-            alignment: Alignment.centerRight,
-            child: GestureDetector(
-              onTap: () => _showAddEditModal(),
-              child: Container(
-                width: 39,
-                height: 39,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFF113CEE), width: 1),
-                ),
-                child: const Center(
-                  child: Text(
-                    '+',
-                    style: TextStyle(
-                      color: Color(0xFF0C32E8),
-                      fontSize: 16,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w400,
+    return RefreshIndicator(
+      onRefresh: _loadLanguages,
+      color: const Color(0xFF113CEE),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 21, vertical: 20),
+        child: Column(
+          children: [
+            // Tombol Tambah
+            Align(
+              alignment: Alignment.centerRight,
+              child: GestureDetector(
+                onTap: () => _showAddEditModal(),
+                child: Container(
+                  width: 39,
+                  height: 39,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: const Color(0xFF113CEE),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      '+',
+                      style: TextStyle(
+                        color: Color(0xFF0C32E8),
+                        fontSize: 16,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 21),
+            const SizedBox(height: 21),
 
-          // Language Items
-          _buildBahasaItem(
-            language: 'English',
-            level: 'Beginner',
-            certificate: 'TOEFL',
-            score: 'Skor : 550',
-            isFirst: true,
-            onEdit: () {
-              _showAddEditModal(
-                data: {
-                  'bahasa': 'English',
-                  'level': 'Beginner',
-                  'sertifikat': 'TOEFL',
-                  'skor': '550',
-                  'urlSertifikat': '',
-                },
-                isEdit: true,
-              );
-            },
-          ),
-          _buildBahasaItem(
-            language: 'Japanese',
-            level: 'Native',
-            certificate: 'JLPT N1',
-            score: 'Skor : 180',
-            isLast: true,
-            onEdit: () {
-              _showAddEditModal(
-                data: {
-                  'bahasa': 'Japanese',
-                  'level': 'Native',
-                  'sertifikat': 'JLPT N1',
-                  'skor': '180',
-                  'urlSertifikat': '',
-                },
-                isEdit: true,
-              );
-            },
-          ),
+            // Loading Indicator
+            if (_isLoading)
+              const Center(
+                child: CircularProgressIndicator(color: Color(0xFF113CEE)),
+              )
+            else if (_languages.isEmpty)
+              const Text(
+                "Belum ada data bahasa",
+                style: TextStyle(fontFamily: 'Poppins'),
+              )
+            else
+              Column(
+                children: List.generate(_languages.length, (index) {
+                  final lang = _languages[index];
+                  final isFirst = index == 0;
+                  final isLast = index == _languages.length - 1;
 
-          const SizedBox(height: 80),
-        ],
+                  return _buildBahasaItem(
+                    language: lang.namaBahasa,
+                    level: lang.profisiensi,
+                    certificate: lang.sertifikat.isNotEmpty ? lang.sertifikat : '-',
+                    score: lang.skor.isNotEmpty ? 'Skor : ${lang.skor}' : '-',
+                    isFirst: isFirst,
+                    isLast: isLast,
+                    onEdit: () {
+                      _showAddEditModal(language: lang);
+                    },
+                  );
+                }),
+              ),
+
+            const SizedBox(height: 80),
+          ],
+        ),
       ),
     );
   }
@@ -530,11 +645,11 @@ class _TabBahasaState extends State<TabBahasa> {
                 topRight: Radius.circular(20),
               )
             : isLast
-                ? const BorderRadius.only(
-                    bottomLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(20),
-                  )
-                : BorderRadius.zero,
+            ? const BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              )
+            : BorderRadius.zero,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
