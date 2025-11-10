@@ -1,5 +1,8 @@
 import 'dart:io';
 
+import 'package:dio/dio.dart';
+import 'package:jobfair/api/api_client.dart';
+import 'package:jobfair/models/talent_education_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:jobfair/models/loker_umum_detail_model.dart';
@@ -12,7 +15,24 @@ import 'package:jobfair/models/talent_career_interest_model.dart';
 import 'package:jobfair/models/talent_reference_model.dart';
 
 class ApiService {
-  // --------------------------------------------------------------------------Talents-----------------------------------------------------------
+  final Dio _dio = ApiClient().dio;
+
+  Future<void> _saveTokens(
+    String accessToken,
+    String refreshToken,
+    int expiresIn,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('token', accessToken);
+    await prefs.setString('refreshToken', refreshToken);
+
+    final expiryTime = DateTime.now().add(Duration(seconds: expiresIn));
+    await prefs.setString('tokenExpiry', expiryTime.toIso8601String());
+  }
+
+  //------------------------------------------------TALENTS--------------------------TALENTS-----------------TALENTS------------------------------------------
+
+  // -----------------------------------------------------------------------AUTH
 
   // ================== REGISTER ==================
   Future<http.StreamedResponse> registerTalent(
@@ -36,20 +56,28 @@ class ApiService {
     String email,
     String password,
   ) async {
-    var url = Uri.parse(ApiConfig.loginTalent);
-
     try {
-      final response = await http.post(
-        url,
-        headers: {"Content-Type": "application/x-www-form-urlencoded"},
-        body: {"Email": email, "Password": password},
+      final response = await _dio.post(
+        ApiConfig.loginTalent,
+        data: {"Email": email, "Password": password},
+        options: Options(contentType: Headers.formUrlEncodedContentType),
       );
 
       print("STATUS: ${response.statusCode}");
-      print("RESPONSE: ${response.body}");
+      print("RESPONSE: ${response.data}");
 
-      return jsonDecode(response.body);
-    } catch (e) {
+      // ✅ Simpan token + expiry
+      if (response.statusCode == 200 && response.data['accessToken'] != null) {
+        await _saveTokens(
+          response.data['accessToken'],
+          response.data['refreshToken'],
+          response.data['expiresIn'] ?? 900, // Default 15 menit
+        );
+      }
+
+      return response.data;
+    } on DioException catch (e) {
+      print("❌ Login error: ${e.message}");
       return {"message": "Gagal terhubung ke server"};
     }
   }
@@ -106,66 +134,35 @@ class ApiService {
     }
   }
 
+  // PROFIL -------------------------------------PROFIL -------------------------------PROFIL
+
+  //  -----------------------------------------------------------------------Data Diri
+
   // ================== GET PROFIL / DATA DIRI ==================
   Future<TalentProfileModel?> getProfilDataDiri() async {
     final prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
-    final refreshToken = prefs.getString('refreshToken');
     final talentId = prefs.getString('talentId');
 
-    if (token == null || talentId == null) {
-      print("❌ Token atau TalentId tidak ditemukan di SharedPreferences");
+    if (talentId == null) {
+      print("❌ TalentId tidak ditemukan");
       return null;
-    }
-
-    final url = Uri.parse(ApiConfig.profilDataDiri(talentId));
-
-    Future<http.Response> getProfileRequest(String? token) async {
-      return await http.get(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
     }
 
     try {
-      var response = await getProfileRequest(token);
+      final response = await _dio.get(ApiConfig.profilDataDiri(talentId));
 
-      print("URL: $url");
       print("STATUS: ${response.statusCode}");
-      print("BODY: ${response.body}");
-
-      // ✅ Jika token expired (401), coba refresh token
-      if (response.statusCode == 401 && refreshToken != null) {
-        print("🔄 Token expired, mencoba refresh token...");
-        final refreshed = await refreshAccessToken();
-
-        if (refreshed) {
-          final newPrefs = await SharedPreferences.getInstance();
-          final newToken = newPrefs.getString('token');
-          print("✅ Token baru didapat, ulangi request pakai token baru...");
-          response = await getProfileRequest(newToken);
-        } else {
-          print("❌ Refresh token gagal, user harus login ulang.");
-          await prefs.clear();
-          return null;
-        }
-      }
+      print("BODY: ${response.data}");
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        prefs.setString('cachedProfile', response.body);
-        return TalentProfileModel.fromJson(data);
-      } else {
-        print("⚠️ Gagal ambil data profil: ${response.body}");
-        return null;
+        prefs.setString('cachedProfile', jsonEncode(response.data));
+        return TalentProfileModel.fromJson(response.data);
       }
-    } catch (e) {
-      print("❌ Error ambil profil: $e");
-      return null;
+    } on DioException catch (e) {
+      print("❌ Error ambil profil: ${e.message}");
     }
+
+    return null;
   }
 
   // ================== UPDATE PROFIL / DATA DIRI (PATCH) ==================
@@ -248,41 +245,27 @@ class ApiService {
     }
   }
 
+  //-----------------------------------------------------------------------SOSMED
+
   // ================== GET SOCIAL MEDIA ==================
   Future<List<SocialMediaModel>> getSocialMedia() async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
     final talentId = prefs.getString('talentId');
 
-    if (token == null || talentId == null) {
-      print("❌ Token atau TalentId tidak ditemukan");
-      throw Exception('Unauthorized');
-    }
-
-    final url = Uri.parse(ApiConfig.getSocialMediaByTalent(talentId));
+    if (talentId == null) throw Exception('Unauthorized');
 
     try {
-      final response = await http.get(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
+      final response = await _dio.get(
+        ApiConfig.getSocialMediaByTalent(talentId),
       );
 
-      print("GET Social Media - URL: $url");
       print("GET Social Media - STATUS: ${response.statusCode}");
-      print("GET Social Media - BODY: ${response.body}");
+      print("GET Social Media - BODY: ${response.data}");
 
-      if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-        return data.map((json) => SocialMediaModel.fromJson(json)).toList();
-      } else {
-        print("⚠️ Gagal ambil social media: ${response.body}");
-        throw Exception('Failed to load social media');
-      }
-    } catch (e) {
-      print("❌ Error ambil social media: $e");
+      final List<dynamic> data = response.data;
+      return data.map((json) => SocialMediaModel.fromJson(json)).toList();
+    } on DioException catch (e) {
+      print("❌ Error ambil social media: ${e.message}");
       rethrow;
     }
   }
@@ -292,38 +275,22 @@ class ApiService {
     SocialMediaModel socialMedia,
   ) async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
     final talentId = prefs.getString('talentId');
 
-    if (token == null || talentId == null) {
-      print("❌ Token atau TalentId tidak ditemukan");
-      throw Exception('Unauthorized');
-    }
-
-    final url = Uri.parse(ApiConfig.createSocialMedia());
+    if (talentId == null) throw Exception('Unauthorized');
 
     try {
-      final response = await http.post(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(socialMedia.toJsonPost(talentId)),
+      final response = await _dio.post(
+        ApiConfig.createSocialMedia(),
+        data: socialMedia.toJsonPost(talentId),
       );
 
-      print("POST Social Media - URL: $url");
       print("POST Social Media - STATUS: ${response.statusCode}");
-      print("POST Social Media - BODY: ${response.body}");
+      print("POST Social Media - BODY: ${response.data}");
 
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else {
-        print("⚠️ Gagal tambah social media: ${response.body}");
-        throw Exception('Failed to create social media');
-      }
-    } catch (e) {
-      print("❌ Error tambah social media: $e");
+      return response.data;
+    } on DioException catch (e) {
+      print("❌ Error tambah social media: ${e.message}");
       rethrow;
     }
   }
@@ -333,155 +300,83 @@ class ApiService {
     String socialId,
     SocialMediaModel socialMedia,
   ) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
-
-    if (token == null) {
-      print("❌ Token tidak ditemukan");
-      throw Exception('Unauthorized');
-    }
-
-    final url = Uri.parse(ApiConfig.updateSocialMedia(socialId));
-
     try {
-      final response = await http.put(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(socialMedia.toJsonPut()),
+      final response = await _dio.put(
+        ApiConfig.updateSocialMedia(socialId),
+        data: socialMedia.toJsonPut(),
       );
 
-      print("PUT Social Media - URL: $url");
       print("PUT Social Media - STATUS: ${response.statusCode}");
-      print("PUT Social Media - BODY: ${response.body}");
+      print("PUT Social Media - BODY: ${response.data}");
 
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else {
-        print("⚠️ Gagal update social media: ${response.body}");
-        throw Exception('Failed to update social media');
-      }
-    } catch (e) {
-      print("❌ Error update social media: $e");
+      return response.data;
+    } on DioException catch (e) {
+      print("❌ Error update social media: ${e.message}");
       rethrow;
     }
   }
 
   // ================== DELETE SOCIAL MEDIA ==================
   Future<Map<String, dynamic>> deleteSocialMedia(String socialId) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
-
-    if (token == null) {
-      print("❌ Token tidak ditemukan");
-      throw Exception('Unauthorized');
-    }
-
-    final url = Uri.parse(ApiConfig.deleteSocialMedia(socialId));
-
     try {
-      final response = await http.delete(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
+      final response = await _dio.delete(ApiConfig.deleteSocialMedia(socialId));
 
-      print("DELETE Social Media - URL: $url");
       print("DELETE Social Media - STATUS: ${response.statusCode}");
-      print("DELETE Social Media - BODY: ${response.body}");
+      print("DELETE Social Media - BODY: ${response.data}");
 
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else {
-        print("⚠️ Gagal hapus social media: ${response.body}");
-        throw Exception('Failed to delete social media');
-      }
-    } catch (e) {
-      print("❌ Error hapus social media: $e");
+      return response.data;
+    } on DioException catch (e) {
+      print("❌ Error hapus social media: ${e.message}");
       rethrow;
     }
   }
+
+  //  -----------------------------------------------------------------------MINAT KARIR
 
   // ================== GET MINAT KARIR ==================
   Future<List<CareerInterestModel>> getCareerInterest() async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
     final talentId = prefs.getString('talentId');
 
-    if (token == null || talentId == null) {
-      print("❌ Token atau TalentId tidak ditemukan");
-      throw Exception('Unauthorized');
-    }
-
-    final url = Uri.parse(ApiConfig.getCareerInterestByTalent(talentId));
+    if (talentId == null) throw Exception('Unauthorized');
 
     try {
-      final response = await http.get(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
+      final response = await _dio.get(
+        ApiConfig.getCareerInterestByTalent(talentId),
       );
 
-      print("GET Career Interest - URL: $url");
       print("GET Career Interest - STATUS: ${response.statusCode}");
-      print("GET Career Interest - BODY: ${response.body}");
+      print("GET Career Interest - BODY: ${response.data}");
 
-      if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-        return data.map((json) => CareerInterestModel.fromJson(json)).toList();
-      } else {
-        print("⚠️ Gagal ambil minat karir: ${response.body}");
-        throw Exception('Failed to load career interest');
-      }
-    } catch (e) {
-      print("❌ Error ambil minat karir: $e");
+      final List<dynamic> data = response.data;
+      return data.map((json) => CareerInterestModel.fromJson(json)).toList();
+    } on DioException catch (e) {
+      print("❌ Error ambil minat karir: ${e.message}");
       rethrow;
     }
   }
 
-  // ================== CREATE MINAT KARIR ==================
+  //================== CREATE MINAT KARIR ==================
   Future<Map<String, dynamic>> createCareerInterest(
     CareerInterestModel careerInterest,
   ) async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
     final talentId = prefs.getString('talentId');
 
-    if (token == null || talentId == null) {
-      print("❌ Token atau TalentId tidak ditemukan");
-      throw Exception('Unauthorized');
-    }
-
-    final url = Uri.parse(ApiConfig.createCareerInterest());
+    if (talentId == null) throw Exception('Unauthorized');
 
     try {
-      final response = await http.post(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(careerInterest.toJsonPost(talentId)),
+      final response = await _dio.post(
+        ApiConfig.createCareerInterest(),
+        data: careerInterest.toJsonPost(talentId),
       );
 
-      print("POST Career Interest - URL: $url");
       print("POST Career Interest - STATUS: ${response.statusCode}");
-      print("POST Career Interest - BODY: ${response.body}");
+      print("POST Career Interest - BODY: ${response.data}");
 
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else {
-        print("⚠️ Gagal tambah minat karir: ${response.body}");
-        throw Exception('Failed to create career interest');
-      }
-    } catch (e) {
-      print("❌ Error tambah minat karir: $e");
+      return response.data;
+    } on DioException catch (e) {
+      print("❌ Error tambah minat karir: ${e.message}");
       rethrow;
     }
   }
@@ -491,38 +386,18 @@ class ApiService {
     String careerInterestId,
     CareerInterestModel careerInterest,
   ) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
-
-    if (token == null) {
-      print("❌ Token tidak ditemukan");
-      throw Exception('Unauthorized');
-    }
-
-    final url = Uri.parse(ApiConfig.updateCareerInterest(careerInterestId));
-
     try {
-      final response = await http.put(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(careerInterest.toJsonPut()),
+      final response = await _dio.put(
+        ApiConfig.updateCareerInterest(careerInterestId),
+        data: careerInterest.toJsonPut(),
       );
 
-      print("PUT Career Interest - URL: $url");
       print("PUT Career Interest - STATUS: ${response.statusCode}");
-      print("PUT Career Interest - BODY: ${response.body}");
+      print("PUT Career Interest - BODY: ${response.data}");
 
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else {
-        print("⚠️ Gagal update minat karir: ${response.body}");
-        throw Exception('Failed to update career interest');
-      }
-    } catch (e) {
-      print("❌ Error update minat karir: $e");
+      return response.data;
+    } on DioException catch (e) {
+      print("❌ Error update minat karir: ${e.message}");
       rethrow;
     }
   }
@@ -531,76 +406,48 @@ class ApiService {
   Future<Map<String, dynamic>> deleteCareerInterest(
     String careerInterestId,
   ) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
-
-    if (token == null) {
-      print("❌ Token tidak ditemukan");
-      throw Exception('Unauthorized');
-    }
-
-    final url = Uri.parse(ApiConfig.deleteCareerInterest(careerInterestId));
-
     try {
-      final response = await http.delete(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
+      final response = await _dio.delete(
+        ApiConfig.deleteCareerInterest(careerInterestId),
       );
 
-      print("DELETE Career Interest - URL: $url");
       print("DELETE Career Interest - STATUS: ${response.statusCode}");
-      print("DELETE Career Interest - BODY: ${response.body}");
+      print("DELETE Career Interest - BODY: ${response.data}");
 
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else {
-        print("⚠️ Gagal hapus minat karir: ${response.body}");
-        throw Exception('Failed to delete career interest');
-      }
-    } catch (e) {
-      print("❌ Error hapus minat karir: $e");
+      return response.data;
+    } on DioException catch (e) {
+      print("❌ Error hapus minat karir: ${e.message}");
       rethrow;
     }
   }
 
-  // ================== GET REFERENSI ==================
+  //  -----------------------------------------------------------------------REFERENSI
+
+  // ================== GET REFERENCE ==================
   Future<List<ReferenceModel>> getReference() async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
     final talentId = prefs.getString('talentId');
 
-    if (token == null || talentId == null) {
-      print("❌ Token atau TalentId tidak ditemukan");
+    if (talentId == null) {
+      print("❌ TalentId tidak ditemukan");
       throw Exception('Unauthorized');
     }
 
-    final url = Uri.parse(ApiConfig.getReferenceByTalent(talentId));
-
     try {
-      final response = await http.get(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
+      final response = await _dio.get(ApiConfig.getReferenceByTalent(talentId));
 
-      print("GET Reference - URL: $url");
       print("GET Reference - STATUS: ${response.statusCode}");
-      print("GET Reference - BODY: ${response.body}");
+      print("GET Reference - BODY: ${response.data}");
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
+        final List<dynamic> data = response.data;
         return data.map((json) => ReferenceModel.fromJson(json)).toList();
       } else {
-        print("⚠️ Gagal ambil referensi: ${response.body}");
+        print("⚠️ Gagal ambil referensi: ${response.data}");
         throw Exception('Failed to load reference');
       }
-    } catch (e) {
-      print("❌ Error ambil referensi: $e");
+    } on DioException catch (e) {
+      print("❌ Error ambil referensi: ${e.message}");
       rethrow;
     }
   }
@@ -608,38 +455,30 @@ class ApiService {
   // ================== CREATE REFERENSI ==================
   Future<Map<String, dynamic>> createReference(ReferenceModel reference) async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
     final talentId = prefs.getString('talentId');
 
-    if (token == null || talentId == null) {
-      print("❌ Token atau TalentId tidak ditemukan");
+    if (talentId == null) {
+      print("❌ TalentId tidak ditemukan");
       throw Exception('Unauthorized');
     }
 
-    final url = Uri.parse(ApiConfig.createReference());
-
     try {
-      final response = await http.post(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(reference.toJsonPost(talentId)),
+      final response = await _dio.post(
+        ApiConfig.createReference(),
+        data: reference.toJsonPost(talentId),
       );
 
-      print("POST Reference - URL: $url");
       print("POST Reference - STATUS: ${response.statusCode}");
-      print("POST Reference - BODY: ${response.body}");
+      print("POST Reference - BODY: ${response.data}");
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return response.data;
       } else {
-        print("⚠️ Gagal tambah referensi: ${response.body}");
+        print("⚠️ Gagal tambah referensi: ${response.data}");
         throw Exception('Failed to create reference');
       }
-    } catch (e) {
-      print("❌ Error tambah referensi: $e");
+    } on DioException catch (e) {
+      print("❌ Error tambah referensi: ${e.message}");
       rethrow;
     }
   }
@@ -649,78 +488,164 @@ class ApiService {
     String referenceId,
     ReferenceModel reference,
   ) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
-
-    if (token == null) {
-      print("❌ Token tidak ditemukan");
-      throw Exception('Unauthorized');
-    }
-
-    final url = Uri.parse(ApiConfig.updateReference(referenceId));
-
     try {
-      final response = await http.put(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(reference.toJsonPut()),
+      final response = await _dio.put(
+        ApiConfig.updateReference(referenceId),
+        data: reference.toJsonPut(),
       );
 
-      print("PUT Reference - URL: $url");
       print("PUT Reference - STATUS: ${response.statusCode}");
-      print("PUT Reference - BODY: ${response.body}");
+      print("PUT Reference - BODY: ${response.data}");
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return response.data;
       } else {
-        print("⚠️ Gagal update referensi: ${response.body}");
+        print("⚠️ Gagal update referensi: ${response.data}");
         throw Exception('Failed to update reference');
       }
-    } catch (e) {
-      print("❌ Error update referensi: $e");
+    } on DioException catch (e) {
+      print("❌ Error update referensi: ${e.message}");
       rethrow;
     }
   }
 
   // ================== DELETE REFERENSI ==================
   Future<Map<String, dynamic>> deleteReference(String referenceId) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
-
-    if (token == null) {
-      print("❌ Token tidak ditemukan");
-      throw Exception('Unauthorized');
-    }
-
-    final url = Uri.parse(ApiConfig.deleteReference(referenceId));
-
     try {
-      final response = await http.delete(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
+      final response = await _dio.delete(
+        ApiConfig.deleteReference(referenceId),
       );
 
-      print("DELETE Reference - URL: $url");
       print("DELETE Reference - STATUS: ${response.statusCode}");
-      print("DELETE Reference - BODY: ${response.body}");
+      print("DELETE Reference - BODY: ${response.data}");
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return response.data;
       } else {
-        print("⚠️ Gagal hapus referensi: ${response.body}");
+        print("⚠️ Gagal hapus referensi: ${response.data}");
         throw Exception('Failed to delete reference');
       }
-    } catch (e) {
-      print("❌ Error hapus referensi: $e");
+    } on DioException catch (e) {
+      print("❌ Error hapus referensi: ${e.message}");
       rethrow;
     }
   }
+
+  // AKADEMIK -------------------------------------AKADEMIK -------------------------------AKADEMIK
+
+  //  -----------------------------------------------------------------------PENDIDIKAN
+
+  // ================== GET PENDIDIKAN ==================
+  Future<List<EducationModel>> getEducation() async {
+    final prefs = await SharedPreferences.getInstance();
+    final talentId = prefs.getString('talentId');
+
+    if (talentId == null) {
+      print("❌ TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      final response = await _dio.get(ApiConfig.getEducationByTalent(talentId));
+
+      print("GET Education - STATUS: ${response.statusCode}");
+      print("GET Education - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        return data.map((json) => EducationModel.fromJson(json)).toList();
+      } else {
+        print("⚠️ Gagal ambil data pendidikan: ${response.data}");
+        throw Exception('Failed to load education');
+      }
+    } on DioException catch (e) {
+      print("❌ Error ambil pendidikan: ${e.message}");
+      rethrow;
+    }
+  }
+
+  // ================== CREATE PENDIDIKAN ==================
+  Future<Map<String, dynamic>> createEducation(EducationModel education) async {
+    final prefs = await SharedPreferences.getInstance();
+    final talentId = prefs.getString('talentId');
+
+    if (talentId == null) {
+      print("❌ TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      final response = await _dio.post(
+        ApiConfig.createEducation(),
+        data: education.toJsonPost(talentId),
+      );
+
+      print("POST Education - STATUS: ${response.statusCode}");
+      print("POST Education - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        print("⚠️ Gagal tambah pendidikan: ${response.data}");
+        throw Exception('Failed to create education');
+      }
+    } on DioException catch (e) {
+      print("❌ Error tambah pendidikan: ${e.message}");
+      rethrow;
+    }
+  }
+
+  // ================== UPDATE PENDIDIKAN ==================
+  Future<Map<String, dynamic>> updateEducation(
+    String educationId,
+    EducationModel education,
+  ) async {
+    try {
+      final response = await _dio.put(
+        ApiConfig.updateEducation(educationId),
+        data: education.toJsonPut(),
+      );
+
+      print("PUT Education - STATUS: ${response.statusCode}");
+      print("PUT Education - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        print("⚠️ Gagal update pendidikan: ${response.data}");
+        throw Exception('Failed to update education');
+      }
+    } on DioException catch (e) {
+      print("❌ Error update pendidikan: ${e.message}");
+      rethrow;
+    }
+  }
+
+  // ================== DELETE PENDIDIKAN ==================
+  Future<Map<String, dynamic>> deleteEducation(String educationId) async {
+    try {
+      final response = await _dio.delete(
+        ApiConfig.deleteEducation(educationId),
+      );
+
+      print("DELETE Education - STATUS: ${response.statusCode}");
+      print("DELETE Education - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        print("⚠️ Gagal hapus pendidikan: ${response.data}");
+        throw Exception('Failed to delete education');
+      }
+    } on DioException catch (e) {
+      print("❌ Error hapus pendidikan: ${e.message}");
+      rethrow;
+    }
+  }
+
+  //  -----------------------------------------------------------------------BAHASA
+
+  //  -----------------------------------------------------------------------PENGHARGAAN
 
   // --------------------------------------------------------------------------LOKER UMUM-----------------------------------------------------------
 
