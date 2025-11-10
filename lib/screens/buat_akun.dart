@@ -55,6 +55,19 @@ class _BuatAkunPageState extends State<BuatAkunPage> {
   String? _confirmPasswordError;
 
   @override
+  void initState() {
+    super.initState();
+    // Add listeners untuk validasi real-time
+    _namaController.addListener(_validateNama);
+    _emailController.addListener(_validateEmail);
+    _passwordController.addListener(() {
+      _validatePassword();
+      _validateConfirmPassword(); // Re-validate confirm password
+    });
+    _confirmPasswordController.addListener(_validateConfirmPassword);
+  }
+
+  @override
   void dispose() {
     _namaController.dispose();
     _emailController.dispose();
@@ -93,10 +106,20 @@ class _BuatAkunPageState extends State<BuatAkunPage> {
 
   void _validatePassword() {
     setState(() {
-      if (_passwordController.text.isEmpty) {
+      String password = _passwordController.text;
+
+      if (password.isEmpty) {
         _passwordError = 'Password tidak boleh kosong';
-      } else if (_passwordController.text.length < 8) {
+      } else if (password.length < 8) {
         _passwordError = 'Password minimal 8 karakter';
+      } else if (!RegExp(r'[A-Z]').hasMatch(password)) {
+        _passwordError = 'Password harus mengandung huruf besar';
+      } else if (!RegExp(r'[a-z]').hasMatch(password)) {
+        _passwordError = 'Password harus mengandung huruf kecil';
+      } else if (!RegExp(r'[0-9]').hasMatch(password)) {
+        _passwordError = 'Password harus mengandung angka';
+      } else if (!RegExp(r'[!@#\$%^&*(),.?":{}|<>]').hasMatch(password)) {
+        _passwordError = 'Password harus mengandung karakter spesial';
       } else {
         _passwordError = null;
       }
@@ -115,17 +138,35 @@ class _BuatAkunPageState extends State<BuatAkunPage> {
     });
   }
 
-  Future<void> _registerTalent() async {
-    if (!_formKey.currentState!.validate()) return;
+  bool _isFormValid() {
+    return _namaError == null &&
+        _emailError == null &&
+        _passwordError == null &&
+        _confirmPasswordError == null &&
+        _namaController.text.isNotEmpty &&
+        _emailController.text.isNotEmpty &&
+        _passwordController.text.isNotEmpty &&
+        _confirmPasswordController.text.isNotEmpty;
+  }
 
-    // Validasi password match
-    if (_passwordController.text != _confirmPasswordController.text) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Password tidak cocok')));
+  Future<void> _registerTalent() async {
+    // Trigger all validations
+    _validateNama();
+    _validateEmail();
+    _validatePassword();
+    _validateConfirmPassword();
+
+    if (!_isFormValid()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Mohon lengkapi semua field dengan benar'),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
-    debugPrint("🔍 Mencoba kirim data register..."); // <=== CEK DI SINI
+
+    debugPrint("🔍 Mencoba kirim data register...");
 
     setState(() => _isLoading = true);
 
@@ -149,18 +190,32 @@ class _BuatAkunPageState extends State<BuatAkunPage> {
       var responseBody = await response.stream.bytesToString();
 
       if (response.statusCode == 200) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("Registrasi berhasil!")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Registrasi berhasil!")),
+        );
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HalamanLogin()),
         );
       } else {
         debugPrint("Server error ${response.statusCode}:\n$responseBody");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Registrasi gagal: ${response.statusCode}"),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } catch (e) {
       debugPrint("Gagal terhubung ke server.\nCek koneksi internet Anda.");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Gagal terhubung ke server"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
@@ -283,7 +338,7 @@ class _BuatAkunPageState extends State<BuatAkunPage> {
                 AnimatedPasswordField(
                   controller: _passwordController,
                   focusNode: _passwordFocus,
-                  label: 'Password minimal 8 karakter',
+                  label: 'Password',
                   isPasswordVisible: _isPasswordVisible,
                   onToggleVisibility: () {
                     setState(() {
@@ -291,9 +346,27 @@ class _BuatAkunPageState extends State<BuatAkunPage> {
                     });
                   },
                 ),
+                // Hint text untuk password
+                Padding(
+                  padding: const EdgeInsets.only(top: 6, left: 12, right: 12),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Min. 8 karakter, huruf besar, kecil, angka, simbol',
+                      style: TextStyle(
+                        color: _passwordError != null 
+                            ? Colors.red 
+                            : const Color(0xFF65758C),
+                        fontSize: 10,
+                        fontFamily: 'Poppins',
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
+                ),
                 if (_passwordError != null)
                   Padding(
-                    padding: const EdgeInsets.only(top: 6, left: 12),
+                    padding: const EdgeInsets.only(top: 4, left: 12),
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: Text(

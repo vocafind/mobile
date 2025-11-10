@@ -1,11 +1,13 @@
 class ApiConfig {
   // Ganti IP dengan IP komputer server kamu
-  static const String baseUrl = "http://192.168.1.5:5035/api";
+  static const String baseUrl = "http://10.136.144.118:5035/api";
+  static const String baseUrlFoto = "http://10.136.144.118:5035/";
 
   // ------------------------------------------------------------- TALENTS AUTH
 
-  static const String registerTalent = "$baseUrl/Talents/register";   // Register
-  static const String loginTalent = "$baseUrl/Talents/login";   // Login
+  static const String registerTalent = "$baseUrl/Auth/registerTalent";   // Register
+  static const String loginTalent = "$baseUrl/Auth/loginTalent";   // Login
+  static const String refreshToken = "$baseUrl/Auth/refresh-token";   // Login
 
 
 

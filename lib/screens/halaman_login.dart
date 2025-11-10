@@ -53,18 +53,17 @@ class _HalamanLoginState extends State<HalamanLogin> {
     final result = await ApiService().loginTalent(email, password);
 
     // ✅ Jika login berhasil dan ada token
-    if (result['token'] != null) {
+    if (result['accessToken'] != null) {
       final prefs = await SharedPreferences.getInstance();
 
-      await prefs.setString('token', result['token']);
+      await prefs.setString('token', result['accessToken']);
+      await prefs.setString('refreshToken', result['refreshToken']);
       await prefs.setString('talentId', result['talentId']);
       await prefs.setString('nama', result['message']); // opsional
 
-      // ✅ Tambahkan di sini untuk test
       print("TOKEN: ${prefs.getString('token')}");
       print("TALENT ID: ${prefs.getString('talentId')}");
 
-      // Lanjut ke halaman beranda
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HalamanBeranda()),
@@ -318,7 +317,7 @@ class _AnimatedTextFieldState extends State<AnimatedTextField> {
         boxShadow: _isFocused
             ? [
                 BoxShadow(
-                  color: const Color(0xFF1548F5).withValues(alpha:0.15),
+                  color: const Color(0xFF1548F5).withValues(alpha: 0.15),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 ),
@@ -452,7 +451,7 @@ class _AnimatedPasswordFieldState extends State<AnimatedPasswordField> {
         boxShadow: _isFocused
             ? [
                 BoxShadow(
-                  color: const Color(0xFF1548F5).withValues(alpha:0.15),
+                  color: const Color(0xFF1548F5).withValues(alpha: 0.15),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 ),

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:jobfair/api/endpoints.dart';
 import 'package:jobfair/models/talent_profile_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'tab_media_sosial.dart';
 import 'tab_minat_karir.dart';
 import 'tab_referensi.dart';
 import 'package:jobfair/api/api_service.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class TabProfil extends StatefulWidget {
   const TabProfil({super.key});
@@ -18,6 +21,8 @@ class _TabProfilState extends State<TabProfil> {
   int _selectedSubTab = 0;
 
   // Data profil dari API
+  File? _selectedImage;
+  bool _isUploadingImage = false;
   TalentProfileModel? _profil;
   bool _isLoading = true;
   String? _editingField;
@@ -27,6 +32,71 @@ class _TabProfilState extends State<TabProfil> {
   void initState() {
     super.initState();
     _loadProfil();
+  }
+
+  Future<void> _pickAndUploadImage() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+
+      if (image == null) return;
+
+      setState(() {
+        _selectedImage = File(image.path);
+        _isUploadingImage = true;
+      });
+
+      final prefs = await SharedPreferences.getInstance();
+      final talentId = prefs.getString('talentId');
+
+      if (talentId == null) {
+        _showSnackBar('Error: ID talent tidak ditemukan', isError: true);
+        setState(() {
+          _isUploadingImage = false;
+        });
+        return;
+      }
+
+      // Upload foto
+      final result = await ApiService().updateProfilTalent(
+        talentId: talentId,
+        fotoProfil: _selectedImage!,
+        nama: _profil!.nama,
+        alamat: _profil!.alamat,
+        nomorTelepon: _profil!.nomorTelepon,
+        lokasiKerjaDiinginkan: _profil!.lokasiKerjaDiinginkan,
+        statusPekerjaanSaatIni: _profil!.statusPekerjaanSaatIni,
+        preferensiGaji: _profil!.preferensiGaji,
+        preferensiJamKerjaMulai: _profil!.preferensiJamKerjaMulai,
+        preferensiJamKerjaSelesai: _profil!.preferensiJamKerjaSelesai,
+        preferensiPerjalananDinas: _profil!.preferensiPerjalananDinas,
+      );
+
+      setState(() {
+        _isUploadingImage = false;
+      });
+
+      if (result['success'] == true) {
+        _showSnackBar('Foto profil berhasil diperbarui');
+        await _loadProfil();
+      } else {
+        _showSnackBar(
+          result['message'] ?? 'Gagal memperbarui foto profil',
+          isError: true,
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isUploadingImage = false;
+      });
+      _showSnackBar('Gagal mengupload foto: $e', isError: true);
+      debugPrint('Error upload foto: $e');
+    }
   }
 
   Future<void> _loadProfil() async {
@@ -79,6 +149,7 @@ class _TabProfilState extends State<TabProfil> {
 
     final result = await ApiService().updateProfilTalent(
       talentId: talentId,
+      //fotoProfil tambahkan
       nama: _profil!.nama,
       alamat: _profil!.alamat,
       nomorTelepon: _profil!.nomorTelepon,
@@ -341,13 +412,7 @@ class _TabProfilState extends State<TabProfil> {
             ),
           ),
           const SizedBox(height: 18),
-          _buildProfileField(
-            Icons.photo_camera_outlined,
-            'Foto profil',
-            hasAvatar: true,
-            isFirst: true,
-            avatarUrl: profil.fotoProfil,
-          ),
+          _buildFotoProfilField(profil.fotoProfil),
           _buildInlineEditableField(
             Icons.person_outline,
             'Nama',
@@ -938,6 +1003,114 @@ class _TabProfilState extends State<TabProfil> {
             fontFamily: 'Poppins',
             fontWeight: FontWeight.w500,
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFotoProfilField(String? avatarUrl) {
+    return GestureDetector(
+      onTap: _isUploadingImage ? null : _pickAndUploadImage,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            bottom: BorderSide(color: Color(0xFFE8E8E8), width: 1),
+          ),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.photo_camera_outlined,
+              size: 24,
+              color: Colors.black54,
+            ),
+            const SizedBox(width: 20),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Foto profil',
+                    style: TextStyle(
+                      color: Color(0xFF515151),
+                      fontSize: 16,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Ketuk untuk mengubah',
+                    style: TextStyle(
+                      color: Color(0xFF999999),
+                      fontSize: 12,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Stack(
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD9D9D9),
+                    shape: BoxShape.circle,
+                    image: _selectedImage != null
+                        ? DecorationImage(
+                            image: FileImage(_selectedImage!),
+                            fit: BoxFit.cover,
+                          )
+                        : (avatarUrl != null && avatarUrl.isNotEmpty
+                              ? DecorationImage(
+                                  image: NetworkImage(
+                                    '${ApiConfig.baseUrlFoto}/$avatarUrl',
+                                  ),
+                                  fit: BoxFit.cover,
+                                )
+                              : null),
+                  ),
+                  child:
+                      (avatarUrl == null || avatarUrl.isEmpty) &&
+                          _selectedImage == null
+                      ? const Icon(
+                          Icons.person,
+                          size: 30,
+                          color: Colors.white54,
+                        )
+                      : null,
+                ),
+                if (_isUploadingImage)
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.5),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Center(
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
         ),
       ),
     );

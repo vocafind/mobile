@@ -11,13 +11,9 @@ import 'package:jobfair/models/talent_social_media_model.dart';
 import 'package:jobfair/models/talent_career_interest_model.dart';
 import 'package:jobfair/models/talent_reference_model.dart';
 
-
 class ApiService {
-  
-
-
-
   // --------------------------------------------------------------------------Talents-----------------------------------------------------------
+
   // ================== REGISTER ==================
   Future<http.StreamedResponse> registerTalent(
     Map<String, String> fields,
@@ -46,32 +42,75 @@ class ApiService {
       final response = await http.post(
         url,
         headers: {"Content-Type": "application/x-www-form-urlencoded"},
-        body: {
-          "Email": email, // Gunakan huruf besar "E" karena DTO pakai Email
-          "Password": password,
-        },
+        body: {"Email": email, "Password": password},
       );
 
       print("STATUS: ${response.statusCode}");
       print("RESPONSE: ${response.body}");
 
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body); // { message, token, talentId }
-      } else {
-        return jsonDecode(response.body); // { message: ... }
-      }
+      return jsonDecode(response.body);
     } catch (e) {
       return {"message": "Gagal terhubung ke server"};
     }
   }
 
+  // ================== REFRESH TOKEN ==================
+  Future<bool> refreshAccessToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final refreshToken = prefs.getString('refreshToken');
 
+    if (refreshToken == null) {
+      print("❌ Tidak ada refresh token tersimpan");
+      return false;
+    }
 
+    final url = Uri.parse(ApiConfig.refreshToken);
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"refreshToken": refreshToken}),
+      );
+
+      print("REFRESH STATUS: ${response.statusCode}");
+      print("REFRESH RESPONSE: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        final newAccessToken = data['accessToken'];
+        final newRefreshToken = data['refreshToken'];
+
+        if (newAccessToken == null || newRefreshToken == null) {
+          print("❌ Response tidak mengandung token baru!");
+          return false;
+        }
+
+        await prefs.setString('token', newAccessToken);
+        await prefs.setString('refreshToken', newRefreshToken);
+
+        print("✅ Token baru berhasil disimpan ke SharedPreferences");
+        return true;
+      } else if (response.statusCode == 401) {
+        print("⚠️ Refresh token invalid atau expired");
+        await prefs.clear();
+        return false;
+      } else {
+        print("⚠️ Refresh token gagal: ${response.body}");
+        return false;
+      }
+    } catch (e) {
+      print("❌ Error saat refresh token: $e");
+      return false;
+    }
+  }
 
   // ================== GET PROFIL / DATA DIRI ==================
   Future<TalentProfileModel?> getProfilDataDiri() async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+    String? token = prefs.getString('token');
+    final refreshToken = prefs.getString('refreshToken');
     final talentId = prefs.getString('talentId');
 
     if (token == null || talentId == null) {
@@ -81,25 +120,43 @@ class ApiService {
 
     final url = Uri.parse(ApiConfig.profilDataDiri(talentId));
 
-    try {
-      final response = await http.get(
+    Future<http.Response> getProfileRequest(String? token) async {
+      return await http.get(
         url,
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
       );
+    }
+
+    try {
+      var response = await getProfileRequest(token);
 
       print("URL: $url");
       print("STATUS: ${response.statusCode}");
       print("BODY: ${response.body}");
 
+      // ✅ Jika token expired (401), coba refresh token
+      if (response.statusCode == 401 && refreshToken != null) {
+        print("🔄 Token expired, mencoba refresh token...");
+        final refreshed = await refreshAccessToken();
+
+        if (refreshed) {
+          final newPrefs = await SharedPreferences.getInstance();
+          final newToken = newPrefs.getString('token');
+          print("✅ Token baru didapat, ulangi request pakai token baru...");
+          response = await getProfileRequest(newToken);
+        } else {
+          print("❌ Refresh token gagal, user harus login ulang.");
+          await prefs.clear();
+          return null;
+        }
+      }
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-
-        // Simpan cache profil
         prefs.setString('cachedProfile', response.body);
-
         return TalentProfileModel.fromJson(data);
       } else {
         print("⚠️ Gagal ambil data profil: ${response.body}");
@@ -191,9 +248,6 @@ class ApiService {
     }
   }
 
-
-
-
   // ================== GET SOCIAL MEDIA ==================
   Future<List<SocialMediaModel>> getSocialMedia() async {
     final prefs = await SharedPreferences.getInstance();
@@ -234,7 +288,9 @@ class ApiService {
   }
 
   // ================== CREATE SOCIAL MEDIA ==================
-  Future<Map<String, dynamic>> createSocialMedia(SocialMediaModel socialMedia) async {
+  Future<Map<String, dynamic>> createSocialMedia(
+    SocialMediaModel socialMedia,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
     final talentId = prefs.getString('talentId');
@@ -273,7 +329,10 @@ class ApiService {
   }
 
   // ================== UPDATE SOCIAL MEDIA ==================
-  Future<Map<String, dynamic>> updateSocialMedia(String socialId, SocialMediaModel socialMedia) async {
+  Future<Map<String, dynamic>> updateSocialMedia(
+    String socialId,
+    SocialMediaModel socialMedia,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
@@ -347,11 +406,6 @@ class ApiService {
     }
   }
 
-
-
-
-
-
   // ================== GET MINAT KARIR ==================
   Future<List<CareerInterestModel>> getCareerInterest() async {
     final prefs = await SharedPreferences.getInstance();
@@ -392,7 +446,9 @@ class ApiService {
   }
 
   // ================== CREATE MINAT KARIR ==================
-  Future<Map<String, dynamic>> createCareerInterest(CareerInterestModel careerInterest) async {
+  Future<Map<String, dynamic>> createCareerInterest(
+    CareerInterestModel careerInterest,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
     final talentId = prefs.getString('talentId');
@@ -431,7 +487,10 @@ class ApiService {
   }
 
   // ================== UPDATE MINAT KARIR ==================
-  Future<Map<String, dynamic>> updateCareerInterest(String careerInterestId, CareerInterestModel careerInterest) async {
+  Future<Map<String, dynamic>> updateCareerInterest(
+    String careerInterestId,
+    CareerInterestModel careerInterest,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
@@ -469,7 +528,9 @@ class ApiService {
   }
 
   // ================== DELETE MINAT KARIR ==================
-  Future<Map<String, dynamic>> deleteCareerInterest(String careerInterestId) async {
+  Future<Map<String, dynamic>> deleteCareerInterest(
+    String careerInterestId,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
@@ -504,16 +565,6 @@ class ApiService {
       rethrow;
     }
   }
-
-
-
-
-
-
-
-
-
-
 
   // ================== GET REFERENSI ==================
   Future<List<ReferenceModel>> getReference() async {
@@ -594,7 +645,10 @@ class ApiService {
   }
 
   // ================== UPDATE REFERENSI ==================
-  Future<Map<String, dynamic>> updateReference(String referenceId, ReferenceModel reference) async {
+  Future<Map<String, dynamic>> updateReference(
+    String referenceId,
+    ReferenceModel reference,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
@@ -667,46 +721,6 @@ class ApiService {
       rethrow;
     }
   }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   // --------------------------------------------------------------------------LOKER UMUM-----------------------------------------------------------
 
