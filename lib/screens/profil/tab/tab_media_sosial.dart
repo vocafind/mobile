@@ -139,22 +139,26 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
     );
   }
 
-  void _showAddEditModal({SocialMediaModel? socialMedia}) {
-    final isEdit = socialMedia != null;
-    
-    if (socialMedia != null) {
-      _platformController.text = socialMedia.platform;
-      _usernameController.text = socialMedia.username;
-      _urlController.text = socialMedia.url;
-    } else {
-      _clearControllers();
-    }
+ void _showAddEditModal({SocialMediaModel? socialMedia}) {
+  final isEdit = socialMedia != null;
+  
+  if (socialMedia != null) {
+    _platformController.text = socialMedia.platform;
+    _usernameController.text = socialMedia.username;
+    _urlController.text = socialMedia.url;
+  } else {
+    _clearControllers();
+  }
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Container(
         height: MediaQuery.of(context).size.height * 0.75,
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -328,8 +332,9 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildTextField({
     required TextEditingController controller,

@@ -139,21 +139,25 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
   }
 
   void _showAddEditModal({CareerInterestModel? careerInterest}) {
-    final isEdit = careerInterest != null;
-    
-    if (careerInterest != null) {
-      _bidangController.text = careerInterest.bidangKetertarikan;
-      _alasanController.text = careerInterest.alasan;
-      _selectedLevel = careerInterest.tingkatKetertarikan;
-    } else {
-      _clearControllers();
-    }
+  final isEdit = careerInterest != null;
+  
+  if (careerInterest != null) {
+    _bidangController.text = careerInterest.bidangKetertarikan;
+    _alasanController.text = careerInterest.alasan;
+    _selectedLevel = careerInterest.tingkatKetertarikan;
+  } else {
+    _clearControllers();
+  }
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: StatefulBuilder(
         builder: (context, setModalState) => Container(
           height: MediaQuery.of(context).size.height * 0.8,
           decoration: const BoxDecoration(
@@ -393,7 +397,8 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   IconData _getInterestIcon(String level) {

@@ -531,7 +531,7 @@ class _TabProfilState extends State<TabProfil> {
             profil.preferensiPerjalananDinas ?? 'Tidak',
             isLast: true,
           ),
-          const SizedBox(height: 30),
+          const SizedBox(height: 100),
         ],
       ),
     );

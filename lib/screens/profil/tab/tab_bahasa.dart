@@ -32,24 +32,28 @@ class _TabBahasaState extends State<TabBahasa> {
     _selectedLevel = 'Beginner';
   }
 
-  void _showAddEditModal({Map<String, dynamic>? data, bool isEdit = false}) {
-    if (data != null) {
-      _namaBahasaController.text = data['bahasa'] ?? '';
-      _selectedLevel = data['level'] ?? 'Beginner';
-      _sertifikatController.text = data['sertifikat'] ?? '';
-      _skorController.text = data['skor'] ?? '';
-      _urlSertifikatController.text = data['urlSertifikat'] ?? '';
-    } else {
-      _clearControllers();
-    }
+ void _showAddEditModal({Map<String, dynamic>? data, bool isEdit = false}) {
+  if (data != null) {
+    _namaBahasaController.text = data['bahasa'] ?? '';
+    _selectedLevel = data['level'] ?? 'Beginner';
+    _sertifikatController.text = data['sertifikat'] ?? '';
+    _skorController.text = data['skor'] ?? '';
+    _urlSertifikatController.text = data['urlSertifikat'] ?? '';
+  } else {
+    _clearControllers();
+  }
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          height: MediaQuery.of(context).size.height * 0.8,
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: StatefulBuilder(  
+        builder: (context, setModalState) => Container(  // ← setModalState di sini
+          height: MediaQuery.of(context).size.height * 0.85,
           decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -181,7 +185,7 @@ class _TabBahasaState extends State<TabBahasa> {
                               final isSelected = _selectedLevel == level;
                               return GestureDetector(
                                 onTap: () {
-                                  setModalState(() {
+                                  setModalState(() {  // ← Sekarang setModalState sudah ada
                                     _selectedLevel = level;
                                   });
                                 },
@@ -287,8 +291,9 @@ class _TabBahasaState extends State<TabBahasa> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildTextField({
     required TextEditingController controller,

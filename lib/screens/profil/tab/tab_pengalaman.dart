@@ -30,7 +30,7 @@ class _TabPengalamanState extends State<TabPengalaman> {
                 _buildSubTab('Riwayat pekerjaan', 0),
                 const SizedBox(width: 8),
                 _buildSubTab('Proyek', 1),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 _buildSubTab('Portofolio', 2),
               ],
             ),
@@ -76,7 +76,7 @@ class _TabPengalamanState extends State<TabPengalaman> {
           text,
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 14,
+            fontSize: 13,
             fontFamily: 'Poppins',
             fontWeight: FontWeight.w500,
           ),

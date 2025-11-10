@@ -87,27 +87,31 @@ class _TabReferensiState extends State<TabReferensi> {
     );
   }
 
-  void _showAddEditModal({ReferenceModel? reference}) {
-    final isEdit = reference != null;
-    bool isSaving = false;
+ void _showAddEditModal({ReferenceModel? reference}) {
+  final isEdit = reference != null;
+  bool isSaving = false;
 
-    if (reference != null) {
-      _namaController.text = reference.nama;
-      _relasiController.text = reference.relasi;
-      _perusahaanController.text = reference.perusahaan;
-      _posisiController.text = reference.posisi;
-      _emailController.text = reference.email;
-      _teleponController.text = reference.telepon;
-      _deskripsiController.text = reference.deskripsi ?? '';
-    } else {
-      _clearControllers();
-    }
+  if (reference != null) {
+    _namaController.text = reference.nama;
+    _relasiController.text = reference.relasi;
+    _perusahaanController.text = reference.perusahaan;
+    _posisiController.text = reference.posisi;
+    _emailController.text = reference.email;
+    _teleponController.text = reference.telepon;
+    _deskripsiController.text = reference.deskripsi ?? '';
+  } else {
+    _clearControllers();
+  }
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: StatefulBuilder(
         builder: (context, setModalState) => Container(
           height: MediaQuery.of(context).size.height * 0.9,
           decoration: const BoxDecoration(
@@ -360,6 +364,7 @@ class _TabReferensiState extends State<TabReferensi> {
             ],
           ),
         ),
+      ),
       ),
     );
   }
