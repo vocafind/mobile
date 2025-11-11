@@ -102,6 +102,16 @@ class ApiConfig {
 
 
 
+  // ------------------------------------------------------------------------------------------ Soft Skill
+  
+  static String getSoftskillByTalent(String talentId) => "$baseUrl/Talents/profil/softskill/$talentId";         // GET softskill
+  static String createSoftskill() => "$baseUrl/Talents/profil/softskill/";                                      // POST softskill
+  static String updateSoftskill(String softskillId) => "$baseUrl/Talents/profil/softskill/$softskillId";                // Update softskill
+  static String deleteSoftskill(String softskillId) => "$baseUrl/Talents/profil/softskill/$softskillId";                // Hapus softskill
+
+
+
+
 
 
 

@@ -6,6 +6,7 @@ import 'package:jobfair/models/talent_award_model.dart';
 import 'package:jobfair/models/talent_certification_model.dart';
 import 'package:jobfair/models/talent_education_model.dart';
 import 'package:jobfair/models/talent_language_model.dart';
+import 'package:jobfair/models/talent_softskill_model.dart';
 import 'package:jobfair/models/talent_training_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -1081,6 +1082,122 @@ class ApiService {
       rethrow;
     }
   }
+
+
+
+
+
+
+
+
+  //  -----------------------------------------------------------------------SOFT SKILL
+
+  // ================== GET SOFT SKILL ==================
+  Future<List<SoftskillModel>> getSoftskill() async {
+    final prefs = await SharedPreferences.getInstance();
+    final talentId = prefs.getString('talentId');
+
+    if (talentId == null) {
+      print("❌ TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      final response = await _dio.get(ApiConfig.getSoftskillByTalent(talentId));
+
+      print("GET Softskill - STATUS: ${response.statusCode}");
+      print("GET Softskill - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        return data.map((json) => SoftskillModel.fromJson(json)).toList();
+      } else {
+        print("⚠️ Gagal ambil data softskill: ${response.data}");
+        throw Exception('Failed to load language');
+      }
+    } on DioException catch (e) {
+      print("❌ Error ambil softskill: ${e.message}");
+      rethrow;
+    }
+  }
+
+  // ================== CREATE SOFT SKILL ==================
+  Future<Map<String, dynamic>> createSoftskill(SoftskillModel softskill) async {
+    final prefs = await SharedPreferences.getInstance();
+    final talentId = prefs.getString('talentId');
+
+    if (talentId == null) {
+      print("❌ TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      final response = await _dio.post(
+        ApiConfig.createSoftskill(),
+        data: softskill.toJsonPost(talentId),
+      );
+
+      print("POST softskill - STATUS: ${response.statusCode}");
+      print("POST softskill - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        print("⚠️ Gagal tambah softskill: ${response.data}");
+        throw Exception('Failed to create softskill');
+      }
+    } on DioException catch (e) {
+      print("❌ Error tambah softskill: ${e.message}");
+      rethrow;
+    }
+  }
+
+  // ================== UPDATE SOFT SKILL ==================
+  Future<Map<String, dynamic>> updateSoftskill(
+    String softskillId,
+    SoftskillModel softskill,
+  ) async {
+    try {
+      final response = await _dio.put(
+        ApiConfig.updateSoftskill(softskillId),
+        data: softskill.toJsonPut(),
+      );
+
+      print("PUT softskill - STATUS: ${response.statusCode}");
+      print("PUT softskill - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        print("⚠️ Gagal update softskill: ${response.data}");
+        throw Exception('Failed to update softskill');
+      }
+    } on DioException catch (e) {
+      print("❌ Error update softskill: ${e.message}");
+      rethrow;
+    }
+  }
+
+  // ================== DELETE SOFT SKILL ==================
+  Future<Map<String, dynamic>> deleteSoftskill(String softskillId) async {
+    try {
+      final response = await _dio.delete(ApiConfig.deleteSoftskill(softskillId));
+
+      print("DELETE softskill - STATUS: ${response.statusCode}");
+      print("DELETE softskill - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        print("⚠️ Gagal hapus softskill: ${response.data}");
+        throw Exception('Failed to delete softskill');
+      }
+    } on DioException catch (e) {
+      print("❌ Error hapus softskill: ${e.message}");
+      rethrow;
+    }
+  }
+
 
 
 
