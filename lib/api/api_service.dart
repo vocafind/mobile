@@ -6,6 +6,7 @@ import 'package:jobfair/models/talent_award_model.dart';
 import 'package:jobfair/models/talent_certification_model.dart';
 import 'package:jobfair/models/talent_education_model.dart';
 import 'package:jobfair/models/talent_language_model.dart';
+import 'package:jobfair/models/talent_training_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:jobfair/models/loker_umum_detail_model.dart';
@@ -968,6 +969,124 @@ class ApiService {
       rethrow;
     }
   }
+
+
+
+
+
+  //  -----------------------------------------------------------------------PELATIHAN
+
+  // ================== GET TRAINING ==================
+  Future<List<TrainingModel>> getTraining() async {
+    final prefs = await SharedPreferences.getInstance();
+    final talentId = prefs.getString('talentId');
+
+    if (talentId == null) {
+      print("❌ TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      final response = await _dio.get(ApiConfig.getTrainingByTalent(talentId));
+
+      print("GET Training - STATUS: ${response.statusCode}");
+      print("GET Training - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        return data.map((json) => TrainingModel.fromJson(json)).toList();
+      } else {
+        print("⚠️ Gagal ambil data pelatihan: ${response.data}");
+        throw Exception('Failed to load language');
+      }
+    } on DioException catch (e) {
+      print("❌ Error ambil pelatihan: ${e.message}");
+      rethrow;
+    }
+  }
+
+  // ================== CREATE TRAINING ==================
+  Future<Map<String, dynamic>> createTraining(TrainingModel training) async {
+    final prefs = await SharedPreferences.getInstance();
+    final talentId = prefs.getString('talentId');
+
+    if (talentId == null) {
+      print("❌ TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      final response = await _dio.post(
+        ApiConfig.createTraining(),
+        data: training.toJsonPost(talentId),
+      );
+
+      print("POST Training - STATUS: ${response.statusCode}");
+      print("POST Training - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        print("⚠️ Gagal tambah pelatihan: ${response.data}");
+        throw Exception('Failed to create language');
+      }
+    } on DioException catch (e) {
+      print("❌ Error tambah pelatihan: ${e.message}");
+      rethrow;
+    }
+  }
+
+  // ================== UPDATE TRAINING ==================
+  Future<Map<String, dynamic>> updateTraining(
+    String trainingId,
+    TrainingModel training,
+  ) async {
+    try {
+      final response = await _dio.put(
+        ApiConfig.updateTraining(trainingId),
+        data: training.toJsonPut(),
+      );
+
+      print("PUT training - STATUS: ${response.statusCode}");
+      print("PUT training - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        print("⚠️ Gagal update pelatihan: ${response.data}");
+        throw Exception('Failed to update training');
+      }
+    } on DioException catch (e) {
+      print("❌ Error update pelatihan: ${e.message}");
+      rethrow;
+    }
+  }
+
+  // ================== DELETE TRAINING ==================
+  Future<Map<String, dynamic>> deleteTraining(String trainingId) async {
+    try {
+      final response = await _dio.delete(ApiConfig.deleteTraining(trainingId));
+
+      print("DELETE training - STATUS: ${response.statusCode}");
+      print("DELETE training - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        print("⚠️ Gagal hapus pelatihan: ${response.data}");
+        throw Exception('Failed to delete training');
+      }
+    } on DioException catch (e) {
+      print("❌ Error hapus pelatihan: ${e.message}");
+      rethrow;
+    }
+  }
+
+
+
+
+
+
 
 
 

@@ -82,12 +82,22 @@ class ApiConfig {
 
   // ---------------------------TALENTS Kompetensi---------------------------TALENTS Kompetensi---------------------------TALENTS Kompetensi 
 
-  // ------------------------------------------------------------------------------------------ PENGHARGAAN
+  // ------------------------------------------------------------------------------------------ SERTIFIKASI
   
   static String getCertificationByTalent(String talentId) => "$baseUrl/Talents/profil/sertifikasi/$talentId";         // GET sertifikasi
   static String createCertification() => "$baseUrl/Talents/profil/sertifikasi/";                                      // POST sertifikasi
   static String updateCertification(String certificationId) => "$baseUrl/Talents/profil/sertifikasi/$certificationId";                // Update sertifikasi
   static String deleteCertification(String certificationId) => "$baseUrl/Talents/profil/sertifikasi/$certificationId";                // Hapus sertifikasi
+
+
+
+
+  // ------------------------------------------------------------------------------------------ PELATIHAN
+  
+  static String getTrainingByTalent(String talentId) => "$baseUrl/Talents/profil/pelatihan/$talentId";         // GET pelatihan
+  static String createTraining() => "$baseUrl/Talents/profil/pelatihan/";                                      // POST pelatihan
+  static String updateTraining(String trainingId) => "$baseUrl/Talents/profil/pelatihan/$trainingId";                // Update pelatihan
+  static String deleteTraining(String trainingId) => "$baseUrl/Talents/profil/pelatihan/$trainingId";                // Hapus pelatihan
 
 
 
