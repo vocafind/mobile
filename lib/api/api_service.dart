@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:jobfair/api/api_client.dart';
+import 'package:jobfair/models/talent_award_model.dart';
 import 'package:jobfair/models/talent_education_model.dart';
 import 'package:jobfair/models/talent_language_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -642,8 +643,6 @@ class ApiService {
 
   //  -----------------------------------------------------------------------BAHASA
 
-  //  -----------------------------------------------------------------------BAHASA
-
   // ================== GET BAHASA ==================
   Future<List<LanguageModel>> getLanguages() async {
     final prefs = await SharedPreferences.getInstance();
@@ -751,6 +750,117 @@ class ApiService {
   }
 
   //  -----------------------------------------------------------------------PENGHARGAAN
+
+  // ================== GET BAHASA ==================
+  Future<List<AwardModel>> getAward() async {
+    final prefs = await SharedPreferences.getInstance();
+    final talentId = prefs.getString('talentId');
+
+    if (talentId == null) {
+      print("❌ TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      final response = await _dio.get(ApiConfig.getAwardByTalent(talentId));
+
+      print("GET Award - STATUS: ${response.statusCode}");
+      print("GET Award - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        return data.map((json) => AwardModel.fromJson(json)).toList();
+      } else {
+        print("⚠️ Gagal ambil data penghargaan: ${response.data}");
+        throw Exception('Failed to load language');
+      }
+    } on DioException catch (e) {
+      print("❌ Error ambil penghargaan: ${e.message}");
+      rethrow;
+    }
+  }
+
+  // ================== CREATE BAHASA ==================
+  Future<Map<String, dynamic>> createAward(AwardModel award) async {
+    final prefs = await SharedPreferences.getInstance();
+    final talentId = prefs.getString('talentId');
+
+    if (talentId == null) {
+      print("❌ TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      final response = await _dio.post(
+        ApiConfig.createAward(),
+        data: award.toJsonPost(talentId),
+      );
+
+      print("POST Award - STATUS: ${response.statusCode}");
+      print("POST Award - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        print("⚠️ Gagal tambah penghargaan: ${response.data}");
+        throw Exception('Failed to create language');
+      }
+    } on DioException catch (e) {
+      print("❌ Error tambah penghargaan: ${e.message}");
+      rethrow;
+    }
+  }
+
+  // ================== UPDATE BAHASA ==================
+  Future<Map<String, dynamic>> updateAward(
+    String awardId,
+    AwardModel award,
+  ) async {
+    try {
+      final response = await _dio.put(
+        ApiConfig.updateAward(awardId),
+        data: award.toJsonPut(),
+      );
+
+      print("PUT Award - STATUS: ${response.statusCode}");
+      print("PUT Award - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        print("⚠️ Gagal update penghargaan: ${response.data}");
+        throw Exception('Failed to update language');
+      }
+    } on DioException catch (e) {
+      print("❌ Error update penghargaan: ${e.message}");
+      rethrow;
+    }
+  }
+
+  // ================== DELETE BAHASA ==================
+  Future<Map<String, dynamic>> deleteAward(String awardId) async {
+    try {
+      final response = await _dio.delete(ApiConfig.deleteAward(awardId));
+
+      print("DELETE Award - STATUS: ${response.statusCode}");
+      print("DELETE Award - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        print("⚠️ Gagal hapus penghargaan: ${response.data}");
+        throw Exception('Failed to delete award');
+      }
+    } on DioException catch (e) {
+      print("❌ Error hapus penghargaan: ${e.message}");
+      rethrow;
+    }
+  }
+
+
+
+
+  
 
   // --------------------------------------------------------------------------LOKER UMUM-----------------------------------------------------------
 

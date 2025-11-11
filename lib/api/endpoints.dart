@@ -1,7 +1,7 @@
 class ApiConfig {
   // Ganti IP dengan IP komputer server kamu
-  static const String baseUrl = "http://10.136.140.68:5035/api";
-  static const String baseUrlFoto = "http://10.136.140.68:5035/";
+  static const String baseUrl = "http://10.136.144.240:5035/api";
+  static const String baseUrlFoto = "http://10.136.144.240:5035/";
 
   // ------------------------------------------------------------- TALENTS AUTH
 
@@ -64,6 +64,15 @@ class ApiConfig {
   static String createLanguage() => "$baseUrl/Talents/profil/bahasa/";                                      // POST bahasa
   static String updateLanguage(String languageId) => "$baseUrl/Talents/profil/bahasa/$languageId";                // Update bahasa
   static String deleteLanguage(String languageId) => "$baseUrl/Talents/profil/bahasa/$languageId";                // Hapus bahasa
+
+
+
+  // ------------------------------------------------------------------------------------------ PENGHARGAAN
+  
+  static String getAwardByTalent(String talentId) => "$baseUrl/Talents/profil/penghargaan/$talentId";         // GET penghargaan
+  static String createAward() => "$baseUrl/Talents/profil/penghargaan/";                                      // POST penghargaan
+  static String updateAward(String awardId) => "$baseUrl/Talents/profil/penghargaan/$awardId";                // Update penghargaan
+  static String deleteAward(String awardId) => "$baseUrl/Talents/profil/penghargaan/$awardId";                // Hapus penghargaan
 
 
 

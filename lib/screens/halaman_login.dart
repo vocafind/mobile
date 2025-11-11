@@ -50,6 +50,10 @@ class _HalamanLoginState extends State<HalamanLogin> {
       return;
     }
 
+    // ✅ Clear old session data sebelum login
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+
     final result = await ApiService().loginTalent(email, password);
 
     // ✅ Jika login berhasil dan ada token

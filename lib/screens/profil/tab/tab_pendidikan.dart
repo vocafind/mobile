@@ -197,7 +197,7 @@ class _TabPendidikanState extends State<TabPendidikan> {
                                 try {
                                   if (isEdit) {
                                     await _apiService.updateEducation(
-                                      education!.educationId!,
+                                      education.educationId!,
                                       edu,
                                     );
                                     _showSnackBar(
@@ -319,7 +319,7 @@ class _TabPendidikanState extends State<TabPendidikan> {
                                   ? null
                                   : () {
                                       Navigator.pop(context);
-                                      _showDeleteConfirmation(education!);
+                                      _showDeleteConfirmation(education);
                                     },
                               icon: const Icon(
                                 Icons.delete_outline,

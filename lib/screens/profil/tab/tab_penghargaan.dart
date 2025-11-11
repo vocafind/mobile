@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:jobfair/api/api_service.dart';
+import 'package:jobfair/models/talent_award_model.dart';
 
 class TabPenghargaan extends StatefulWidget {
   const TabPenghargaan({super.key});
@@ -8,6 +10,10 @@ class TabPenghargaan extends StatefulWidget {
 }
 
 class _TabPenghargaanState extends State<TabPenghargaan> {
+  final ApiService _apiService = ApiService();
+  List<AwardModel> _awards = [];
+  bool _isLoading = true;
+
   // Controllers
   final _judulPenghargaanController = TextEditingController();
   final _institusiController = TextEditingController();
@@ -15,6 +21,12 @@ class _TabPenghargaanState extends State<TabPenghargaan> {
   final _deskripsiController = TextEditingController();
   final _urlSertifikatController = TextEditingController();
   String _selectedBadge = 'International';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAwards();
+  }
 
   @override
   void dispose() {
@@ -35,279 +47,401 @@ class _TabPenghargaanState extends State<TabPenghargaan> {
     _selectedBadge = 'International';
   }
 
-  void _showAddEditModal({Map<String, dynamic>? data, bool isEdit = false}) {
-  if (data != null) {
-    _judulPenghargaanController.text = data['judul'] ?? '';
-    _institusiController.text = data['institusi'] ?? '';
-    _tahunController.text = data['tahun'] ?? '';
-    _deskripsiController.text = data['deskripsi'] ?? '';
-    _selectedBadge = data['badge'] ?? 'International';
-    _urlSertifikatController.text = data['urlSertifikat'] ?? '';
-  } else {
-    _clearControllers();
+  Future<void> _loadAwards() async {
+    setState(() => _isLoading = true);
+    try {
+      final awards = await _apiService.getAward();
+      setState(() {
+        _awards = awards;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      _showSnackBar('Gagal memuat data penghargaan', isError: true);
+      print("Error load awards: $e");
+    }
   }
 
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) => Padding( 
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: StatefulBuilder(  // ← StatefulBuilder di dalam Padding
-        builder: (context, setModalState) => Container(
-          height: MediaQuery.of(context).size.height * 0.8,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+  void _showSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.w500,
+            fontFamily: 'Poppins',
           ),
-          child: Column(
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: Colors.grey.shade200),
+        ),
+        backgroundColor: isError ? Colors.red[100] : Colors.white,
+        behavior: SnackBarBehavior.floating,
+        elevation: 2,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showAddEditModal({AwardModel? award}) {
+    final isEdit = award != null;
+    bool isSaving = false;
+
+    // Populate controllers if editing
+    final TextEditingController _judulController = TextEditingController(
+      text: award?.namaPenghargaan ?? '',
+    );
+    final TextEditingController _institusiController = TextEditingController(
+      text: award?.pemberiPenghargaan ?? '',
+    );
+    final TextEditingController _tahunController = TextEditingController(
+      text: award?.tahun?.toString() ?? '',
+    );
+    final TextEditingController _deskripsiController = TextEditingController(
+      text: award?.deskripsi ?? '',
+    );
+    final TextEditingController _urlSertifikatController = TextEditingController(
+      text: award?.sertifikat ?? '',
+    );
+    String _selectedBadge = award?.tingkatPenghargaan ?? 'International';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: StatefulBuilder(
+          builder: (context, setModalState) => Container(
+            height: MediaQuery.of(context).size.height * 0.8,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              children: [
+                // Header
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: Colors.grey.shade200),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: isSaving
+                            ? null
+                            : () => Navigator.pop(context),
+                      ),
+                      Expanded(
+                        child: Text(
+                          isEdit ? 'Edit Penghargaan' : 'Tambah Penghargaan',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: isSaving
+                            ? null
+                            : () async {
+                                final nama = _judulController.text.trim();
+                                final institusi = _institusiController.text.trim();
+                                final tahun = int.tryParse(
+                                  _tahunController.text.trim(),
+                                );
+                                final deskripsi = _deskripsiController.text.trim();
+                                final sertifikat = _urlSertifikatController.text.trim();
+
+                                if (nama.isEmpty ||
+                                    institusi.isEmpty ||
+                                    tahun == null) {
+                                  _showSnackBar(
+                                    "Lengkapi semua data wajib",
+                                    isError: true,
+                                  );
+                                  return;
+                                }
+
+                                setModalState(() => isSaving = true);
+
+                                final newAward = AwardModel(
+                                  awardId: award?.awardId,
+                                  namaPenghargaan: nama,
+                                  tingkatPenghargaan: _selectedBadge,
+                                  pemberiPenghargaan: institusi,
+                                  tahun: tahun,
+                                  deskripsi: deskripsi,
+                                  sertifikat: sertifikat,
+                                );
+
+                                try {
+                                  if (isEdit) {
+                                    await _apiService.updateAward(
+                                      award.awardId!,
+                                      newAward,
+                                    );
+                                    _showSnackBar(
+                                      'Berhasil memperbarui penghargaan',
+                                    );
+                                  } else {
+                                    await _apiService.createAward(newAward);
+                                    _showSnackBar(
+                                      'Berhasil menambah penghargaan',
+                                    );
+                                  }
+
+                                  await _loadAwards();
+                                  Navigator.pop(context);
+                                } catch (e) {
+                                  setModalState(() => isSaving = false);
+                                  _showSnackBar(
+                                    'Gagal menyimpan data',
+                                    isError: true,
+                                  );
+                                  print("❌ Error submit award: $e");
+                                }
+                              },
+                        child: isSaving
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text(
+                                'Simpan',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: 'Poppins',
+                                ),
+                              ),
+                      ),
+                    ],
                   ),
                 ),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    Expanded(
-                      child: Text(
-                        isEdit ? 'Edit Penghargaan' : 'Tambah Penghargaan',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        // TODO: Simpan data ke database/state management
-                        Navigator.pop(context);
-                      },
-                      child: const Text(
-                        'Simpan',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
 
-              // Form
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Keterangan
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE8F5E9),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFF81C784)),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Icon(
-                              Icons.info_outline,
-                              color: Color(0xFF388E3C),
-                              size: 20,
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                'Tambahkan penghargaan atau sertifikat yang pernah Anda raih untuk meningkatkan kredibilitas profil Anda.',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.green.shade900,
-                                  fontFamily: 'Poppins',
-                                  height: 1.4,
-                                ),
+                // Form
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Keterangan
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE8F5E9),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFF81C784)),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(
+                                Icons.info_outline,
+                                color: Color(0xFF388E3C),
+                                size: 20,
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      _buildTextField(
-                        controller: _judulPenghargaanController,
-                        label: 'Judul Penghargaan',
-                        hint: 'Contoh: Google UX Design Certificate',
-                        icon: Icons.workspace_premium_outlined,
-                        required: true,
-                      ),
-                      const SizedBox(height: 16),
-
-                      _buildTextField(
-                        controller: _deskripsiController,
-                        label: 'Deskripsi',
-                        hint: 'Jelaskan tentang penghargaan ini...',
-                        icon: Icons.description_outlined,
-                        maxLines: 4,
-                        helperText: 'Opsional - Tambahkan deskripsi singkat',
-                      ),
-                      const SizedBox(height: 16),
-
-                      _buildTextField(
-                        controller: _institusiController,
-                        label: 'Institusi Pemberi',
-                        hint: 'Contoh: Google Career Certificates',
-                        icon: Icons.business_outlined,
-                        required: true,
-                      ),
-                      const SizedBox(height: 16),
-
-                      _buildTextField(
-                        controller: _tahunController,
-                        label: 'Tahun',
-                        hint: 'Contoh: 2024',
-                        icon: Icons.calendar_today_outlined,
-                        keyboardType: TextInputType.number,
-                        required: true,
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Badge/Kategori
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: const [
-                              Text(
-                                'Kategori',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  fontFamily: 'Poppins',
-                                  color: Color(0xFF515151),
-                                ),
-                              ),
-                              Text(
-                                ' *',
-                                style: TextStyle(
-                                  color: Colors.red,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Tambahkan penghargaan atau sertifikat yang pernah Anda raih untuk meningkatkan kredibilitas profil Anda.',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.green.shade900,
+                                    fontFamily: 'Poppins',
+                                    height: 1.4,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 12),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: ['International', 'National', 'Regional', 'Local']
-                                .map((badge) {
-                              final isSelected = _selectedBadge == badge;
-                              return GestureDetector(
-                                onTap: () {
-                                  setModalState(() {
-                                    _selectedBadge = badge;
-                                  });
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 10,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? const Color(0xFF113CEE)
-                                        : Colors.grey.shade50,
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color: isSelected
-                                          ? const Color(0xFF113CEE)
-                                          : Colors.grey.shade300,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    badge,
-                                    style: TextStyle(
-                                      color: isSelected
-                                          ? Colors.white
-                                          : const Color(0xFF515151),
-                                      fontSize: 14,
-                                      fontFamily: 'Poppins',
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        _buildTextField(
+                          controller: _judulController,
+                          label: 'Nama Penghargaan',
+                          hint: 'Contoh: Google UX Design Certificate',
+                          icon: Icons.workspace_premium_outlined,
+                          required: true,
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Badge/Kategori
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: const [
+                                Text(
+                                  'Tingkat Penghargaan',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    fontFamily: 'Poppins',
+                                    color: Color(0xFF515151),
                                   ),
                                 ),
-                              );
-                            }).toList(),
+                                Text(
+                                  ' *',
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                'Regional',
+                                'National',
+                                'International',
+                              ].map((badge) {
+                                final isSelected = _selectedBadge == badge;
+                                return GestureDetector(
+                                  onTap: () {
+                                    setModalState(() {
+                                      _selectedBadge = badge;
+                                    });
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 10,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? const Color(0xFF113CEE)
+                                          : Colors.grey.shade50,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? const Color(0xFF113CEE)
+                                            : Colors.grey.shade300,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      badge,
+                                      style: TextStyle(
+                                        color: isSelected
+                                            ? Colors.white
+                                            : const Color(0xFF515151),
+                                        fontSize: 14,
+                                        fontFamily: 'Poppins',
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        _buildTextField(
+                          controller: _institusiController,
+                          label: 'Pemberi Penghargaan',
+                          hint: 'Contoh: Google Career Certificates',
+                          icon: Icons.business_outlined,
+                          required: true,
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        _buildTextField(
+                          controller: _tahunController,
+                          label: 'Tahun',
+                          hint: 'Contoh: 2024',
+                          icon: Icons.calendar_today_outlined,
+                          keyboardType: TextInputType.number,
+                          required: true,
+                        ),
+                        const SizedBox(height: 16),
+
+                        _buildTextField(
+                          controller: _deskripsiController,
+                          label: 'Deskripsi',
+                          hint: 'Jelaskan tentang penghargaan ini...',
+                          icon: Icons.description_outlined,
+                          maxLines: 4,
+                          helperText: 'Opsional - Tambahkan deskripsi singkat',
+                        ),
+                        const SizedBox(height: 16),
+
+                        _buildTextField(
+                          controller: _urlSertifikatController,
+                          label: 'URL Sertifikat',
+                          hint: 'Contoh: https://drive.google.com/file/xxx',
+                          icon: Icons.link,
+                          keyboardType: TextInputType.url,
+                          helperText: 'Opsional - Link menuju file sertifikat',
+                        ),
+
+                        // Tombol Hapus (hanya untuk edit)
+                        if (isEdit) ...[
+                          const SizedBox(height: 32),
+                          Center(
+                            child: OutlinedButton.icon(
+                              onPressed: isSaving
+                                  ? null
+                                  : () {
+                                      Navigator.pop(context);
+                                      _showDeleteConfirmation(award);
+                                    },
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.red,
+                              ),
+                              label: const Text(
+                                'Hapus Penghargaan',
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontFamily: 'Poppins',
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Colors.red),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
                           ),
                         ],
-                      ),
-                      const SizedBox(height: 16),
-
-                      _buildTextField(
-                        controller: _urlSertifikatController,
-                        label: 'URL Sertifikat',
-                        hint: 'Contoh: https://drive.google.com/file/xxx',
-                        icon: Icons.link,
-                        keyboardType: TextInputType.url,
-                        helperText: 'Opsional - Link menuju file sertifikat',
-                      ),
-
-                      // Tombol Hapus (hanya untuk edit)
-                      if (isEdit) ...[
-                        const SizedBox(height: 32),
-                        Center(
-                          child: OutlinedButton.icon(
-                            onPressed: () {
-                              Navigator.pop(context);
-                              _showDeleteConfirmation(data!);
-                            },
-                            icon: const Icon(Icons.delete_outline, color: Colors.red),
-                            label: const Text(
-                              'Hapus Penghargaan',
-                              style: TextStyle(
-                                color: Colors.red,
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: Colors.red),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 12,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        ),
                       ],
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildTextField({
     required TextEditingController controller,
@@ -371,7 +505,10 @@ class _TabPenghargaanState extends State<TabPenghargaan> {
             ),
             filled: true,
             fillColor: Colors.grey.shade50,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
             helperText: helperText,
             helperStyle: TextStyle(
               fontSize: 11,
@@ -384,139 +521,166 @@ class _TabPenghargaanState extends State<TabPenghargaan> {
     );
   }
 
-  void _showDeleteConfirmation(Map<String, dynamic> data) {
+  void _showDeleteConfirmation(AwardModel award) {
+    bool isDeleting = false;
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        backgroundColor: Colors.white,
-        title: const Text(
-          'Hapus Penghargaan',
-          style: TextStyle(
-            fontSize: 18,
-            fontFamily: 'Poppins',
-            fontWeight: FontWeight.w600,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
           ),
-        ),
-        content: Text(
-          'Apakah Anda yakin ingin menghapus ${data['judul']}?',
-          style: const TextStyle(
-            fontSize: 14,
-            fontFamily: 'Poppins',
-            color: Color(0xFF515151),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Batal',
-              style: TextStyle(
-                color: Color(0xFF515151),
-                fontSize: 14,
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w500,
-              ),
+          backgroundColor: Colors.white,
+          title: const Text(
+            'Hapus Penghargaan',
+            style: TextStyle(
+              fontSize: 18,
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w600,
             ),
           ),
-          TextButton(
-            onPressed: () {
-              // TODO: Hapus data dari database/state management
-              Navigator.pop(context);
-            },
-            child: const Text(
-              'Hapus',
-              style: TextStyle(
-                color: Colors.red,
-                fontSize: 14,
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w600,
-              ),
+          content: Text(
+            'Apakah Anda yakin ingin menghapus ${award.namaPenghargaan}?',
+            style: const TextStyle(
+              fontSize: 14,
+              fontFamily: 'Poppins',
+              color: Color(0xFF515151),
             ),
           ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: isDeleting ? null : () => Navigator.pop(context),
+              child: const Text(
+                'Batal',
+                style: TextStyle(
+                  color: Color(0xFF515151),
+                  fontSize: 14,
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: isDeleting
+                  ? null
+                  : () async {
+                      setDialogState(() => isDeleting = true);
+                      try {
+                        await _apiService.deleteAward(award.awardId!);
+                        await _loadAwards();
+                        Navigator.pop(context);
+                        _showSnackBar('Penghargaan berhasil dihapus');
+                      } catch (e) {
+                        setDialogState(() => isDeleting = false);
+                        _showSnackBar(
+                          'Gagal menghapus penghargaan',
+                          isError: true,
+                        );
+                        print("Error delete award: $e");
+                      }
+                    },
+              child: isDeleting
+                  ? const SizedBox(
+                      height: 14,
+                      width: 14,
+                      child: CircularProgressIndicator(
+                        color: Colors.red,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text(
+                      'Hapus',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontSize: 14,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 21, vertical: 20),
-      child: Column(
-        children: [
-          // Tombol Tambah
-          Align(
-            alignment: Alignment.centerRight,
-            child: GestureDetector(
-              onTap: () => _showAddEditModal(),
-              child: Container(
-                width: 39,
-                height: 39,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFF113CEE), width: 1),
-                ),
-                child: const Center(
-                  child: Text(
-                    '+',
-                    style: TextStyle(
-                      color: Color(0xFF0C32E8),
-                      fontSize: 16,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w400,
+    return RefreshIndicator(
+      onRefresh: _loadAwards,
+      color: const Color(0xFF113CEE),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 21, vertical: 20),
+        child: Column(
+          children: [
+            // Tombol Tambah
+            Align(
+              alignment: Alignment.centerRight,
+              child: GestureDetector(
+                onTap: () => _showAddEditModal(),
+                child: Container(
+                  width: 39,
+                  height: 39,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: const Color(0xFF113CEE),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      '+',
+                      style: TextStyle(
+                        color: Color(0xFF0C32E8),
+                        fontSize: 16,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 21),
+            const SizedBox(height: 21),
 
-          // Award Items
-          _buildPenghargaanItem(
-            title: 'Google UX Design Certificate',
-            institution: 'Google Career Certificates',
-            year: '2024',
-            badge: 'International',
-            isFirst: true,
-            onEdit: () {
-              _showAddEditModal(
-                data: {
-                  'judul': 'Google UX Design Certificate',
-                  'institusi': 'Google Career Certificates',
-                  'tahun': '2024',
-                  'badge': 'International',
-                  'deskripsi': '',
-                  'urlSertifikat': '',
-                },
-                isEdit: true,
-              );
-            },
-          ),
-          _buildPenghargaanItem(
-            title: 'Google UX Design Certificate',
-            institution: 'Google Career Certificates',
-            year: '2024',
-            badge: 'International',
-            isLast: true,
-            onEdit: () {
-              _showAddEditModal(
-                data: {
-                  'judul': 'Google UX Design Certificate',
-                  'institusi': 'Google Career Certificates',
-                  'tahun': '2024',
-                  'badge': 'International',
-                  'deskripsi': '',
-                  'urlSertifikat': '',
-                },
-                isEdit: true,
-              );
-            },
-          ),
+            // Loading atau Data
+            if (_isLoading)
+              const Center(
+                child: CircularProgressIndicator(color: Color(0xFF113CEE)),
+              )
+            else if (_awards.isEmpty)
+              const Text(
+                "Belum ada data penghargaan",
+                style: TextStyle(fontFamily: 'Poppins'),
+              )
+            else
+              Column(
+                children: List.generate(_awards.length, (index) {
+                  final award = _awards[index];
+                  final isFirst = index == 0;
+                  final isLast = index == _awards.length - 1;
 
-          const SizedBox(height: 80),
-        ],
+                  return _buildPenghargaanItem(
+                    title: award.namaPenghargaan,
+                    institution: award.pemberiPenghargaan,
+                    year: award.tahun?.toString() ?? '-',
+                    badge: award.tingkatPenghargaan,
+                    hasCertificate: award.sertifikat.isNotEmpty,
+                    isFirst: isFirst,
+                    isLast: isLast,
+                    onEdit: () {
+                      _showAddEditModal(award: award);
+                    },
+                  );
+                }),
+              ),
+
+            const SizedBox(height: 80),
+          ],
+        ),
       ),
     );
   }
@@ -526,6 +690,7 @@ class _TabPenghargaanState extends State<TabPenghargaan> {
     required String institution,
     required String year,
     required String badge,
+    bool hasCertificate = false,
     bool isFirst = false,
     bool isLast = false,
     VoidCallback? onEdit,
@@ -546,11 +711,11 @@ class _TabPenghargaanState extends State<TabPenghargaan> {
                 topRight: Radius.circular(20),
               )
             : isLast
-                ? const BorderRadius.only(
-                    bottomLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(20),
-                  )
-                : BorderRadius.zero,
+            ? const BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              )
+            : BorderRadius.zero,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -603,15 +768,18 @@ class _TabPenghargaanState extends State<TabPenghargaan> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Lihat sertifikat',
-                      style: TextStyle(
-                        color: Color(0xFF0E38EB),
-                        fontSize: 14,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
+                    if (hasCertificate)
+                      const Text(
+                        'Lihat sertifikat',
+                        style: TextStyle(
+                          color: Color(0xFF0E38EB),
+                          fontSize: 14,
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w400,
+                        ),
+                      )
+                    else
+                      const SizedBox(),
                     Text(
                       year,
                       style: const TextStyle(

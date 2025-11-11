@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:jobfair/api/endpoints.dart';
 import 'package:jobfair/screens/halaman_login.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'endpoints.dart';
 
 class ApiClient {
   static final ApiClient _instance = ApiClient._internal();
@@ -14,7 +13,7 @@ class ApiClient {
 
   ApiClient._internal() {
     dio = Dio(BaseOptions(
-      baseUrl: ApiConfig.baseUrl, // Set base URL kamu
+      baseUrl: ApiConfig.baseUrl,
       connectTimeout: Duration(seconds: 30),
       receiveTimeout: Duration(seconds: 30),
       headers: {
@@ -22,10 +21,8 @@ class ApiClient {
       },
     ));
 
-    // ✅ Tambahkan interceptor
     dio.interceptors.add(AuthInterceptor());
     
-    // Optional: Logger untuk debugging
     dio.interceptors.add(LogInterceptor(
       requestBody: true,
       responseBody: true,
@@ -33,12 +30,25 @@ class ApiClient {
   }
 }
 
-// ✅ Interceptor untuk handle token otomatis
 class AuthInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+    // ✅ SKIP interceptor untuk login & refresh endpoint
+    if (options.path.contains('/Auth/loginTalent') || 
+        options.path.contains('/Auth/refresh-token')) {
+      print("⏭️ Skip interceptor untuk ${options.path}");
+      return handler.next(options);
+    }
+
     final prefs = await SharedPreferences.getInstance();
     
+    // ✅ CEK: Apakah ada token sama sekali?
+    final token = prefs.getString('token');
+    if (token == null) {
+      print("⚠️ Tidak ada token, lanjutkan request tanpa auth");
+      return handler.next(options);
+    }
+
     // ✅ CEK PROAKTIF: Apakah token akan expired?
     final expiryString = prefs.getString('tokenExpiry');
     if (expiryString != null) {
@@ -51,11 +61,13 @@ class AuthInterceptor extends Interceptor {
         
         final refreshed = await _refreshToken();
         if (!refreshed) {
-          print("❌ Refresh gagal, batalkan request");
+          print("❌ Refresh gagal, clear session");
+          await prefs.clear();
+          
           return handler.reject(
             DioException(
               requestOptions: options,
-              error: 'Token refresh failed',
+              error: 'Token refresh failed, please login again',
               type: DioExceptionType.cancel,
             ),
           );
@@ -64,9 +76,9 @@ class AuthInterceptor extends Interceptor {
     }
     
     // ✅ Tambahkan token ke header
-    final token = prefs.getString('token');
-    if (token != null) {
-      options.headers['Authorization'] = 'Bearer $token';
+    final newToken = prefs.getString('token');
+    if (newToken != null) {
+      options.headers['Authorization'] = 'Bearer $newToken';
     }
     
     handler.next(options);
@@ -74,6 +86,12 @@ class AuthInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
+    // ✅ SKIP untuk login & refresh endpoint
+    if (err.requestOptions.path.contains('/Auth/loginTalent') || 
+        err.requestOptions.path.contains('/Auth/refresh-token')) {
+      return handler.next(err);
+    }
+
     // ✅ REAKTIF: Kalau dapat 401, coba refresh & retry
     if (err.response?.statusCode == 401) {
       print("⚠️ Dapat 401, mencoba refresh token...");
@@ -83,14 +101,11 @@ class AuthInterceptor extends Interceptor {
       if (refreshed) {
         print("✅ Token di-refresh, retry request...");
         
-        // Ambil token baru
         final prefs = await SharedPreferences.getInstance();
         final newToken = prefs.getString('token');
         
-        // Update header dengan token baru
         err.requestOptions.headers['Authorization'] = 'Bearer $newToken';
         
-        // ✅ RETRY request dengan token baru
         try {
           final response = await ApiClient().dio.fetch(err.requestOptions);
           return handler.resolve(response);
@@ -98,17 +113,16 @@ class AuthInterceptor extends Interceptor {
           return handler.next(err);
         }
       } else {
-        print("❌ Refresh gagal, user harus login ulang");
+        print("❌ Refresh gagal, clear session");
         final prefs = await SharedPreferences.getInstance();
         await prefs.clear();
-        HalamanLogin();
+        // TODO: Navigate ke login screen
       }
     }
     
     handler.next(err);
   }
 
-  // ✅ Function refresh token (dipanggil otomatis oleh interceptor)
   Future<bool> _refreshToken() async {
     final prefs = await SharedPreferences.getInstance();
     final refreshToken = prefs.getString('refreshToken');
@@ -119,21 +133,21 @@ class AuthInterceptor extends Interceptor {
     }
 
     try {
-      final dio = Dio(); // Dio baru tanpa interceptor (avoid infinite loop)
+      // ✅ Dio baru tanpa interceptor untuk avoid infinite loop
+      final dio = Dio(BaseOptions(baseUrl: ApiConfig.baseUrl));
+      
       final response = await dio.post(
-        ApiConfig.refreshToken,
+        '/Auth/refresh-token', // Pakai path relatif
         data: {"refreshToken": refreshToken},
       );
 
       if (response.statusCode == 200) {
         final data = response.data;
         
-        // Simpan token baru
         await prefs.setString('token', data['accessToken']);
         await prefs.setString('refreshToken', data['refreshToken']);
         
-        // Hitung expiry baru
-        final expiresIn = data['expiresIn'] ?? 900; // Default 15 menit
+        final expiresIn = data['expiresIn'] ?? 900;
         final expiryTime = DateTime.now().add(Duration(seconds: expiresIn));
         await prefs.setString('tokenExpiry', expiryTime.toIso8601String());
         

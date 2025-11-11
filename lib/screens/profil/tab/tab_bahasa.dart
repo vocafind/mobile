@@ -143,7 +143,7 @@ class _TabBahasaState extends State<TabBahasa> {
                                 try {
                                   if (isEdit) {
                                     await _apiService.updateLanguage(
-                                      language!.languageId!,
+                                      language.languageId!,
                                       lang,
                                     );
                                     _showSnackBar('Berhasil memperbarui bahasa');
@@ -338,7 +338,7 @@ class _TabBahasaState extends State<TabBahasa> {
                                   ? null
                                   : () {
                                       Navigator.pop(context);
-                                      _showDeleteConfirmation(language!);
+                                      _showDeleteConfirmation(language);
                                     },
                               icon: const Icon(
                                 Icons.delete_outline,

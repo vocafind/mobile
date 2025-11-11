@@ -52,9 +52,7 @@ class LanguageModel {
     String? profisiensi,
     String? sertifikat,
     String? skor,
-    double? nilaiAkhir,
-    int? tahunMasuk,
-    int? tahunLulus,
+
   }) {
     return LanguageModel(
       languageId: languageId ?? this.languageId,
