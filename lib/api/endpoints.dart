@@ -114,6 +114,18 @@ class ApiConfig {
 
 
 
+  // ------------------------------------------------------------------------------------------ RIWAYAT PEKERJAAN
+  
+  static String getWorkHistoryByTalent(String talentId) => "$baseUrl/Talents/profil/riwayat_pekerjaan/$talentId";         // GET WorkHistory
+  static String createWorkHistory() => "$baseUrl/Talents/profil/riwayat_pekerjaan/";                                      // POST WorkHistory
+  static String updateWorkHistory(String workHistoryId) => "$baseUrl/Talents/profil/riwayat_pekerjaan/$workHistoryId";                // Update WorkHistory
+  static String deleteWorkHistory(String workHistoryId) => "$baseUrl/Talents/profil/riwayat_pekerjaan/$workHistoryId";                // Hapus WorkHistory
+
+
+
+
+
+
 
 
   // ------------------------------------------------------------- LOKER UMUM

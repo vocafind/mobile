@@ -8,6 +8,7 @@ import 'package:jobfair/models/talent_education_model.dart';
 import 'package:jobfair/models/talent_language_model.dart';
 import 'package:jobfair/models/talent_softskill_model.dart';
 import 'package:jobfair/models/talent_training_model.dart';
+import 'package:jobfair/models/talent_workhistory_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:jobfair/models/loker_umum_detail_model.dart';
@@ -860,9 +861,6 @@ class ApiService {
     }
   }
 
-
-
-
   //  -----------------------------------------------------------------------SERTIFIKASI
 
   // ================== GET SERTIFIKASI ==================
@@ -876,7 +874,9 @@ class ApiService {
     }
 
     try {
-      final response = await _dio.get(ApiConfig.getCertificationByTalent(talentId));
+      final response = await _dio.get(
+        ApiConfig.getCertificationByTalent(talentId),
+      );
 
       print("GET Certification - STATUS: ${response.statusCode}");
       print("GET Certification - BODY: ${response.data}");
@@ -895,7 +895,9 @@ class ApiService {
   }
 
   // ================== CREATE SERTIFIKASI ==================
-  Future<Map<String, dynamic>> createCertification(CertificationModel certification) async {
+  Future<Map<String, dynamic>> createCertification(
+    CertificationModel certification,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     final talentId = prefs.getString('talentId');
 
@@ -952,9 +954,13 @@ class ApiService {
   }
 
   // ================== DELETE SERTIFIKASI ==================
-  Future<Map<String, dynamic>> deleteCertification(String certificationId) async {
+  Future<Map<String, dynamic>> deleteCertification(
+    String certificationId,
+  ) async {
     try {
-      final response = await _dio.delete(ApiConfig.deleteCertification(certificationId));
+      final response = await _dio.delete(
+        ApiConfig.deleteCertification(certificationId),
+      );
 
       print("DELETE Certification - STATUS: ${response.statusCode}");
       print("DELETE Certification - BODY: ${response.data}");
@@ -970,10 +976,6 @@ class ApiService {
       rethrow;
     }
   }
-
-
-
-
 
   //  -----------------------------------------------------------------------PELATIHAN
 
@@ -1083,13 +1085,6 @@ class ApiService {
     }
   }
 
-
-
-
-
-
-
-
   //  -----------------------------------------------------------------------SOFT SKILL
 
   // ================== GET SOFT SKILL ==================
@@ -1181,7 +1176,9 @@ class ApiService {
   // ================== DELETE SOFT SKILL ==================
   Future<Map<String, dynamic>> deleteSoftskill(String softskillId) async {
     try {
-      final response = await _dio.delete(ApiConfig.deleteSoftskill(softskillId));
+      final response = await _dio.delete(
+        ApiConfig.deleteSoftskill(softskillId),
+      );
 
       print("DELETE softskill - STATUS: ${response.statusCode}");
       print("DELETE softskill - BODY: ${response.data}");
@@ -1198,17 +1195,117 @@ class ApiService {
     }
   }
 
+  // ================== GET RIWAYAT PEKERJAAN ==================
+  Future<List<WorkHistoryModel>> getWorkHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final talentId = prefs.getString('talentId');
 
+    if (talentId == null) {
+      print("❌ TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
 
+    try {
+      final response = await _dio.get(
+        ApiConfig.getWorkHistoryByTalent(talentId),
+      );
 
+      print("GET WorkHistory - STATUS: ${response.statusCode}");
+      print("GET WorkHistory - BODY: ${response.data}");
 
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        return data.map((json) => WorkHistoryModel.fromJson(json)).toList();
+      } else {
+        print("⚠️ Gagal ambil data WorkHistory: ${response.data}");
+        throw Exception('Failed to load work history');
+      }
+    } on DioException catch (e) {
+      print("❌ Error ambil WorkHistory: ${e.message}");
+      rethrow;
+    }
+  }
 
+  // ================== CREATE RIWAYAT PEKERJAAN ==================
+  Future<Map<String, dynamic>> createWorkHistory(
+    WorkHistoryModel workHistory,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    final talentId = prefs.getString('talentId');
 
+    if (talentId == null) {
+      print("❌ TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
 
+    try {
+      final response = await _dio.post(
+        ApiConfig.createWorkHistory(),
+        data: workHistory.toJsonPost(talentId),
+      );
 
+      print("POST WorkHistory - STATUS: ${response.statusCode}");
+      print("POST WorkHistory - BODY: ${response.data}");
 
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        print("⚠️ Gagal tambah WorkHistory: ${response.data}");
+        throw Exception('Failed to create work history');
+      }
+    } on DioException catch (e) {
+      print("❌ Error tambah WorkHistory: ${e.message}");
+      rethrow;
+    }
+  }
 
+  // ================== UPDATE RIWAYAT PEKERJAAN ==================
+  Future<Map<String, dynamic>> updateWorkHistory(
+    String workHistoryId,
+    WorkHistoryModel workHistory,
+  ) async {
+    try {
+      final response = await _dio.put(
+        ApiConfig.updateWorkHistory(workHistoryId),
+        data: workHistory.toJsonPut(),
+      );
 
+      print("PUT WorkHistory - STATUS: ${response.statusCode}");
+      print("PUT WorkHistory - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        print("⚠️ Gagal update WorkHistory: ${response.data}");
+        throw Exception('Failed to update work history');
+      }
+    } on DioException catch (e) {
+      print("❌ Error update WorkHistory: ${e.message}");
+      rethrow;
+    }
+  }
+
+  // ================== DELETE RIWAYAT PEKERJAAN ==================
+  Future<Map<String, dynamic>> deleteWorkHistory(String workHistoryId) async {
+    try {
+      final response = await _dio.delete(
+        ApiConfig.deleteWorkHistory(workHistoryId),
+      );
+
+      print("DELETE WorkHistory - STATUS: ${response.statusCode}");
+      print("DELETE WorkHistory - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        print("⚠️ Gagal hapus WorkHistory: ${response.data}");
+        throw Exception('Failed to delete work history');
+      }
+    } on DioException catch (e) {
+      print("❌ Error hapus WorkHistory: ${e.message}");
+      rethrow;
+    }
+  }
 
   // --------------------------------------------------------------------------LOKER UMUM-----------------------------------------------------------
 
