@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'screens/halaman_1.dart'; // ✅ ubah ke halaman_1.dart
+import 'package:intl/date_symbol_data_local.dart'; // ✅ yang benar ini!
+import 'screens/halaman_1.dart'; // pastikan file ini benar
 
-void main() {
+void main() async { // ✅ tambahkan async
   WidgetsFlutterBinding.ensureInitialized();
+
+  await initializeDateFormatting('id_ID', null); // ✅ sudah benar sekarang
 
   // Warna status bar & navigation bar agar sesuai dengan tema light
   SystemChrome.setSystemUIOverlayStyle(
@@ -32,7 +35,7 @@ class JobFairApp extends StatelessWidget {
         primaryColor: const Color(0xFF1747A2),
         fontFamily: 'Poppins',
       ),
-      home: const Halaman1(), 
+      home: const Halaman1(),
     );
   }
 }

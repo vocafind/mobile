@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:jobfair/api/api_client.dart';
 import 'package:jobfair/models/talent_award_model.dart';
+import 'package:jobfair/models/talent_certification_model.dart';
 import 'package:jobfair/models/talent_education_model.dart';
 import 'package:jobfair/models/talent_language_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -751,7 +752,7 @@ class ApiService {
 
   //  -----------------------------------------------------------------------PENGHARGAAN
 
-  // ================== GET BAHASA ==================
+  // ================== GET PENGHARGAAN ==================
   Future<List<AwardModel>> getAward() async {
     final prefs = await SharedPreferences.getInstance();
     final talentId = prefs.getString('talentId');
@@ -780,7 +781,7 @@ class ApiService {
     }
   }
 
-  // ================== CREATE BAHASA ==================
+  // ================== CREATE PENGHARGAAN ==================
   Future<Map<String, dynamic>> createAward(AwardModel award) async {
     final prefs = await SharedPreferences.getInstance();
     final talentId = prefs.getString('talentId');
@@ -811,7 +812,7 @@ class ApiService {
     }
   }
 
-  // ================== UPDATE BAHASA ==================
+  // ================== UPDATE PENGHARGAAN ==================
   Future<Map<String, dynamic>> updateAward(
     String awardId,
     AwardModel award,
@@ -837,7 +838,7 @@ class ApiService {
     }
   }
 
-  // ================== DELETE BAHASA ==================
+  // ================== DELETE PENGHARGAAN ==================
   Future<Map<String, dynamic>> deleteAward(String awardId) async {
     try {
       final response = await _dio.delete(ApiConfig.deleteAward(awardId));
@@ -860,7 +861,118 @@ class ApiService {
 
 
 
-  
+  //  -----------------------------------------------------------------------SERTIFIKASI
+
+  // ================== GET SERTIFIKASI ==================
+  Future<List<CertificationModel>> getCertification() async {
+    final prefs = await SharedPreferences.getInstance();
+    final talentId = prefs.getString('talentId');
+
+    if (talentId == null) {
+      print("❌ TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      final response = await _dio.get(ApiConfig.getCertificationByTalent(talentId));
+
+      print("GET Certification - STATUS: ${response.statusCode}");
+      print("GET Certification - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        return data.map((json) => CertificationModel.fromJson(json)).toList();
+      } else {
+        print("⚠️ Gagal ambil data sertifikasi: ${response.data}");
+        throw Exception('Failed to load language');
+      }
+    } on DioException catch (e) {
+      print("❌ Error ambil sertifikasi: ${e.message}");
+      rethrow;
+    }
+  }
+
+  // ================== CREATE SERTIFIKASI ==================
+  Future<Map<String, dynamic>> createCertification(CertificationModel certification) async {
+    final prefs = await SharedPreferences.getInstance();
+    final talentId = prefs.getString('talentId');
+
+    if (talentId == null) {
+      print("❌ TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      final response = await _dio.post(
+        ApiConfig.createCertification(),
+        data: certification.toJsonPost(talentId),
+      );
+
+      print("POST Certification - STATUS: ${response.statusCode}");
+      print("POST Certification - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        print("⚠️ Gagal tambah sertifikasi: ${response.data}");
+        throw Exception('Failed to create language');
+      }
+    } on DioException catch (e) {
+      print("❌ Error tambah sertifikasi: ${e.message}");
+      rethrow;
+    }
+  }
+
+  // ================== UPDATE SERTIFIKASI ==================
+  Future<Map<String, dynamic>> updateCertification(
+    String certificationId,
+    CertificationModel certification,
+  ) async {
+    try {
+      final response = await _dio.put(
+        ApiConfig.updateCertification(certificationId),
+        data: certification.toJsonPut(),
+      );
+
+      print("PUT Certification - STATUS: ${response.statusCode}");
+      print("PUT Certification - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        print("⚠️ Gagal update sertifikasi: ${response.data}");
+        throw Exception('Failed to update certification');
+      }
+    } on DioException catch (e) {
+      print("❌ Error update sertifikasi: ${e.message}");
+      rethrow;
+    }
+  }
+
+  // ================== DELETE SERTIFIKASI ==================
+  Future<Map<String, dynamic>> deleteCertification(String certificationId) async {
+    try {
+      final response = await _dio.delete(ApiConfig.deleteCertification(certificationId));
+
+      print("DELETE Certification - STATUS: ${response.statusCode}");
+      print("DELETE Certification - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        print("⚠️ Gagal hapus sertifikasi: ${response.data}");
+        throw Exception('Failed to delete certification');
+      }
+    } on DioException catch (e) {
+      print("❌ Error hapus sertifikasi: ${e.message}");
+      rethrow;
+    }
+  }
+
+
+
+
+
 
   // --------------------------------------------------------------------------LOKER UMUM-----------------------------------------------------------
 

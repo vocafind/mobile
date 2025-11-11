@@ -80,6 +80,21 @@ class ApiConfig {
 
 
 
+  // ---------------------------TALENTS Kompetensi---------------------------TALENTS Kompetensi---------------------------TALENTS Kompetensi 
+
+  // ------------------------------------------------------------------------------------------ PENGHARGAAN
+  
+  static String getCertificationByTalent(String talentId) => "$baseUrl/Talents/profil/sertifikasi/$talentId";         // GET sertifikasi
+  static String createCertification() => "$baseUrl/Talents/profil/sertifikasi/";                                      // POST sertifikasi
+  static String updateCertification(String certificationId) => "$baseUrl/Talents/profil/sertifikasi/$certificationId";                // Update sertifikasi
+  static String deleteCertification(String certificationId) => "$baseUrl/Talents/profil/sertifikasi/$certificationId";                // Hapus sertifikasi
+
+
+
+
+
+
+
 
   // ------------------------------------------------------------- LOKER UMUM
   // Get all Loker Umum
