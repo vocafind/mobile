@@ -130,6 +130,16 @@ class ApiConfig {
 
 
 
+  // ------------------------------------------------------------------------------------------ PORTOFOLIO
+  
+  static String getPortofolioByTalent(String talentId) => "$baseUrl/Talents/profil/portofolio/$talentId";         // GET portofolio
+  static String createPortofolio() => "$baseUrl/Talents/profil/portofolio/";                                      // POST portofolio
+  static String updatePortofolio(String portofolioId) => "$baseUrl/Talents/profil/portofolio/$portofolioId";                // Update portofolio
+  static String deletePortofolio(String portofolioId) => "$baseUrl/Talents/profil/portofolio/$portofolioId";                // Hapus portofolio
+
+
+
+
 
 
   // ------------------------------------------------------------- LOKER UMUM

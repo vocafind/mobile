@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:jobfair/api/api_service.dart';
+import 'package:jobfair/models/talent_portofolio_model.dart';
 
 class TabPortofolio extends StatefulWidget {
   const TabPortofolio({super.key});
@@ -8,41 +10,69 @@ class TabPortofolio extends StatefulWidget {
 }
 
 class _TabPortofolioState extends State<TabPortofolio> {
-  // Controllers
-  final _judulController = TextEditingController();
-  final _deskripsiController = TextEditingController();
-  final _linkPortofolioController = TextEditingController();
-  final _urlGambarController = TextEditingController();
-  
-  // List untuk menyimpan URL gambar
-  List<String> _imageUrls = [];
+  final ApiService _apiService = ApiService();
+  List<PortofolioModel> _portofolio = [];
+  bool _isLoading = true;
 
   @override
-  void dispose() {
-    _judulController.dispose();
-    _deskripsiController.dispose();
-    _linkPortofolioController.dispose();
-    _urlGambarController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _loadPortofolio();
   }
 
-  void _clearControllers() {
-    _judulController.clear();
-    _deskripsiController.clear();
-    _linkPortofolioController.clear();
-    _urlGambarController.clear();
-    _imageUrls.clear();
-  }
-
-  void _showAddEditModal({Map<String, dynamic>? data, bool isEdit = false}) {
-    if (data != null) {
-      _judulController.text = data['judul'] ?? '';
-      _deskripsiController.text = data['deskripsi'] ?? '';
-      _linkPortofolioController.text = data['link'] ?? '';
-      _imageUrls = List<String>.from(data['images'] ?? []);
-    } else {
-      _clearControllers();
+  Future<void> _loadPortofolio() async {
+    setState(() => _isLoading = true);
+    try {
+      final portofolio = await _apiService.getPortofolio();
+      setState(() {
+        _portofolio = portofolio;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      _showSnackBar('Gagal memuat data portofolio', isError: true);
+      print("Error load portofolio: $e");
     }
+  }
+
+  void _showSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.w500,
+            fontFamily: 'Poppins',
+          ),
+        ),
+        backgroundColor: isError ? Colors.red[100] : Colors.white,
+        behavior: SnackBarBehavior.floating,
+        elevation: 2,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showAddEditModal({PortofolioModel? portofolio}) {
+    final isEdit = portofolio != null;
+    bool isSaving = false;
+
+    // Controller form
+    final _judulController = TextEditingController(
+      text: portofolio?.judul ?? '',
+    );
+    final _deskripsiController = TextEditingController(
+      text: portofolio?.deskripsi ?? '',
+    );
+    final _linkPortofolioController = TextEditingController(
+      text: portofolio?.linkPorotofolio ?? '',
+    );
+    final _galeriPortofolioController = TextEditingController(
+      text: portofolio?.galeriPortofolio ?? '',
+    );
 
     showModalBottomSheet(
       context: context,
@@ -61,7 +91,7 @@ class _TabPortofolioState extends State<TabPortofolio> {
             ),
             child: Column(
               children: [
-                // Header
+                // === HEADER ===
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -73,7 +103,9 @@ class _TabPortofolioState extends State<TabPortofolio> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: isSaving
+                            ? null
+                            : () => Navigator.pop(context),
                       ),
                       Expanded(
                         child: Text(
@@ -86,24 +118,78 @@ class _TabPortofolioState extends State<TabPortofolio> {
                         ),
                       ),
                       TextButton(
-                        onPressed: () {
-                          // TODO: Simpan data ke database/state management
-                          Navigator.pop(context);
-                        },
-                        child: const Text(
-                          'Simpan',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: 'Poppins',
-                          ),
-                        ),
+                        onPressed: isSaving
+                            ? null
+                            : () async {
+                                final judul = _judulController.text.trim();
+                                final deskripsi = _deskripsiController.text.trim();
+                                final linkPortofolio = _linkPortofolioController.text.trim();
+                                final galeriPortofolio = _galeriPortofolioController.text.trim();
+
+                                if (judul.isEmpty || deskripsi.isEmpty) {
+                                  _showSnackBar(
+                                    "Judul dan deskripsi wajib diisi",
+                                    isError: true,
+                                  );
+                                  return;
+                                }
+
+                                setModalState(() => isSaving = true);
+
+                                final portfolio = PortofolioModel(
+                                  portfolioId: portofolio?.portfolioId,
+                                  talentId: portofolio?.talentId,
+                                  judul: judul,
+                                  deskripsi: deskripsi,
+                                  linkPorotofolio: linkPortofolio,
+                                  galeriPortofolio: galeriPortofolio,
+                                );
+
+                                try {
+                                  if (isEdit) {
+                                    await _apiService.updatePortofolio(
+                                      portofolio!.portfolioId!,
+                                      portfolio,
+                                    );
+                                    _showSnackBar('Berhasil memperbarui portofolio');
+                                  } else {
+                                    await _apiService.createPortofolio(portfolio);
+                                    _showSnackBar('Berhasil menambah portofolio');
+                                  }
+
+                                  await _loadPortofolio();
+                                  Navigator.pop(context);
+                                } catch (e) {
+                                  setModalState(() => isSaving = false);
+                                  _showSnackBar(
+                                    'Gagal menyimpan data',
+                                    isError: true,
+                                  );
+                                  print("❌ Error submit portofolio: $e");
+                                }
+                              },
+                        child: isSaving
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text(
+                                'Simpan',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: 'Poppins',
+                                ),
+                              ),
                       ),
                     ],
                   ),
                 ),
 
-                // Form
+                // === FORM ===
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(20),
@@ -172,23 +258,28 @@ class _TabPortofolioState extends State<TabPortofolio> {
                         const SizedBox(height: 16),
 
                         _buildTextField(
-                          controller: _urlGambarController,
+                          controller: _galeriPortofolioController,
                           label: 'Link Galeri Portofolio',
                           hint: 'https://example.com/gallery',
                           icon: Icons.image_outlined,
                           keyboardType: TextInputType.url,
                         ),
 
-                        // Tombol Hapus (hanya untuk edit)
+                        // Tombol Hapus (hanya jika edit)
                         if (isEdit) ...[
                           const SizedBox(height: 32),
                           Center(
                             child: OutlinedButton.icon(
-                              onPressed: () {
-                                Navigator.pop(context);
-                                _showDeleteConfirmation(data!);
-                              },
-                              icon: const Icon(Icons.delete_outline, color: Colors.red),
+                              onPressed: isSaving
+                                  ? null
+                                  : () {
+                                      Navigator.pop(context);
+                                      _showDeleteConfirmation(portofolio!);
+                                    },
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.red,
+                              ),
                               label: const Text(
                                 'Hapus Portofolio',
                                 style: TextStyle(
@@ -217,6 +308,92 @@ class _TabPortofolioState extends State<TabPortofolio> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(PortofolioModel portofolio) {
+    bool isDeleting = false;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          backgroundColor: Colors.white,
+          title: const Text(
+            'Hapus Portofolio',
+            style: TextStyle(
+              fontSize: 18,
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          content: Text(
+            'Apakah Anda yakin ingin menghapus portofolio "${portofolio.judul}"?',
+            style: const TextStyle(
+              fontSize: 14,
+              fontFamily: 'Poppins',
+              color: Color(0xFF515151),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: isDeleting ? null : () => Navigator.pop(context),
+              child: const Text(
+                'Batal',
+                style: TextStyle(
+                  color: Color(0xFF515151),
+                  fontSize: 14,
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: isDeleting
+                  ? null
+                  : () async {
+                      setDialogState(() => isDeleting = true);
+                      try {
+                        await _apiService.deletePortofolio(
+                          portofolio.portfolioId!,
+                        );
+                        await _loadPortofolio();
+                        Navigator.pop(context);
+                        _showSnackBar('Portofolio berhasil dihapus');
+                      } catch (e) {
+                        setDialogState(() => isDeleting = false);
+                        _showSnackBar(
+                          'Gagal menghapus portofolio',
+                          isError: true,
+                        );
+                        print("Error delete portofolio: $e");
+                      }
+                    },
+              child: isDeleting
+                  ? const SizedBox(
+                      height: 14,
+                      width: 14,
+                      child: CircularProgressIndicator(
+                        color: Colors.red,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text(
+                      'Hapus',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontSize: 14,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+            ),
+          ],
         ),
       ),
     );
@@ -284,7 +461,10 @@ class _TabPortofolioState extends State<TabPortofolio> {
             ),
             filled: true,
             fillColor: Colors.grey.shade50,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
             helperText: helperText,
             helperStyle: TextStyle(
               fontSize: 11,
@@ -297,134 +477,80 @@ class _TabPortofolioState extends State<TabPortofolio> {
     );
   }
 
-  void _showDeleteConfirmation(Map<String, dynamic> data) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        backgroundColor: Colors.white,
-        title: const Text(
-          'Hapus Portofolio',
-          style: TextStyle(
-            fontSize: 18,
-            fontFamily: 'Poppins',
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        content: Text(
-          'Apakah Anda yakin ingin menghapus portofolio ${data['judul']}?',
-          style: const TextStyle(
-            fontSize: 14,
-            fontFamily: 'Poppins',
-            color: Color(0xFF515151),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Batal',
-              style: TextStyle(
-                color: Color(0xFF515151),
-                fontSize: 14,
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              // TODO: Hapus data dari database/state management
-              Navigator.pop(context);
-            },
-            child: const Text(
-              'Hapus',
-              style: TextStyle(
-                color: Colors.red,
-                fontSize: 14,
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-      child: Column(
-        children: [
-          // Tombol Tambah
-          Align(
-            alignment: Alignment.centerRight,
-            child: GestureDetector(
-              onTap: () => _showAddEditModal(),
-              child: Container(
-                width: 39,
-                height: 39,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFF113CEE), width: 1),
-                ),
-                child: const Center(
-                  child: Text(
-                    '+',
-                    style: TextStyle(
-                      color: Color(0xFF0C32E8),
-                      fontSize: 16,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w400,
+    return RefreshIndicator(
+      onRefresh: _loadPortofolio,
+      color: const Color(0xFF113CEE),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 21, vertical: 20),
+        child: Column(
+          children: [
+            // Tombol Tambah
+            Align(
+              alignment: Alignment.centerRight,
+              child: GestureDetector(
+                onTap: () => _showAddEditModal(),
+                child: Container(
+                  width: 39,
+                  height: 39,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: const Color(0xFF113CEE),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      '+',
+                      style: TextStyle(
+                        color: Color(0xFF0C32E8),
+                        fontSize: 16,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 21),
+            const SizedBox(height: 21),
 
-          // Portofolio Items
-          _buildPortofolioItem(
-            title: 'Sistem Keuangan Negara',
-            description: 'Berperan dalam pembangunan sistem keuangan negara uruguay, dengan ....',
-            isFirst: true,
-            onEdit: () {
-              _showAddEditModal(
-                data: {
-                  'judul': 'Sistem Keuangan Negara',
-                  'deskripsi': 'Berperan dalam pembangunan sistem keuangan negara uruguay, dengan membangun sistem yang kompleks',
-                  'link': 'https://example.com/portfolio',
-                  'images': [
-                    'https://picsum.photos/400/300?random=1',
-                    'https://picsum.photos/400/300?random=2',
-                  ],
-                },
-                isEdit: true,
-              );
-            },
-          ),
-          _buildPortofolioItem(
-            title: 'Sistem Keuangan Negara',
-            description: 'Berperan dalam pembangunan sistem keuangan negara uruguay, dengan ....',
-            isLast: true,
-            onEdit: () {
-              _showAddEditModal(
-                data: {
-                  'judul': 'Sistem Keuangan Negara',
-                  'deskripsi': 'Berperan dalam pembangunan sistem keuangan negara uruguay, dengan membangun sistem yang kompleks',
-                  'link': 'https://example.com/portfolio',
-                  'images': [],
-                },
-                isEdit: true,
-              );
-            },
-          ),
+            // Loading Indicator
+            if (_isLoading)
+              const Center(
+                child: CircularProgressIndicator(color: Color(0xFF113CEE)),
+              )
+            else if (_portofolio.isEmpty)
+              const Text(
+                "Belum ada data portofolio",
+                style: TextStyle(fontFamily: 'Poppins'),
+              )
+            else
+              Column(
+                children: List.generate(_portofolio.length, (index) {
+                  final portfolio = _portofolio[index];
+                  final isFirst = index == 0;
+                  final isLast = index == _portofolio.length - 1;
 
-          const SizedBox(height: 80),
-        ],
+                  return _buildPortofolioItem(
+                    title: portfolio.judul,
+                    description: portfolio.deskripsi,
+                    link: portfolio.linkPorotofolio,
+                    isFirst: isFirst,
+                    isLast: isLast,
+                    onEdit: () {
+                      _showAddEditModal(portofolio: portfolio);
+                    },
+                  );
+                }),
+              ),
+
+            const SizedBox(height: 80),
+          ],
+        ),
       ),
     );
   }
@@ -432,6 +558,7 @@ class _TabPortofolioState extends State<TabPortofolio> {
   Widget _buildPortofolioItem({
     required String title,
     required String description,
+    required String link,
     bool isFirst = false,
     bool isLast = false,
     VoidCallback? onEdit,
@@ -475,15 +602,21 @@ class _TabPortofolioState extends State<TabPortofolio> {
                   ),
                 ),
                 const SizedBox(height: 3),
-                const Text(
-                  'Lihat portofolio',
-                  style: TextStyle(
-                    color: Color(0xFF0E38EB),
-                    fontSize: 14,
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w400,
+                if (link.isNotEmpty)
+                  GestureDetector(
+                    onTap: () {
+                      // TODO: Buka link portofolio
+                    },
+                    child: const Text(
+                      'Lihat portofolio',
+                      style: TextStyle(
+                        color: Color(0xFF0E38EB),
+                        fontSize: 14,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
                   ),
-                ),
                 const SizedBox(height: 15),
                 Text(
                   description,

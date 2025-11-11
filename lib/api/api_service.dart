@@ -6,6 +6,7 @@ import 'package:jobfair/models/talent_award_model.dart';
 import 'package:jobfair/models/talent_certification_model.dart';
 import 'package:jobfair/models/talent_education_model.dart';
 import 'package:jobfair/models/talent_language_model.dart';
+import 'package:jobfair/models/talent_portofolio_model.dart';
 import 'package:jobfair/models/talent_project_model.dart';
 import 'package:jobfair/models/talent_softskill_model.dart';
 import 'package:jobfair/models/talent_training_model.dart';
@@ -1236,6 +1237,8 @@ class ApiService {
 
 
 
+
+
   //  -----------------------------------------------------------------------RIWAYAT PEKERJAAN
 
   // ================== GET RIWAYAT PEKERJAAN ==================
@@ -1354,6 +1357,9 @@ class ApiService {
 
 
 
+
+
+
   //  -----------------------------------------------------------------------PROYEK
 
   // ================== GET PROYEK ==================
@@ -1461,6 +1467,126 @@ class ApiService {
       rethrow;
     }
   }
+
+
+
+
+
+
+
+
+
+
+  //  -----------------------------------------------------------------------PORTOFOLIO
+
+  // ================== GET PORTOFOLIO ==================
+  Future<List<PortofolioModel>> getPortofolio() async {
+    final prefs = await SharedPreferences.getInstance();
+    final talentId = prefs.getString('talentId');
+
+    if (talentId == null) {
+      print("❌ TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      final response = await _dio.get(ApiConfig.getPortofolioByTalent(talentId));
+
+      print("GET Portofolio - STATUS: ${response.statusCode}");
+      print("GET Portofolio - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        return data.map((json) => PortofolioModel.fromJson(json)).toList();
+      } else {
+        print("⚠️ Gagal ambil data Portofolio: ${response.data}");
+        throw Exception('Failed to load Portofolio');
+      }
+    } on DioException catch (e) {
+      print("❌ Error ambil Portofolio: ${e.message}");
+      rethrow;
+    }
+  }
+
+  // ================== CREATE PORTOFOLIO ==================
+  Future<Map<String, dynamic>> createPortofolio(PortofolioModel portofolio) async {
+    final prefs = await SharedPreferences.getInstance();
+    final talentId = prefs.getString('talentId');
+
+    if (talentId == null) {
+      print("❌ TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      final response = await _dio.post(
+        ApiConfig.createPortofolio(),
+        data: portofolio.toJsonPost(talentId),
+      );
+
+      print("POST portofolio - STATUS: ${response.statusCode}");
+      print("POST portofolio - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        print("⚠️ Gagal tambah Portofolio: ${response.data}");
+        throw Exception('Failed to create Portofolio');
+      }
+    } on DioException catch (e) {
+      print("❌ Error tambah Portofolio: ${e.message}");
+      rethrow;
+    }
+  }
+
+  // ================== UPDATE PORTOFOLIO ==================
+  Future<Map<String, dynamic>> updatePortofolio(
+    String portofolioId,
+    PortofolioModel portofolio,
+  ) async {
+    try {
+      final response = await _dio.put(
+        ApiConfig.updatePortofolio(portofolioId),
+        data: portofolio.toJsonPut(),
+      );
+
+      print("PUT portofolio - STATUS: ${response.statusCode}");
+      print("PUT portofolio - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        print("⚠️ Gagal update portofolio: ${response.data}");
+        throw Exception('Failed to update portofolio');
+      }
+    } on DioException catch (e) {
+      print("❌ Error update portofolio: ${e.message}");
+      rethrow;
+    }
+  }
+
+  // ================== DELETE PORTOFOLIO ==================
+  Future<Map<String, dynamic>> deletePortofolio(String portofolioId) async {
+    try {
+      final response = await _dio.delete(ApiConfig.deletePortofolio(portofolioId));
+
+      print("DELETE portofolio - STATUS: ${response.statusCode}");
+      print("DELETE portofolio - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        print("⚠️ Gagal hapus portofolio: ${response.data}");
+        throw Exception('Failed to delete portofolio');
+      }
+    } on DioException catch (e) {
+      print("❌ Error hapus portofolio: ${e.message}");
+      rethrow;
+    }
+  }
+
+
+
 
 
 
