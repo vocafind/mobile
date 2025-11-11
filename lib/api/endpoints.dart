@@ -1,7 +1,7 @@
 class ApiConfig {
   // Ganti IP dengan IP komputer server kamu
-  static const String baseUrl = "http://10.136.144.240:5035/api";
-  static const String baseUrlFoto = "http://10.136.144.240:5035/";
+  static const String baseUrl = "http://10.54.142.51:5035/api";
+  static const String baseUrlFoto = "http://10.54.142.51:5035/";
 
   // ------------------------------------------------------------- TALENTS AUTH
 
@@ -111,9 +111,6 @@ class ApiConfig {
 
 
 
-
-
-
   // ------------------------------------------------------------------------------------------ RIWAYAT PEKERJAAN
   
   static String getWorkHistoryByTalent(String talentId) => "$baseUrl/Talents/profil/riwayat_pekerjaan/$talentId";         // GET WorkHistory
@@ -122,6 +119,13 @@ class ApiConfig {
   static String deleteWorkHistory(String workHistoryId) => "$baseUrl/Talents/profil/riwayat_pekerjaan/$workHistoryId";                // Hapus WorkHistory
 
 
+
+  // ------------------------------------------------------------------------------------------ PROYEK
+  
+  static String getProjectByTalent(String talentId) => "$baseUrl/Talents/profil/proyek/$talentId";         // GET proyek
+  static String createProject() => "$baseUrl/Talents/profil/proyek/";                                      // POST proyek
+  static String updateProject(String projectId) => "$baseUrl/Talents/profil/proyek/$projectId";                // Update proyek
+  static String deleteProject(String projectId) => "$baseUrl/Talents/profil/proyek/$projectId";                // Hapus proyek
 
 
 

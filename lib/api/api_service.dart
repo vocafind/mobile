@@ -6,6 +6,7 @@ import 'package:jobfair/models/talent_award_model.dart';
 import 'package:jobfair/models/talent_certification_model.dart';
 import 'package:jobfair/models/talent_education_model.dart';
 import 'package:jobfair/models/talent_language_model.dart';
+import 'package:jobfair/models/talent_project_model.dart';
 import 'package:jobfair/models/talent_softskill_model.dart';
 import 'package:jobfair/models/talent_training_model.dart';
 import 'package:jobfair/models/talent_workhistory_model.dart';
@@ -425,6 +426,11 @@ class ApiService {
     }
   }
 
+
+
+
+
+
   //  -----------------------------------------------------------------------REFERENSI
 
   // ================== GET REFERENCE ==================
@@ -534,6 +540,11 @@ class ApiService {
       rethrow;
     }
   }
+
+
+
+
+
 
   //  -----------------------------------------------------------------------PENDIDIKAN
 
@@ -645,6 +656,12 @@ class ApiService {
     }
   }
 
+
+
+
+
+
+
   //  -----------------------------------------------------------------------BAHASA
 
   // ================== GET BAHASA ==================
@@ -753,6 +770,10 @@ class ApiService {
     }
   }
 
+
+
+
+
   //  -----------------------------------------------------------------------PENGHARGAAN
 
   // ================== GET PENGHARGAAN ==================
@@ -860,6 +881,11 @@ class ApiService {
       rethrow;
     }
   }
+
+
+
+
+
 
   //  -----------------------------------------------------------------------SERTIFIKASI
 
@@ -977,6 +1003,11 @@ class ApiService {
     }
   }
 
+
+
+
+
+
   //  -----------------------------------------------------------------------PELATIHAN
 
   // ================== GET TRAINING ==================
@@ -1084,6 +1115,12 @@ class ApiService {
       rethrow;
     }
   }
+
+
+
+
+
+
 
   //  -----------------------------------------------------------------------SOFT SKILL
 
@@ -1194,6 +1231,12 @@ class ApiService {
       rethrow;
     }
   }
+
+
+
+
+
+  //  -----------------------------------------------------------------------RIWAYAT PEKERJAAN
 
   // ================== GET RIWAYAT PEKERJAAN ==================
   Future<List<WorkHistoryModel>> getWorkHistory() async {
@@ -1306,6 +1349,122 @@ class ApiService {
       rethrow;
     }
   }
+
+
+
+
+
+  //  -----------------------------------------------------------------------PROYEK
+
+  // ================== GET PROYEK ==================
+  Future<List<ProjectModel>> getProject() async {
+    final prefs = await SharedPreferences.getInstance();
+    final talentId = prefs.getString('talentId');
+
+    if (talentId == null) {
+      print("❌ TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      final response = await _dio.get(ApiConfig.getProjectByTalent(talentId));
+
+      print("GET project - STATUS: ${response.statusCode}");
+      print("GET project - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        return data.map((json) => ProjectModel.fromJson(json)).toList();
+      } else {
+        print("⚠️ Gagal ambil data project: ${response.data}");
+        throw Exception('Failed to load language');
+      }
+    } on DioException catch (e) {
+      print("❌ Error ambil project: ${e.message}");
+      rethrow;
+    }
+  }
+
+  // ================== CREATE PROYEK ==================
+  Future<Map<String, dynamic>> createProject(ProjectModel project) async {
+    final prefs = await SharedPreferences.getInstance();
+    final talentId = prefs.getString('talentId');
+
+    if (talentId == null) {
+      print("❌ TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      final response = await _dio.post(
+        ApiConfig.createProject(),
+        data: project.toJsonPost(talentId),
+      );
+
+      print("POST project - STATUS: ${response.statusCode}");
+      print("POST project - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        print("⚠️ Gagal tambah project: ${response.data}");
+        throw Exception('Failed to create project');
+      }
+    } on DioException catch (e) {
+      print("❌ Error tambah project: ${e.message}");
+      rethrow;
+    }
+  }
+
+  // ================== UPDATE PROYEK ==================
+  Future<Map<String, dynamic>> updateProject(
+    String projectId,
+    ProjectModel project,
+  ) async {
+    try {
+      final response = await _dio.put(
+        ApiConfig.updateProject(projectId),
+        data: project.toJsonPut(),
+      );
+
+      print("PUT project - STATUS: ${response.statusCode}");
+      print("PUT project - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        print("⚠️ Gagal update project: ${response.data}");
+        throw Exception('Failed to update project');
+      }
+    } on DioException catch (e) {
+      print("❌ Error update project: ${e.message}");
+      rethrow;
+    }
+  }
+
+  // ================== DELETE PROYEK ==================
+  Future<Map<String, dynamic>> deleteProject(String projectId) async {
+    try {
+      final response = await _dio.delete(ApiConfig.deleteProject(projectId));
+
+      print("DELETE project - STATUS: ${response.statusCode}");
+      print("DELETE project - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        print("⚠️ Gagal hapus project: ${response.data}");
+        throw Exception('Failed to delete project');
+      }
+    } on DioException catch (e) {
+      print("❌ Error hapus project: ${e.message}");
+      rethrow;
+    }
+  }
+
+
+
+
 
   // --------------------------------------------------------------------------LOKER UMUM-----------------------------------------------------------
 
