@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:jobfair/models/loker_umum_model.dart';
 
-// ✅ Update fungsi showJobDetail untuk menerima parameter lowongan
-void showJobDetail(BuildContext context, {required LokerUmum lowongan}) {
+// Fungsi untuk membuka detail lowongan
+void showJobDetail(BuildContext context, LokerUmum lowongan) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (context) => JobDetailSheet(lowongan: lowongan),
+    builder: (context) => JobDetailSheet(loker: lowongan),
   );
 }
 
 class JobDetailSheet extends StatefulWidget {
-  final LokerUmum lowongan;
+  final LokerUmum loker;
 
-  const JobDetailSheet({super.key, required this.lowongan});
+  const JobDetailSheet({super.key, required this.loker});
 
   @override
   State<JobDetailSheet> createState() => _JobDetailSheetState();
@@ -22,19 +22,50 @@ class JobDetailSheet extends StatefulWidget {
 
 class _JobDetailSheetState extends State<JobDetailSheet> {
   int _selectedTab = 0;
+  bool _isBookmarked = false;
 
-  // Fungsi untuk membersihkan HTML tags
-  String _cleanHtml(String htmlString) {
-    return htmlString
+  // Helper methods untuk mengakses data
+  String get _posisi => widget.loker.posisi;
+  String get _perusahaan => widget.loker.namaPerusahaan;
+  String get _logo => widget.loker.logo;
+  String get _deskripsi => widget.loker.deskripsiPekerjaan;
+  String get _gaji => widget.loker.gaji;
+  String get _lokasi => widget.loker.lokasi;
+  bool get _isRemote => widget.loker.opsiKerjaRemote;
+  String get _jenisPekerjaan => widget.loker.jenisPekerjaan;
+  String get _pengalaman => widget.loker.tingkatPengalaman;
+  String? get _minimalLulusan => widget.loker.minimalLulusan;
+  String get _kontrakDurasi => widget.loker.kontrakDurasi;
+  String get _peluangKarir => widget.loker.peluangKarir;
+  int get _jumlahDibutuhkan => widget.loker.batasPelamar;
+  int get _jumlahPelamar => widget.loker.jumlahPelamar;
+
+  // Format gaji
+  String _formatGaji(String gaji) {
+    if (gaji.startsWith('Rp')) {
+      return gaji;
+    }
+    return 'Rp $gaji';
+  }
+
+  // Clean HTML dari deskripsi
+  String _cleanDescription(String description) {
+    return description
         .replaceAll(RegExp(r'<[^>]*>'), '')
         .replaceAll('&nbsp;', ' ')
+        .replaceAll('&amp;', '&')
         .trim();
+  }
+
+  // Format tanggal
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
   }
 
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
-      initialChildSize: 0.95,
+      initialChildSize: 0.92, // Sedikit dikurangi
       minChildSize: 0.5,
       maxChildSize: 0.95,
       builder: (context, scrollController) {
@@ -59,16 +90,17 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
               Expanded(
                 child: ListView(
                   controller: scrollController,
-                  padding: const EdgeInsets.fromLTRB(18, 30, 18, 100),
+                  padding: const EdgeInsets.fromLTRB(18, 20, 18, 20), // Padding bottom dikurangi
                   children: [
                     _buildHeader(),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20), // Dikurangi dari 24
                     _buildInfoCards(),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20), // Dikurangi dari 24
                     _buildTabNavigation(),
-                    const SizedBox(height: 22),
-                    if (_selectedTab == 0) _buildDescriptionTab(),
+                    const SizedBox(height: 16), // Dikurangi dari 22
+                    if (_selectedTab == 0) _buildDetailPekerjaanTab(),
                     if (_selectedTab == 1) _buildCompanyTab(),
+                    const SizedBox(height: 10), // Tambahkan sedikit spacing sebelum button
                   ],
                 ),
               ),
@@ -108,23 +140,23 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
             border: Border.all(color: const Color(0xFFF1F5F9)),
           ),
           padding: const EdgeInsets.all(8),
-          child: widget.lowongan.logo.isNotEmpty
+          child: _logo.isNotEmpty
               ? Image.network(
-                  widget.lowongan.logo,
+                  _logo,
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) {
                     return Image.asset(
-                      'assets/icons/icon.png',
+                      'assets/icons/poltek.png',
                       fit: BoxFit.contain,
                     );
                   },
                 )
               : Image.asset(
-                  'assets/icons/icon.png',
+                  'assets/icons/poltek.png',
                   fit: BoxFit.contain,
                 ),
         ),
-        const SizedBox(width: 20),
+        const SizedBox(width: 16), // Dikurangi dari 20
         
         // Job Title & Company
         Expanded(
@@ -132,41 +164,41 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                widget.lowongan.posisi,
+                _posisi,
                 style: const TextStyle(
                   color: Color(0xFF1A1A1A),
-                  fontSize: 24,
+                  fontSize: 22, // Sedikit dikurangi
                   fontFamily: 'SF Pro',
                   fontWeight: FontWeight.w500,
                   height: 1.25,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6), // Dikurangi dari 8
               Text(
-                widget.lowongan.namaPerusahaan,
+                _perusahaan,
                 style: const TextStyle(
                   color: Color(0xFF515151),
-                  fontSize: 16,
+                  fontSize: 15, // Sedikit dikurangi
                   fontFamily: 'SF Pro',
                   fontWeight: FontWeight.w400,
                   height: 1.5,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6), // Dikurangi dari 8
               // Remote Tag
-              if (widget.lowongan.opsiKerjaRemote)
+              if (_isRemote)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3), // Dikurangi
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(6), // Dikurangi
                     border: Border.all(color: const Color(0xFFE2E2E2)),
                   ),
                   child: const Text(
                     'Remote',
                     style: TextStyle(
                       color: Color(0xFF464E5E),
-                      fontSize: 12,
+                      fontSize: 11, // Dikurangi
                       fontFamily: 'SF Pro',
                       fontWeight: FontWeight.w400,
                     ),
@@ -178,10 +210,15 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
         
         // Bookmark Icon
         IconButton(
-          icon: const Icon(Icons.bookmark_border),
-          iconSize: 24,
+          icon: _isBookmarked
+              ? const Icon(Icons.bookmark, color: Color(0xFF0E37EB))
+              : const Icon(Icons.bookmark_border),
+          iconSize: 22, // Dikurangi
           onPressed: () {
-            // Handle bookmark
+            setState(() {
+              _isBookmarked = !_isBookmarked;
+            });
+            // TODO: Handle bookmark logic
           },
         ),
       ],
@@ -191,11 +228,26 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
   Widget _buildInfoCards() {
     return Row(
       children: [
-        Expanded(child: _buildInfoCard('Dibutuhkan', '${widget.lowongan.batasPelamar}')),
+        Expanded(
+          child: _buildInfoCard(
+            'Dibutuhkan', 
+            '${_jumlahDibutuhkan - _jumlahPelamar}'
+          ),
+        ),
         _buildDivider(),
-        Expanded(child: _buildInfoCard('Lokasi', widget.lowongan.lokasi)),
+        Expanded(
+          child: _buildInfoCard(
+            'Min. Lulusan', 
+            _minimalLulusan ?? '-'
+          ),
+        ),
         _buildDivider(),
-        Expanded(child: _buildInfoCard('Gaji', widget.lowongan.gaji)),
+        Expanded(
+          child: _buildInfoCard(
+            'Jenis Pekerjaan', 
+            _jenisPekerjaan
+          ),
+        ),
       ],
     );
   }
@@ -207,20 +259,24 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
           value,
           style: const TextStyle(
             color: Color(0xFF515151),
-            fontSize: 14,
+            fontSize: 13, // Dikurangi
             fontFamily: 'Poppins',
             fontWeight: FontWeight.w500,
-            height: 1.71,
+            height: 1.4, // Dikurangi
           ),
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
         ),
+        const SizedBox(height: 2), // Dikurangi
         Text(
           label,
           style: const TextStyle(
             color: Color(0xFF515151),
-            fontSize: 12,
+            fontSize: 11, // Dikurangi
             fontFamily: 'Poppins',
             fontWeight: FontWeight.w300,
-            height: 2,
+            height: 1.2, // Dikurangi
           ),
         ),
       ],
@@ -229,22 +285,22 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
 
   Widget _buildDivider() {
     return Container(
-      width: 1.4,
-      height: 26,
+      width: 1,
+      height: 20, // Dikurangi
       color: const Color(0xFFE9E9E9),
     );
   }
 
   Widget _buildTabNavigation() {
     return Container(
-      height: 45,
+      height: 40, // Dikurangi
       decoration: BoxDecoration(
         color: const Color(0xFF162781).withValues(alpha:0.9),
         borderRadius: BorderRadius.circular(50),
       ),
       child: Row(
         children: [
-          _buildTab('Deskripsi', 0),
+          _buildTab('Detail Pekerjaan', 0),
           _buildTab('Perusahaan', 1),
         ],
       ),
@@ -257,7 +313,7 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
       child: GestureDetector(
         onTap: () => setState(() => _selectedTab = index),
         child: Container(
-          margin: const EdgeInsets.all(5),
+          margin: const EdgeInsets.all(4), // Dikurangi
           decoration: BoxDecoration(
             color: isSelected 
                 ? const Color(0xFF2345F7).withValues(alpha:0.7) 
@@ -269,7 +325,7 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
               title,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 14,
+                fontSize: 13, // Dikurangi
                 fontFamily: 'Poppins',
                 fontWeight: FontWeight.w500,
               ),
@@ -280,89 +336,81 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
     );
   }
 
-  Widget _buildDescriptionTab() {
-    final cleanDescription = _cleanHtml(widget.lowongan.deskripsiPekerjaan);
-    
+  Widget _buildDetailPekerjaanTab() {
+    final cleanDescription = _cleanDescription(_deskripsi);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSection(
           title: 'Deskripsi Pekerjaan',
           child: Text(
-            cleanDescription.isNotEmpty ? cleanDescription : 'Tidak ada deskripsi tersedia',
+            cleanDescription,
             textAlign: TextAlign.justify,
             style: const TextStyle(
               color: Color(0xFF515151),
               fontSize: 13,
               fontFamily: 'SF Pro',
               fontWeight: FontWeight.w400,
-              height: 1.54,
+              height: 1.5,
             ),
           ),
         ),
-        
-        if (widget.lowongan.tingkatPengalaman.isNotEmpty)
-          _buildSection(
-            title: 'Tingkat Pengalaman',
-            child: Column(
-              children: [
-                _buildBulletPoint(widget.lowongan.tingkatPengalaman),
-              ],
-            ),
-          ),
-        
-        if (widget.lowongan.minimalLulusan != null && widget.lowongan.minimalLulusan!.isNotEmpty)
-          _buildSection(
-            title: 'Minimal Pendidikan',
-            child: Column(
-              children: [
-                _buildBulletPoint(widget.lowongan.minimalLulusan!),
-              ],
-            ),
-          ),
-        
-        if (widget.lowongan.jenisPekerjaan.isNotEmpty)
-          _buildSection(
-            title: 'Jenis Pekerjaan',
-            child: Column(
-              children: [
-                _buildBulletPoint(widget.lowongan.jenisPekerjaan),
-              ],
-            ),
-          ),
-        
-        if (widget.lowongan.kontrakDurasi.isNotEmpty)
-          _buildSection(
-            title: 'Durasi Kontrak',
-            child: Column(
-              children: [
-                _buildBulletPoint(widget.lowongan.kontrakDurasi),
-              ],
-            ),
-          ),
-        
-        if (widget.lowongan.peluangKarir.isNotEmpty)
-          _buildSection(
-            title: 'Peluang Karir',
-            child: Column(
-              children: [
-                _buildBulletPoint(widget.lowongan.peluangKarir),
-              ],
-            ),
-          ),
-        
+
         _buildSection(
-          title: 'Informasi Lamaran',
+          title: 'Detail Pekerjaan',
           child: Column(
             children: [
-              _buildBulletPoint('Batas pelamar: ${widget.lowongan.batasPelamar} orang'),
-              _buildBulletPoint('Jumlah pelamar saat ini: ${widget.lowongan.jumlahPelamar} orang'),
-              _buildBulletPoint('Batas lamaran: ${_formatDate(widget.lowongan.batasLamaran)}'),
-              _buildBulletPoint('Tanggal posting: ${_formatDate(widget.lowongan.tanggalPosting)}'),
+              _buildDetailItem('Tingkat Pengalaman', _pengalaman),
+              _buildDetailItem('Lokasi', _lokasi),
+              if (_isRemote)
+                _buildDetailItem('Tipe Kerja', 'Remote'),
+              _buildDetailItem('Jenis Kontrak', _kontrakDurasi),
+              _buildDetailItem('Peluang Karir', _peluangKarir),
+              _buildDetailItem('Kuota Tersisa', '${_jumlahDibutuhkan - _jumlahPelamar} dari $_jumlahDibutuhkan posisi'),
+              _buildDetailItem('Gaji', _formatGaji(_gaji)),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildDetailItem(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12), // Dikurangi dari 16
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xFF515151),
+                fontSize: 13, // Dikurangi
+                fontFamily: 'SF Pro',
+                fontWeight: FontWeight.w500,
+                height: 1.4,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              style: const TextStyle(
+                color: Color(0xFF515151),
+                fontSize: 13, // Dikurangi
+                fontFamily: 'SF Pro',
+                fontWeight: FontWeight.w400,
+                height: 1.4,
+              ),
+              textAlign: TextAlign.right,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -373,27 +421,28 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
         _buildSection(
           title: 'Tentang Perusahaan',
           child: Text(
-            widget.lowongan.namaPerusahaan,
+            'Informasi tentang perusahaan $_perusahaan. Perusahaan ini saat ini membuka lowongan untuk posisi $_posisi dengan kualifikasi yang telah disebutkan.',
             textAlign: TextAlign.justify,
             style: const TextStyle(
               color: Color(0xFF515151),
               fontSize: 13,
               fontFamily: 'SF Pro',
               fontWeight: FontWeight.w400,
-              height: 1.54,
+              height: 1.5,
             ),
           ),
         ),
-        
-        if (widget.lowongan.lokasi.isNotEmpty)
-          _buildSection(
-            title: 'Lokasi',
-            child: Column(
-              children: [
-                _buildBulletPoint(widget.lowongan.lokasi),
-              ],
-            ),
+
+        _buildSection(
+          title: 'Informasi Lowongan',
+          child: Column(
+            children: [
+              _buildBulletPoint('Diposting: ${_formatDate(widget.loker.tanggalPosting)}', fontSize: 12),
+              _buildBulletPoint('Batas Lamar: ${_formatDate(widget.loker.batasLamaran)}', fontSize: 12),
+              _buildBulletPoint('Status: ${widget.loker.status}', fontSize: 12),
+            ],
           ),
+        ),
       ],
     );
   }
@@ -402,41 +451,41 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 20),
+        const SizedBox(height: 16), // Dikurangi dari 20
         Text(
           title,
           style: const TextStyle(
             color: Color(0xFF191919),
-            fontSize: 20,
+            fontSize: 18, // Dikurangi
             fontFamily: 'SF Pro',
             fontWeight: FontWeight.w500,
             height: 1.2,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10), // Dikurangi dari 12
         child,
-        const SizedBox(height: 24),
+        const SizedBox(height: 16), // Dikurangi dari 24
         Container(height: 1, color: const Color(0xFFE9E9E9)),
       ],
     );
   }
 
-  Widget _buildBulletPoint(String text, {double fontSize = 13}) {
+  Widget _buildBulletPoint(String text, {double fontSize = 12}) { // Default dikurangi
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 8), // Dikurangi dari 12
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            margin: const EdgeInsets.only(top: 6),
-            width: 7,
-            height: 7,
+            margin: const EdgeInsets.only(top: 5), // Dikurangi
+            width: 6, // Dikurangi
+            height: 6, // Dikurangi
             decoration: const BoxDecoration(
               color: Color(0xFF2643D7),
               shape: BoxShape.circle,
             ),
           ),
-          const SizedBox(width: 15),
+          const SizedBox(width: 12), // Dikurangi dari 15
           Expanded(
             child: Text(
               text,
@@ -446,7 +495,7 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
                 fontSize: fontSize,
                 fontFamily: 'SF Pro',
                 fontWeight: FontWeight.w400,
-                height: 1.54,
+                height: 1.4, // Dikurangi
               ),
             ),
           ),
@@ -456,19 +505,18 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
   }
 
   Widget _buildApplyButton() {
-    final daysLeft = widget.lowongan.batasLamaran.difference(DateTime.now()).inDays;
-    final isExpired = daysLeft < 0;
-    final isFull = widget.lowongan.jumlahPelamar >= widget.lowongan.batasPelamar;
+    final isExpired = widget.loker.batasLamaran.isBefore(DateTime.now());
+    final isFull = widget.loker.jumlahPelamar >= widget.loker.batasPelamar;
 
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16), // Dikurangi dari 18
       decoration: const BoxDecoration(
         color: Colors.white,
         boxShadow: [
           BoxShadow(
             color: Color(0x0A000000),
-            blurRadius: 8,
-            offset: Offset(0, -2),
+            blurRadius: 6, // Dikurangi
+            offset: Offset(0, -1), // Dikurangi
           ),
         ],
       ),
@@ -476,36 +524,33 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
         onPressed: (isExpired || isFull) 
             ? null 
             : () {
-                // Handle apply action
+                // TODO: Handle apply action
+                print('Melamar lowongan: ${widget.loker.posisi}');
               },
         style: ElevatedButton.styleFrom(
           backgroundColor: (isExpired || isFull) 
               ? Colors.grey 
               : const Color(0xFF1548F5),
-          minimumSize: const Size(double.infinity, 45),
+          minimumSize: const Size(double.infinity, 44), // Sedikit dikurangi
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(50),
           ),
           elevation: 0,
         ),
         child: Text(
-          isExpired 
+          (isExpired) 
               ? 'Lowongan Telah Berakhir'
-              : isFull
-                  ? 'Kuota Penuh'
+              : (isFull)
+                  ? 'Kuota Telah Penuh'
                   : 'Lamar Sekarang',
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 16,
+            fontSize: 15, // Dikurangi
             fontFamily: 'Poppins',
             fontWeight: FontWeight.w500,
           ),
         ),
       ),
     );
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
   }
 }
