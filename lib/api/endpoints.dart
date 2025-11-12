@@ -146,6 +146,10 @@ class ApiConfig {
   // Get all Loker Umum
   static const String allLokerUmum = "$baseUrl/LokerUmum";
 
+
+
+
+
   // Get Loker Umum by ID
   static String lokerById(String id) => "$baseUrl/LokerUmum/$id";
 }

@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:jobfair/models/loker_umum_model.dart';
 
-void showJobDetail(BuildContext context) {
+// ✅ Update fungsi showJobDetail untuk menerima parameter lowongan
+void showJobDetail(BuildContext context, {required LokerUmum lowongan}) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (context) => const JobDetailSheet(),
+    builder: (context) => JobDetailSheet(lowongan: lowongan),
   );
 }
 
 class JobDetailSheet extends StatefulWidget {
-  const JobDetailSheet({super.key});
+  final LokerUmum lowongan;
+
+  const JobDetailSheet({super.key, required this.lowongan});
 
   @override
   State<JobDetailSheet> createState() => _JobDetailSheetState();
@@ -18,6 +22,14 @@ class JobDetailSheet extends StatefulWidget {
 
 class _JobDetailSheetState extends State<JobDetailSheet> {
   int _selectedTab = 0;
+
+  // Fungsi untuk membersihkan HTML tags
+  String _cleanHtml(String htmlString) {
+    return htmlString
+        .replaceAll(RegExp(r'<[^>]*>'), '')
+        .replaceAll('&nbsp;', ' ')
+        .trim();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -96,10 +108,21 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
             border: Border.all(color: const Color(0xFFF1F5F9)),
           ),
           padding: const EdgeInsets.all(8),
-          child: Image.asset(
-            'assets/icons/icon.png',
-            fit: BoxFit.contain,
-          ),
+          child: widget.lowongan.logo.isNotEmpty
+              ? Image.network(
+                  widget.lowongan.logo,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Image.asset(
+                      'assets/icons/icon.png',
+                      fit: BoxFit.contain,
+                    );
+                  },
+                )
+              : Image.asset(
+                  'assets/icons/icon.png',
+                  fit: BoxFit.contain,
+                ),
         ),
         const SizedBox(width: 20),
         
@@ -108,9 +131,9 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Fulltime Backend Developer',
-                style: TextStyle(
+              Text(
+                widget.lowongan.posisi,
+                style: const TextStyle(
                   color: Color(0xFF1A1A1A),
                   fontSize: 24,
                   fontFamily: 'SF Pro',
@@ -119,9 +142,9 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Inforsys Indonesia',
-                style: TextStyle(
+              Text(
+                widget.lowongan.namaPerusahaan,
+                style: const TextStyle(
                   color: Color(0xFF515151),
                   fontSize: 16,
                   fontFamily: 'SF Pro',
@@ -131,23 +154,24 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
               ),
               const SizedBox(height: 8),
               // Remote Tag
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFE2E2E2)),
-                ),
-                child: const Text(
-                  'Remote',
-                  style: TextStyle(
-                    color: Color(0xFF464E5E),
-                    fontSize: 12,
-                    fontFamily: 'SF Pro',
-                    fontWeight: FontWeight.w400,
+              if (widget.lowongan.opsiKerjaRemote)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFE2E2E2)),
+                  ),
+                  child: const Text(
+                    'Remote',
+                    style: TextStyle(
+                      color: Color(0xFF464E5E),
+                      fontSize: 12,
+                      fontFamily: 'SF Pro',
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ),
@@ -167,11 +191,11 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
   Widget _buildInfoCards() {
     return Row(
       children: [
-        Expanded(child: _buildInfoCard('Dibutuhkan', '5')),
+        Expanded(child: _buildInfoCard('Dibutuhkan', '${widget.lowongan.batasPelamar}')),
         _buildDivider(),
-        Expanded(child: _buildInfoCard('Lokasi', 'Kota Batam')),
+        Expanded(child: _buildInfoCard('Lokasi', widget.lowongan.lokasi)),
         _buildDivider(),
-        Expanded(child: _buildInfoCard('Gaji', 'Rp 9.000.000')),
+        Expanded(child: _buildInfoCard('Gaji', widget.lowongan.gaji)),
       ],
     );
   }
@@ -257,74 +281,84 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
   }
 
   Widget _buildDescriptionTab() {
+    final cleanDescription = _cleanHtml(widget.lowongan.deskripsiPekerjaan);
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSection(
           title: 'Deskripsi Pekerjaan',
-          child: RichText(
+          child: Text(
+            cleanDescription.isNotEmpty ? cleanDescription : 'Tidak ada deskripsi tersedia',
             textAlign: TextAlign.justify,
-            text: const TextSpan(
-              style: TextStyle(
-                color: Color(0xFF515151),
-                fontSize: 13,
-                fontFamily: 'SF Pro',
-                fontWeight: FontWeight.w400,
-                height: 1.54,
-              ),
-              children: [
-                TextSpan(
-                  text: 'Kami mencari Senior UI/UX Designer yang berpengalaman untuk memimpin inisiatif desain dalam mengembangkan pengalaman mobile generasi berikutnya. Kamu akan bekerja dengan tim product dan engineering untuk menciptakan solusi desain yang inovatif... ',
-                ),
-                TextSpan(
-                  text: 'Read more',
-                  style: TextStyle(color: Color(0xFF2345F7)),
-                ),
-              ],
+            style: const TextStyle(
+              color: Color(0xFF515151),
+              fontSize: 13,
+              fontFamily: 'SF Pro',
+              fontWeight: FontWeight.w400,
+              height: 1.54,
             ),
           ),
         ),
-        _buildSection(
-          title: 'Kualifikasi & Persyaratan',
-          child: Column(
-            children: [
-              _buildBulletPoint('Minimal S1 Desain Komunikasi Visual, HCI, atau bidang terkait'),
-              _buildBulletPoint('5+ tahun pengalaman sebagai UI/UX Designer di perusahaan teknologi'),
-              _buildBulletPoint('Mahir menggunakan Figma, Sketch, dan Adobe Creative Suite'),
-              _buildBulletPoint('Pengalaman dalam mengembangkan dan mengelola design system'),
-            ],
+        
+        if (widget.lowongan.tingkatPengalaman.isNotEmpty)
+          _buildSection(
+            title: 'Tingkat Pengalaman',
+            child: Column(
+              children: [
+                _buildBulletPoint(widget.lowongan.tingkatPengalaman),
+              ],
+            ),
           ),
-        ),
-        _buildSection(
-          title: 'Benefit',
-          child: Column(
-            children: [
-              _buildBulletPoint('Gaji kompetitif & bonus tahunan', fontSize: 12),
-              _buildBulletPoint('BPJS Kesehatan & Ketenagakerjaan', fontSize: 12),
-              _buildBulletPoint('Tunjangan makan & transport', fontSize: 12),
-              _buildBulletPoint('Cuti tahunan dan cuti sakit', fontSize: 12),
-            ],
+        
+        if (widget.lowongan.minimalLulusan != null && widget.lowongan.minimalLulusan!.isNotEmpty)
+          _buildSection(
+            title: 'Minimal Pendidikan',
+            child: Column(
+              children: [
+                _buildBulletPoint(widget.lowongan.minimalLulusan!),
+              ],
+            ),
           ),
-        ),
-        _buildSection(
-          title: 'Persyaratan Tambahan',
-          child: Column(
-            children: [
-              _buildBulletPoint('Bersedia ditempatkan di luar kota jika diperlukan', fontSize: 12),
-              _buildBulletPoint('Memiliki laptop pribadi (untuk posisi remote)', fontSize: 12),
-              _buildBulletPoint('Siap bekerja dengan target dan deadline', fontSize: 12),
-              _buildBulletPoint('Tidak sedang terikat kontrak dengan perusahaan lain', fontSize: 12),
-            ],
+        
+        if (widget.lowongan.jenisPekerjaan.isNotEmpty)
+          _buildSection(
+            title: 'Jenis Pekerjaan',
+            child: Column(
+              children: [
+                _buildBulletPoint(widget.lowongan.jenisPekerjaan),
+              ],
+            ),
           ),
-        ),
+        
+        if (widget.lowongan.kontrakDurasi.isNotEmpty)
+          _buildSection(
+            title: 'Durasi Kontrak',
+            child: Column(
+              children: [
+                _buildBulletPoint(widget.lowongan.kontrakDurasi),
+              ],
+            ),
+          ),
+        
+        if (widget.lowongan.peluangKarir.isNotEmpty)
+          _buildSection(
+            title: 'Peluang Karir',
+            child: Column(
+              children: [
+                _buildBulletPoint(widget.lowongan.peluangKarir),
+              ],
+            ),
+          ),
+        
         _buildSection(
-          title: 'Fasilitas',
+          title: 'Informasi Lamaran',
           child: Column(
             children: [
-              _buildBulletPoint('Ruang kerja nyaman (Coworking / Open Space)', fontSize: 12),
-              _buildBulletPoint('Pantry & Snack gratis', fontSize: 12),
-              _buildBulletPoint('Ruang istirahat / Games room (PS, billiard, dll)', fontSize: 12),
-              _buildBulletPoint('Parkir gratis (motor & mobil)', fontSize: 12),
+              _buildBulletPoint('Batas pelamar: ${widget.lowongan.batasPelamar} orang'),
+              _buildBulletPoint('Jumlah pelamar saat ini: ${widget.lowongan.jumlahPelamar} orang'),
+              _buildBulletPoint('Batas lamaran: ${_formatDate(widget.lowongan.batasLamaran)}'),
+              _buildBulletPoint('Tanggal posting: ${_formatDate(widget.lowongan.tanggalPosting)}'),
             ],
           ),
         ),
@@ -338,10 +372,10 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
       children: [
         _buildSection(
           title: 'Tentang Perusahaan',
-          child: const Text(
-            'Informasi tentang perusahaan akan ditampilkan di sini.',
+          child: Text(
+            widget.lowongan.namaPerusahaan,
             textAlign: TextAlign.justify,
-            style: TextStyle(
+            style: const TextStyle(
               color: Color(0xFF515151),
               fontSize: 13,
               fontFamily: 'SF Pro',
@@ -350,6 +384,16 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
             ),
           ),
         ),
+        
+        if (widget.lowongan.lokasi.isNotEmpty)
+          _buildSection(
+            title: 'Lokasi',
+            child: Column(
+              children: [
+                _buildBulletPoint(widget.lowongan.lokasi),
+              ],
+            ),
+          ),
       ],
     );
   }
@@ -412,6 +456,10 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
   }
 
   Widget _buildApplyButton() {
+    final daysLeft = widget.lowongan.batasLamaran.difference(DateTime.now()).inDays;
+    final isExpired = daysLeft < 0;
+    final isFull = widget.lowongan.jumlahPelamar >= widget.lowongan.batasPelamar;
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: const BoxDecoration(
@@ -425,20 +473,28 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
         ],
       ),
       child: ElevatedButton(
-        onPressed: () {
-          // Handle apply action
-        },
+        onPressed: (isExpired || isFull) 
+            ? null 
+            : () {
+                // Handle apply action
+              },
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF1548F5),
+          backgroundColor: (isExpired || isFull) 
+              ? Colors.grey 
+              : const Color(0xFF1548F5),
           minimumSize: const Size(double.infinity, 45),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(50),
           ),
           elevation: 0,
         ),
-        child: const Text(
-          'Lamar Sekarang',
-          style: TextStyle(
+        child: Text(
+          isExpired 
+              ? 'Lowongan Telah Berakhir'
+              : isFull
+                  ? 'Kuota Penuh'
+                  : 'Lamar Sekarang',
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 16,
             fontFamily: 'Poppins',
@@ -447,5 +503,9 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
         ),
       ),
     );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
   }
 }

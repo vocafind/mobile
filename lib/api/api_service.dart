@@ -409,9 +409,7 @@ class ApiService {
   }
 
   // ================== DELETE MINAT KARIR ==================
-  Future<Map<String, dynamic>> deleteCareerInterest(
-    String careerInterestId,
-  ) async {
+  Future<Map<String, dynamic>> deleteCareerInterest(String careerInterestId) async {
     try {
       final response = await _dio.delete(
         ApiConfig.deleteCareerInterest(careerInterestId),
@@ -1597,7 +1595,6 @@ class ApiService {
   // ================== GET ALL LOKER UMUM ==================
   Future<List<LokerUmum>> getAllLokerUmum() async {
     var url = Uri.parse(ApiConfig.allLokerUmum);
-
     try {
       final response = await http.get(url);
 
@@ -1611,6 +1608,9 @@ class ApiService {
       return [];
     }
   }
+
+
+
 
   // ================== GET LOKER DETAIL BY ID ==================
   Future<LokerUmumDetail?> getLokerUmumDetailById(String id) async {

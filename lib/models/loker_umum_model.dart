@@ -1,6 +1,7 @@
 class LokerUmum {
   final String lowonganId;
-  final String companyName;
+  final String namaPerusahaan;
+  final String logo;
   final String posisi;
   final String deskripsiPekerjaan;
   final String? minimalLulusan;
@@ -19,7 +20,8 @@ class LokerUmum {
 
   LokerUmum({
     required this.lowonganId,
-    required this.companyName,
+    required this.namaPerusahaan,
+    required this.logo,
     required this.posisi,
     required this.deskripsiPekerjaan,
     this.minimalLulusan,
@@ -40,7 +42,8 @@ class LokerUmum {
   factory LokerUmum.fromJson(Map<String, dynamic> json) {
     return LokerUmum(
       lowonganId: json['lowonganId']?.toString() ?? '',
-      companyName: json['companyName'] ?? '',
+      namaPerusahaan: json['namaPerusahaan'] ?? '',
+      logo: json['logo'] ?? '',
       posisi: json['posisi'] ?? '',
       deskripsiPekerjaan: json['deskripsiPekerjaan'] ?? '',
       minimalLulusan: json['minimalLulusan'],
