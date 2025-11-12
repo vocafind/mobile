@@ -14,41 +14,10 @@ class _TabReferensiState extends State<TabReferensi> {
   List<ReferenceModel> _references = [];
   bool _isLoading = true;
 
-  // Controllers
-  final _namaController = TextEditingController();
-  final _relasiController = TextEditingController();
-  final _perusahaanController = TextEditingController();
-  final _posisiController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _teleponController = TextEditingController();
-  final _deskripsiController = TextEditingController();
-
   @override
   void initState() {
     super.initState();
     _loadReferences();
-  }
-
-  @override
-  void dispose() {
-    _namaController.dispose();
-    _relasiController.dispose();
-    _perusahaanController.dispose();
-    _posisiController.dispose();
-    _emailController.dispose();
-    _teleponController.dispose();
-    _deskripsiController.dispose();
-    super.dispose();
-  }
-
-  void _clearControllers() {
-    _namaController.clear();
-    _relasiController.clear();
-    _perusahaanController.clear();
-    _posisiController.clear();
-    _emailController.clear();
-    _teleponController.clear();
-    _deskripsiController.clear();
   }
 
   Future<void> _loadReferences() async {
@@ -67,6 +36,8 @@ class _TabReferensiState extends State<TabReferensi> {
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
+    if (!mounted) return; // TAMBAHKAN INI
+    
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -91,17 +62,28 @@ class _TabReferensiState extends State<TabReferensi> {
     final isEdit = reference != null;
     bool isSaving = false;
 
-    if (reference != null) {
-      _namaController.text = reference.nama;
-      _relasiController.text = reference.relasi;
-      _perusahaanController.text = reference.perusahaan;
-      _posisiController.text = reference.posisi;
-      _emailController.text = reference.email;
-      _teleponController.text = reference.telepon;
-      _deskripsiController.text = reference.deskripsi ?? '';
-    } else {
-      _clearControllers();
-    }
+    // BUAT CONTROLLER LOCAL DI DALAM METHOD
+    final _namaController = TextEditingController(
+      text: reference?.nama ?? '',
+    );
+    final _relasiController = TextEditingController(
+      text: reference?.relasi ?? '',
+    );
+    final _perusahaanController = TextEditingController(
+      text: reference?.perusahaan ?? '',
+    );
+    final _posisiController = TextEditingController(
+      text: reference?.posisi ?? '',
+    );
+    final _emailController = TextEditingController(
+      text: reference?.email ?? '',
+    );
+    final _teleponController = TextEditingController(
+      text: reference?.telepon ?? '',
+    );
+    final _deskripsiController = TextEditingController(
+      text: reference?.deskripsi ?? '',
+    );
 
     showModalBottomSheet(
       context: context,
@@ -156,9 +138,24 @@ class _TabReferensiState extends State<TabReferensi> {
                                     _posisiController.text.isEmpty ||
                                     _emailController.text.isEmpty ||
                                     _teleponController.text.isEmpty) {
-                                  _showSnackBar(
-                                    'Field wajib harus diisi',
-                                    isError: true,
+                                  // GUNAKAN ScaffoldMessenger.of(context) DI SINI
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Field wajib harus diisi',
+                                        style: const TextStyle(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w500,
+                                          fontFamily: 'Poppins',
+                                        ),
+                                      ),
+                                      backgroundColor: Colors.red[100],
+                                      behavior: SnackBarBehavior.floating,
+                                      elevation: 2,
+                                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      duration: const Duration(seconds: 2),
+                                    ),
                                   );
                                   return;
                                 }
@@ -183,25 +180,49 @@ class _TabReferensiState extends State<TabReferensi> {
                                       reference!.referenceId!,
                                       newReference,
                                     );
-                                    _showSnackBar(
-                                      'Referensi berhasil diperbarui',
-                                    );
+                                    // JANGAN PANGGIL _showSnackBar DI SINI
                                   } else {
                                     await _apiService.createReference(
                                       newReference,
                                     );
-                                    _showSnackBar(
-                                      'Referensi berhasil ditambahkan',
-                                    );
+                                    // JANGAN PANGGIL _showSnackBar DI SINI
                                   }
 
-                                  await _loadReferences();
+                                  // TUTUP MODAL DULU SEBELUM LOAD DATA
                                   Navigator.pop(context);
+                                  
+                                  // KEMUDIAN LOAD DATA DAN TAMPILKAN SNACKBAR
+                                  await _loadReferences();
+                                  
+                                  // GUNAKAN Future.delayed UNTUK MEMASTIKAN CONTEXT MASIH ADA
+                                  Future.delayed(Duration(milliseconds: 300), () {
+                                    if (mounted) {
+                                      _showSnackBar(
+                                        'Referensi berhasil ${isEdit ? 'diperbarui' : 'ditambahkan'}',
+                                      );
+                                    }
+                                  });
+                                  
                                 } catch (e) {
                                   setModalState(() => isSaving = false);
-                                  _showSnackBar(
-                                    'Gagal ${isEdit ? 'memperbarui' : 'menambahkan'} referensi',
-                                    isError: true,
+                                  // GUNAKAN ScaffoldMessenger.of(context) DI SINI
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Gagal ${isEdit ? 'memperbarui' : 'menambahkan'} referensi',
+                                        style: const TextStyle(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w500,
+                                          fontFamily: 'Poppins',
+                                        ),
+                                      ),
+                                      backgroundColor: Colors.red[100],
+                                      behavior: SnackBarBehavior.floating,
+                                      elevation: 2,
+                                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      duration: const Duration(seconds: 2),
+                                    ),
                                   );
                                   print("Error save reference: $e");
                                 }
@@ -343,7 +364,7 @@ class _TabReferensiState extends State<TabReferensi> {
                                   ? null
                                   : () {
                                       Navigator.pop(context);
-                                      _showDeleteConfirmation(reference);
+                                      _showDeleteConfirmation(reference!);
                                     },
                               icon: const Icon(
                                 Icons.delete_outline,
@@ -377,6 +398,118 @@ class _TabReferensiState extends State<TabReferensi> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(ReferenceModel reference) {
+    bool isDeleting = false;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          backgroundColor: Colors.white,
+          title: const Text(
+            'Hapus Referensi',
+            style: TextStyle(
+              fontSize: 18,
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          content: Text(
+            'Apakah Anda yakin ingin menghapus ${reference.nama}?',
+            style: const TextStyle(
+              fontSize: 14,
+              fontFamily: 'Poppins',
+              color: Color(0xFF515151),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: isDeleting ? null : () => Navigator.pop(context),
+              child: const Text(
+                'Batal',
+                style: TextStyle(
+                  color: Color(0xFF515151),
+                  fontSize: 14,
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: isDeleting
+                  ? null
+                  : () async {
+                      setDialogState(() => isDeleting = true);
+
+                      try {
+                        await _apiService.deleteReference(
+                          reference.referenceId!,
+                        );
+                        
+                        // TUTUP DIALOG DULU
+                        Navigator.pop(context);
+                        
+                        // KEMUDIAN LOAD DATA DAN TAMPILKAN SNACKBAR
+                        await _loadReferences();
+                        
+                        Future.delayed(Duration(milliseconds: 300), () {
+                          if (mounted) {
+                            _showSnackBar('Referensi berhasil dihapus');
+                          }
+                        });
+                        
+                      } catch (e) {
+                        setDialogState(() => isDeleting = false);
+                        // GUNAKAN ScaffoldMessenger.of(context) DI SINI
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Gagal menghapus referensi',
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                            backgroundColor: Colors.red[100],
+                            behavior: SnackBarBehavior.floating,
+                            elevation: 2,
+                            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                        print("Error delete reference: $e");
+                      }
+                    },
+              child: isDeleting
+                  ? const SizedBox(
+                      height: 14,
+                      width: 14,
+                      child: CircularProgressIndicator(
+                        color: Colors.red,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text(
+                      'Hapus',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontSize: 14,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+            ),
+          ],
         ),
       ),
     );
@@ -457,93 +590,6 @@ class _TabReferensiState extends State<TabReferensi> {
           ),
         ),
       ],
-    );
-  }
-
-  void _showDeleteConfirmation(ReferenceModel reference) {
-    bool isDeleting = false;
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          backgroundColor: Colors.white,
-          title: const Text(
-            'Hapus Referensi',
-            style: TextStyle(
-              fontSize: 18,
-              fontFamily: 'Poppins',
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          content: Text(
-            'Apakah Anda yakin ingin menghapus ${reference.nama}?',
-            style: const TextStyle(
-              fontSize: 14,
-              fontFamily: 'Poppins',
-              color: Color(0xFF515151),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: isDeleting ? null : () => Navigator.pop(context),
-              child: const Text(
-                'Batal',
-                style: TextStyle(
-                  color: Color(0xFF515151),
-                  fontSize: 14,
-                  fontFamily: 'Poppins',
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            TextButton(
-              onPressed: isDeleting
-                  ? null
-                  : () async {
-                      setDialogState(() => isDeleting = true);
-
-                      try {
-                        await _apiService.deleteReference(
-                          reference.referenceId!,
-                        );
-                        await _loadReferences();
-                        Navigator.pop(context);
-                        _showSnackBar('Referensi berhasil dihapus');
-                      } catch (e) {
-                        setDialogState(() => isDeleting = false);
-                        _showSnackBar(
-                          'Gagal menghapus referensi',
-                          isError: true,
-                        );
-                        print("Error delete reference: $e");
-                      }
-                    },
-              child: isDeleting
-                  ? const SizedBox(
-                      height: 14,
-                      width: 14,
-                      child: CircularProgressIndicator(
-                        color: Colors.red,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : const Text(
-                      'Hapus',
-                      style: TextStyle(
-                        color: Colors.red,
-                        fontSize: 14,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 

@@ -150,13 +150,14 @@ class _BuatAkunPageState extends State<BuatAkunPage> {
   }
 
   Future<void> _registerTalent() async {
-    // Trigger all validations
+    // Validasi dulu
     _validateNama();
     _validateEmail();
     _validatePassword();
     _validateConfirmPassword();
 
     if (!_isFormValid()) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Mohon lengkapi semua field dengan benar'),
@@ -167,7 +168,6 @@ class _BuatAkunPageState extends State<BuatAkunPage> {
     }
 
     debugPrint("🔍 Mencoba kirim data register...");
-
     setState(() => _isLoading = true);
 
     try {
@@ -189,10 +189,15 @@ class _BuatAkunPageState extends State<BuatAkunPage> {
       );
       var responseBody = await response.stream.bytesToString();
 
+      if (!mounted) return; // Pastikan widget masih aktif
+
       if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Registrasi berhasil!")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Registrasi berhasil!")));
+        // kasih jeda 1 detik agar snackbar sempat tampil
+        await Future.delayed(const Duration(seconds: 1));
+        if (!mounted) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HalamanLogin()),
@@ -207,7 +212,8 @@ class _BuatAkunPageState extends State<BuatAkunPage> {
         );
       }
     } catch (e) {
-      debugPrint("Gagal terhubung ke server.\nCek koneksi internet Anda.");
+      if (!mounted) return;
+      debugPrint("Gagal terhubung ke server: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Gagal terhubung ke server"),
@@ -215,7 +221,9 @@ class _BuatAkunPageState extends State<BuatAkunPage> {
         ),
       );
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -354,8 +362,8 @@ class _BuatAkunPageState extends State<BuatAkunPage> {
                     child: Text(
                       'Min. 8 karakter, huruf besar, kecil, angka, simbol',
                       style: TextStyle(
-                        color: _passwordError != null 
-                            ? Colors.red 
+                        color: _passwordError != null
+                            ? Colors.red
                             : const Color(0xFF65758C),
                         fontSize: 10,
                         fontFamily: 'Poppins',

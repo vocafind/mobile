@@ -101,7 +101,9 @@ class _TabBahasaState extends State<TabBahasa> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.close),
-                        onPressed: isSaving ? null : () => Navigator.pop(context),
+                        onPressed: isSaving
+                            ? null
+                            : () => Navigator.pop(context),
                       ),
                       Expanded(
                         child: Text(
@@ -117,10 +119,12 @@ class _TabBahasaState extends State<TabBahasa> {
                         onPressed: isSaving
                             ? null
                             : () async {
-                                final namaBahasa = namaBahasaController.text.trim();
-                                final sertifikat = sertifikatController.text.trim();
+                                final namaBahasa = namaBahasaController.text
+                                    .trim();
+                                final sertifikat = sertifikatController.text
+                                    .trim();
                                 final skor = skorController.text.trim();
-                                
+
                                 if (namaBahasa.isEmpty) {
                                   _showSnackBar(
                                     "Nama bahasa wajib diisi",
@@ -146,7 +150,9 @@ class _TabBahasaState extends State<TabBahasa> {
                                       language.languageId!,
                                       lang,
                                     );
-                                    _showSnackBar('Berhasil memperbarui bahasa');
+                                    _showSnackBar(
+                                      'Berhasil memperbarui bahasa',
+                                    );
                                   } else {
                                     await _apiService.createLanguage(lang);
                                     _showSnackBar('Berhasil menambah bahasa');
@@ -167,7 +173,9 @@ class _TabBahasaState extends State<TabBahasa> {
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Text(
                                 'Simpan',
@@ -260,50 +268,54 @@ class _TabBahasaState extends State<TabBahasa> {
                             Wrap(
                               spacing: 8,
                               runSpacing: 8,
-                              children: [
-                                'Beginner',
-                                'Intermediate',
-                                'Advanced',
-                                'Fluent',
-                                'Native',
-                              ].map((level) {
-                                final isSelected = selectedProfisiensi == level;
-                                return GestureDetector(
-                                  onTap: () {
-                                    setModalState(() {
-                                      selectedProfisiensi = level;
-                                    });
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 10,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? const Color(0xFF113CEE)
-                                          : Colors.grey.shade50,
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(
-                                        color: isSelected
-                                            ? const Color(0xFF113CEE)
-                                            : Colors.grey.shade300,
+                              children:
+                                  [
+                                    'Beginner',
+                                    'Intermediate',
+                                    'Advanced',
+                                    'Fluent',
+                                    'Native',
+                                  ].map((level) {
+                                    final isSelected =
+                                        selectedProfisiensi == level;
+                                    return GestureDetector(
+                                      onTap: () {
+                                        setModalState(() {
+                                          selectedProfisiensi = level;
+                                        });
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 10,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: isSelected
+                                              ? const Color(0xFF113CEE)
+                                              : Colors.grey.shade50,
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                          border: Border.all(
+                                            color: isSelected
+                                                ? const Color(0xFF113CEE)
+                                                : Colors.grey.shade300,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          level,
+                                          style: TextStyle(
+                                            color: isSelected
+                                                ? Colors.white
+                                                : const Color(0xFF515151),
+                                            fontSize: 14,
+                                            fontFamily: 'Poppins',
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                    child: Text(
-                                      level,
-                                      style: TextStyle(
-                                        color: isSelected
-                                            ? Colors.white
-                                            : const Color(0xFF515151),
-                                        fontSize: 14,
-                                        fontFamily: 'Poppins',
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
+                                    );
+                                  }).toList(),
                             ),
                           ],
                         ),
@@ -423,18 +435,13 @@ class _TabBahasaState extends State<TabBahasa> {
                   : () async {
                       setDialogState(() => isDeleting = true);
                       try {
-                        await _apiService.deleteLanguage(
-                          language.languageId!,
-                        );
+                        await _apiService.deleteLanguage(language.languageId!);
                         await _loadLanguages();
                         Navigator.pop(context);
                         _showSnackBar('Bahasa berhasil dihapus');
                       } catch (e) {
                         setDialogState(() => isDeleting = false);
-                        _showSnackBar(
-                          'Gagal menghapus bahasa',
-                          isError: true,
-                        );
+                        _showSnackBar('Gagal menghapus bahasa', isError: true);
                         print("Error delete language: $e");
                       }
                     },
@@ -602,7 +609,9 @@ class _TabBahasaState extends State<TabBahasa> {
                   return _buildBahasaItem(
                     language: lang.namaBahasa,
                     level: lang.profisiensi,
-                    certificate: lang.sertifikat.isNotEmpty ? lang.sertifikat : '-',
+                    certificate: lang.sertifikat.isNotEmpty
+                        ? lang.sertifikat
+                        : '-',
                     score: lang.skor.isNotEmpty ? 'Skor : ${lang.skor}' : '-',
                     isFirst: isFirst,
                     isLast: isLast,
@@ -694,12 +703,12 @@ class _TabBahasaState extends State<TabBahasa> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  certificate,
-                  style: const TextStyle(
-                    color: Color(0xFF515151),
+                  'Lihat sertifikat',
+                  style: TextStyle(
+                    color: Color(0xFF0E38EB),
                     fontSize: 14,
                     fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w300,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
                 const SizedBox(height: 12),

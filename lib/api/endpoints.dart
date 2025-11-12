@@ -1,7 +1,7 @@
 class ApiConfig {
   // Ganti IP dengan IP komputer server kamu
-  static const String baseUrl = "http://10.54.142.51:5035/api";
-  static const String baseUrlFoto = "http://10.54.142.51:5035/";
+  static const String baseUrl = "http://10.136.151.187:5035/api";
+  static const String baseUrlFoto = "http://10.136.151.187:5035/";
 
   // ------------------------------------------------------------- TALENTS AUTH
 
