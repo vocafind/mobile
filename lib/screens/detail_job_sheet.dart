@@ -41,17 +41,16 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
               Expanded(
                 child: ListView(
                   controller: scrollController,
-                  padding: const EdgeInsets.fromLTRB(18, 30, 18, 20), // Reduced bottom padding from 100 to 20
+                  padding: const EdgeInsets.fromLTRB(18, 30, 18, 100),
                   children: [
                     _buildHeader(),
-                    const SizedBox(height: 20), // Reduced from 24
+                    const SizedBox(height: 24),
                     _buildInfoCards(),
-                    const SizedBox(height: 20), // Reduced from 24
+                    const SizedBox(height: 24),
                     _buildTabNavigation(),
-                    const SizedBox(height: 16), // Reduced from 22
+                    const SizedBox(height: 22),
                     if (_selectedTab == 0) _buildDescriptionTab(),
                     if (_selectedTab == 1) _buildCompanyTab(),
-                    const SizedBox(height: 8), // Small spacer before button
                   ],
                 ),
               ),
@@ -128,7 +127,7 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
                   height: 1.25,
                 ),
               ),
-              const SizedBox(height: 6), // Reduced from 8
+              const SizedBox(height: 8),
               Text(
                 namaPerusahaan,
                 style: const TextStyle(
@@ -139,17 +138,13 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
                   height: 1.5,
                 ),
               ),
-              const SizedBox(height: 6), // Reduced from 8
+              const SizedBox(height: 8),
 
               // Job Type & Experience Tags
               Wrap(
                 spacing: 8,
-                runSpacing: 6, // Reduced runSpacing
-                children: [
-                  if (isRemote) _buildTag('Remote'),
-                  if (jenisPekerjaan.isNotEmpty) _buildTag(jenisPekerjaan),
-                  if (tingkatPengalaman.isNotEmpty) _buildTag(tingkatPengalaman),
-                ],
+                runSpacing: 8,
+                children: [if (isRemote) _buildTag('Remote')],
               ),
             ],
           ),
@@ -169,17 +164,17 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
 
   Widget _buildTag(String text) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), // Reduced padding
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(6), // Slightly smaller
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: const Color(0xFFE2E2E2)),
       ),
       child: Text(
         text,
         style: const TextStyle(
           color: Color(0xFF464E5E),
-          fontSize: 11, // Slightly smaller
+          fontSize: 12,
           fontFamily: 'SF Pro',
           fontWeight: FontWeight.w400,
         ),
@@ -213,18 +208,17 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
             fontSize: 14,
             fontFamily: 'Poppins',
             fontWeight: FontWeight.w500,
-            height: 1.5, // Reduced height
+            height: 1.71,
           ),
         ),
-        const SizedBox(height: 2), // Small spacer
         Text(
           label,
           style: const TextStyle(
             color: Color(0xFF515151),
-            fontSize: 11, // Slightly smaller
+            fontSize: 12,
             fontFamily: 'Poppins',
             fontWeight: FontWeight.w300,
-            height: 1.2, // Reduced height
+            height: 2,
           ),
         ),
       ],
@@ -237,7 +231,7 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
 
   Widget _buildTabNavigation() {
     return Container(
-      height: 42, // Slightly smaller
+      height: 45,
       decoration: BoxDecoration(
         color: const Color(0xFF162781).withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(50),
@@ -254,7 +248,7 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
       child: GestureDetector(
         onTap: () => setState(() => _selectedTab = index),
         child: Container(
-          margin: const EdgeInsets.all(4), // Reduced margin
+          margin: const EdgeInsets.all(5),
           decoration: BoxDecoration(
             color: isSelected
                 ? const Color(0xFF2345F7).withValues(alpha: 0.7)
@@ -266,7 +260,7 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
               title,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 13, // Slightly smaller
+                fontSize: 14,
                 fontFamily: 'Poppins',
                 fontWeight: FontWeight.w500,
               ),
@@ -280,7 +274,8 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
   Widget _buildDescriptionTab() {
     final qualifications = widget.loker?.jobQualifications ?? [];
     final benefits = widget.loker?.jobBenefits ?? [];
-    final additionalRequirements = widget.loker?.jobAdditionalRequirements ?? [];
+    final additionalRequirements =
+        widget.loker?.jobAdditionalRequirements ?? [];
     final additionalFacilities = widget.loker?.jobAdditionalFacilities ?? [];
 
     return Column(
@@ -344,18 +339,19 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
             ),
           ),
 
-        // Gaji Section - More compact
+        // Gaji
         Padding(
-          padding: const EdgeInsets.only(top: 16, bottom: 16), // Reduced padding
+          padding: const EdgeInsets.only(top: 20, bottom: 24),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment:
+                CrossAxisAlignment.center, // penting biar sejajar
             children: [
               const Text(
                 'Gaji',
                 style: TextStyle(
                   color: Color(0xFF191919),
-                  fontSize: 18, // Slightly smaller
+                  fontSize: 20,
                   fontFamily: 'SF Pro',
                   fontWeight: FontWeight.w500,
                   height: 1.2,
@@ -366,7 +362,7 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
                     ? '${widget.loker!.gaji}'
                     : '-',
                 style: const TextStyle(
-                  fontSize: 16, // Slightly smaller
+                  fontSize: 17, // sedikit lebih besar biar menonjol
                   fontFamily: 'SF Pro',
                   fontWeight: FontWeight.w600,
                   color: Colors.black87,
@@ -376,93 +372,207 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
           ),
         ),
         Container(height: 1, color: const Color(0xFFE9E9E9)),
-        
-        // Add small spacer at the very bottom
-        const SizedBox(height: 4),
       ],
     );
   }
 
+  String removeHtmlTags(String htmlText) {
+    final regex = RegExp(r'<[^>]*>', multiLine: true, caseSensitive: false);
+    return htmlText.replaceAll(regex, '').trim();
+  }
+
   Widget _buildCompanyTab() {
-    final namaPerusahaan = widget.loker?.namaPerusahaan ?? 'Perusahaan';
+    final loker = widget.loker;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Tentang Perusahaan
+        if (loker?.deskripsiPerusahaan != null &&
+            loker!.deskripsiPerusahaan!.isNotEmpty)
+          _buildSection(
+            title: 'Tentang Perusahaan',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  loker.namaPerusahaan,
+                  style: const TextStyle(
+                    color: Color(0xFF1A1A1A),
+                    fontSize: 18,
+                    fontFamily: 'SF Pro',
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  removeHtmlTags(loker.deskripsiPerusahaan!),
+                  textAlign: TextAlign.justify,
+                  style: const TextStyle(
+                    color: Color(0xFF515151),
+                    fontSize: 13,
+                    fontFamily: 'SF Pro',
+                    fontWeight: FontWeight.w400,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+        // Informasi Perusahaan
         _buildSection(
-          title: 'Tentang Perusahaan',
+          title: 'Informasi Perusahaan',
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                namaPerusahaan,
-                style: const TextStyle(
-                  color: Color(0xFF1A1A1A),
-                  fontSize: 18, // Slightly smaller
-                  fontFamily: 'SF Pro',
-                  fontWeight: FontWeight.w500,
+              if (loker?.bidangUsaha != null && loker!.bidangUsaha.isNotEmpty)
+                _buildCompanyInfoRow('Bidang Usaha', loker.bidangUsaha),
+
+              if (loker?.alamat != null && loker!.alamat.isNotEmpty)
+                _buildCompanyInfoRow(
+                  'Alamat',
+                  '${loker.alamat}${loker.kota.isNotEmpty ? ', ${loker.kota}' : ''}${loker.provinsi.isNotEmpty ? ', ${loker.provinsi}' : ''}',
                 ),
-              ),
-              const SizedBox(height: 8), // Reduced from 12
-              const Text(
-                'Informasi detail tentang perusahaan akan ditampilkan di sini. '
-                'Anda dapat menambahkan field tambahan di model untuk informasi '
-                'seperti deskripsi perusahaan, alamat, website, dll.',
-                textAlign: TextAlign.justify,
-                style: TextStyle(
-                  color: Color(0xFF515151),
-                  fontSize: 13,
-                  fontFamily: 'SF Pro',
-                  fontWeight: FontWeight.w400,
-                  height: 1.4, // Reduced height
+
+              if (loker?.email != null && loker!.email.isNotEmpty)
+                _buildCompanyInfoRow('Email', loker.email),
+
+              if (loker?.nomorTelepon != null && loker!.nomorTelepon.isNotEmpty)
+                _buildCompanyInfoRow('Telepon', loker.nomorTelepon),
+
+              if (loker?.website != null && loker!.website!.isNotEmpty)
+                _buildCompanyInfoRow('Website', loker.website!),
+
+              if (loker?.jumlahKaryawan != null)
+                _buildCompanyInfoRow(
+                  'Jumlah Karyawan',
+                  '${loker?.jumlahKaryawan ?? '-'} orang',
                 ),
-              ),
+
+              if (loker?.jumlahProyekBerjalan != null)
+                _buildCompanyInfoRow(
+                  'Proyek Berjalan',
+                  '${loker?.jumlahProyekBerjalan ?? '-'} proyek',
+                ),
             ],
           ),
         ),
+
+
+        // Kebijakan Kerja
+        if (loker?.kebijakanKerja != null && loker!.kebijakanKerja!.isNotEmpty)
+          _buildSection(
+            title: 'Kebijakan Kerja',
+            child: Text(
+              removeHtmlTags(loker.kebijakanKerja!),
+              textAlign: TextAlign.justify,
+              style: const TextStyle(
+                color: Color(0xFF515151),
+                fontSize: 13,
+                fontFamily: 'SF Pro',
+                fontWeight: FontWeight.w400,
+                height: 1.4,
+              ),
+            ),
+          ),
+
+        // Budaya Perusahaan
+        if (loker?.budayaPerusahaan != null &&
+            loker!.budayaPerusahaan!.isNotEmpty)
+          _buildSection(
+            title: 'Budaya Perusahaan',
+            child: Text(
+              removeHtmlTags(loker.budayaPerusahaan!),
+              textAlign: TextAlign.justify,
+              style: const TextStyle(
+                color: Color(0xFF515151),
+                fontSize: 13,
+                fontFamily: 'SF Pro',
+                fontWeight: FontWeight.w400,
+                height: 1.4,
+              ),
+            ),
+          ),
       ],
     );
   }
 
+  // Widget untuk baris informasi perusahaan
+  Widget _buildCompanyInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xFF515151),
+                fontSize: 13,
+                fontFamily: 'SF Pro',
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                color: Color(0xFF515151),
+                fontSize: 13,
+                fontFamily: 'SF Pro',
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  //non perusahaan
   Widget _buildSection({required String title, required Widget child}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 16), // Reduced from 20
+        const SizedBox(height: 20),
         Text(
           title,
           style: const TextStyle(
             color: Color(0xFF191919),
-            fontSize: 18, // Slightly smaller
+            fontSize: 20,
             fontFamily: 'SF Pro',
             fontWeight: FontWeight.w500,
             height: 1.2,
           ),
         ),
-        const SizedBox(height: 8), // Reduced from 12
+        const SizedBox(height: 12),
         child,
-        const SizedBox(height: 16), // Reduced from 24
+        const SizedBox(height: 24),
         Container(height: 1, color: const Color(0xFFE9E9E9)),
       ],
     );
   }
 
-  Widget _buildBulletPoint(String text, {double fontSize = 12}) { // Default smaller
+  Widget _buildBulletPoint(String text, {double fontSize = 13}) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8), // Reduced from 12
+      padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            margin: const EdgeInsets.only(top: 5), // Adjusted
-            width: 6, // Slightly smaller
-            height: 6, // Slightly smaller
+            margin: const EdgeInsets.only(top: 6),
+            width: 7,
+            height: 7,
             decoration: const BoxDecoration(
               color: Color(0xFF2643D7),
               shape: BoxShape.circle,
             ),
           ),
-          const SizedBox(width: 12), // Reduced from 15
+          const SizedBox(width: 15),
           Expanded(
             child: Text(
               text,
@@ -472,7 +582,41 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
                 fontSize: fontSize,
                 fontFamily: 'SF Pro',
                 fontWeight: FontWeight.w400,
-                height: 1.4, // Reduced height
+                height: 1.54,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xFF515151),
+                fontSize: 13,
+                fontFamily: 'SF Pro',
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                color: Color(0xFF515151),
+                fontSize: 13,
+                fontFamily: 'SF Pro',
+                fontWeight: FontWeight.w400,
               ),
             ),
           ),
@@ -485,10 +629,11 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
     final jumlahPelamar = widget.loker?.jumlahPelamar ?? 0;
     final batasPelamar = widget.loker?.batasPelamar ?? 0;
     final isKuotaPenuh = jumlahPelamar >= batasPelamar;
-    final isExpired = widget.loker?.batasLamaran.isBefore(DateTime.now()) ?? false;
+    final isExpired =
+        widget.loker?.batasLamaran.isBefore(DateTime.now()) ?? false;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(18, 12, 18, 18), // Reduced top padding
+      padding: const EdgeInsets.all(18),
       decoration: const BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -509,7 +654,7 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
           backgroundColor: (isKuotaPenuh || isExpired)
               ? Colors.grey
               : const Color(0xFF1548F5),
-          minimumSize: const Size(double.infinity, 48), // Slightly taller for better touch
+          minimumSize: const Size(double.infinity, 45),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(50),
           ),
@@ -519,8 +664,8 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
           isKuotaPenuh
               ? 'Kuota Penuh'
               : isExpired
-                  ? 'Lowongan Ditutup'
-                  : 'Lamar Sekarang',
+              ? 'Lowongan Ditutup'
+              : 'Lamar Sekarang',
           style: const TextStyle(
             color: Colors.white,
             fontSize: 16,

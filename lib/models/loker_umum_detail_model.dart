@@ -1,7 +1,5 @@
 class LokerUmumDetail {
   final String lowonganId;
-  final String namaPerusahaan;
-  final String logo;
   final String posisi;
   final String deskripsiPekerjaan;
   final String? minimalLulusan;
@@ -18,6 +16,25 @@ class LokerUmumDetail {
   final String kontrakDurasi;
   final String peluangKarir;
 
+  // --- Data Perusahaan ---
+  final String namaPerusahaan;
+  final String? nib;
+  final String? npwp;
+  final String bidangUsaha;
+  final String alamat;
+  final String provinsi;
+  final String kota;
+  final String email;
+  final String nomorTelepon;
+  final String? website;
+  final String logo;
+  final String? deskripsiPerusahaan;
+  final int? jumlahKaryawan;
+  final String? kebijakanKerja;
+  final String? budayaPerusahaan;
+  final int? jumlahProyekBerjalan;
+
+  // --- Relasi (list data) ---
   final List<JobQualification> jobQualifications;
   final List<JobBenefit> jobBenefits;
   final List<JobAdditionalRequirement> jobAdditionalRequirements;
@@ -25,8 +42,6 @@ class LokerUmumDetail {
 
   LokerUmumDetail({
     required this.lowonganId,
-    required this.namaPerusahaan,
-    required this.logo,
     required this.posisi,
     required this.deskripsiPekerjaan,
     this.minimalLulusan,
@@ -42,6 +57,22 @@ class LokerUmumDetail {
     required this.opsiKerjaRemote,
     required this.kontrakDurasi,
     required this.peluangKarir,
+    required this.namaPerusahaan,
+    this.nib,
+    this.npwp,
+    required this.bidangUsaha,
+    required this.alamat,
+    required this.provinsi,
+    required this.kota,
+    required this.email,
+    required this.nomorTelepon,
+    this.website,
+    required this.logo,
+    this.deskripsiPerusahaan,
+    this.jumlahKaryawan,
+    this.kebijakanKerja,
+    this.budayaPerusahaan,
+    this.jumlahProyekBerjalan,
     required this.jobQualifications,
     required this.jobBenefits,
     required this.jobAdditionalRequirements,
@@ -51,8 +82,6 @@ class LokerUmumDetail {
   factory LokerUmumDetail.fromJson(Map<String, dynamic> json) {
     return LokerUmumDetail(
       lowonganId: json['lowonganId']?.toString() ?? '',
-      namaPerusahaan: json['namaPerusahaan']?.toString() ?? '',
-      logo: json['logo']?.toString() ?? '',
       posisi: json['posisi']?.toString() ?? '',
       deskripsiPekerjaan: json['deskripsiPekerjaan']?.toString() ?? '',
       minimalLulusan: json['minimalLulusan']?.toString(),
@@ -72,6 +101,26 @@ class LokerUmumDetail {
       opsiKerjaRemote: json['opsiKerjaRemote'] == true || json['opsiKerjaRemote'] == 'true',
       kontrakDurasi: json['kontrakDurasi']?.toString() ?? '',
       peluangKarir: json['peluangKarir']?.toString() ?? '',
+      namaPerusahaan: json['namaPerusahaan']?.toString() ?? '',
+      nib: json['nib']?.toString(),
+      npwp: json['npwp']?.toString(),
+      bidangUsaha: json['bidangUsaha']?.toString() ?? '',
+      alamat: json['alamat']?.toString() ?? '',
+      provinsi: json['provinsi']?.toString() ?? '',
+      kota: json['kota']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      nomorTelepon: json['nomorTelepon']?.toString() ?? '',
+      website: json['website']?.toString(),
+      logo: json['logo']?.toString() ?? '',
+      deskripsiPerusahaan: json['deskripsiPerusahaan']?.toString(),
+      jumlahKaryawan: json['jumlahKaryawan'] is int
+          ? json['jumlahKaryawan']
+          : int.tryParse(json['jumlahKaryawan']?.toString() ?? ''),
+      kebijakanKerja: json['kebijakanKerja']?.toString(),
+      budayaPerusahaan: json['budayaPerusahaan']?.toString(),
+      jumlahProyekBerjalan: json['jumlahProyekBerjalan'] is int
+          ? json['jumlahProyekBerjalan']
+          : int.tryParse(json['jumlahProyekBerjalan']?.toString() ?? ''),
       jobQualifications: (json['jobQualifications'] as List<dynamic>? ?? [])
           .map((e) => JobQualification.fromJson(e))
           .toList(),
@@ -90,8 +139,6 @@ class LokerUmumDetail {
   Map<String, dynamic> toJson() {
     return {
       'lowonganId': lowonganId,
-      'namaPerusahaan': namaPerusahaan,
-      'logo': logo,
       'posisi': posisi,
       'deskripsiPekerjaan': deskripsiPekerjaan,
       'minimalLulusan': minimalLulusan,
@@ -107,6 +154,22 @@ class LokerUmumDetail {
       'opsiKerjaRemote': opsiKerjaRemote,
       'kontrakDurasi': kontrakDurasi,
       'peluangKarir': peluangKarir,
+      'namaPerusahaan': namaPerusahaan,
+      'nib': nib,
+      'npwp': npwp,
+      'bidangUsaha': bidangUsaha,
+      'alamat': alamat,
+      'provinsi': provinsi,
+      'kota': kota,
+      'email': email,
+      'nomorTelepon': nomorTelepon,
+      'website': website,
+      'logo': logo,
+      'deskripsiPerusahaan': deskripsiPerusahaan,
+      'jumlahKaryawan': jumlahKaryawan,
+      'kebijakanKerja': kebijakanKerja,
+      'budayaPerusahaan': budayaPerusahaan,
+      'jumlahProyekBerjalan': jumlahProyekBerjalan,
       'jobQualifications': jobQualifications.map((e) => e.toJson()).toList(),
       'jobBenefits': jobBenefits.map((e) => e.toJson()).toList(),
       'jobAdditionalRequirements': jobAdditionalRequirements.map((e) => e.toJson()).toList(),
