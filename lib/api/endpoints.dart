@@ -1,7 +1,7 @@
 class ApiConfig {
   // Ganti IP dengan IP komputer server kamu
-  static const String baseUrl = "http://10.136.151.187:5035/api";
-  static const String baseUrlFoto = "http://10.136.151.187:5035/";
+  static const String baseUrl = "http://10.136.156.107:5035/api";
+  static const String baseUrlFoto = "http://10.136.156.107:5035/";
 
   // ------------------------------------------------------------- TALENTS AUTH
 
@@ -59,7 +59,6 @@ class ApiConfig {
 
 
   // ------------------------------------------------------------------------------------------ BAHASA
-  
   static String getLanguageByTalent(String talentId) => "$baseUrl/Talents/profil/bahasa/$talentId";         // GET bahasa
   static String createLanguage() => "$baseUrl/Talents/profil/bahasa/";                                      // POST bahasa
   static String updateLanguage(String languageId) => "$baseUrl/Talents/profil/bahasa/$languageId";                // Update bahasa

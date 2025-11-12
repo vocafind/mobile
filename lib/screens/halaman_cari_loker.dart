@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:jobfair/widget/bottom_navbar.dart';
 import 'package:jobfair/widget/header.dart';
 import 'detail_job_sheet.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:jobfair/api/api_service.dart';
 import 'package:jobfair/models/loker_umum_model.dart';
 
@@ -82,13 +81,46 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
   }
 
   // ✅ Fungsi untuk membuka detail lowongan
-  void _showJobDetail(LokerUmum lowongan) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => JobDetailSheet(loker: lowongan),
-    );
+  Future<void> _showJobDetail(LokerUmum lowongan) async {
+    try {
+      // Tampilkan loading terlebih dahulu
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
+      // Ambil data detail dari API
+      final detailLowongan = await _apiService.getLokerUmumDetailById(
+        lowongan.lowonganId,
+      );
+
+      // Tutup loading
+      if (mounted) Navigator.of(context).pop();
+
+      // Tampilkan bottom sheet dengan data detail
+      if (mounted) {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => JobDetailSheet(loker: detailLowongan),
+        );
+      }
+    } catch (e) {
+      // Tutup loading jika error
+      if (mounted) Navigator.of(context).pop();
+
+      // Tampilkan error
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal memuat detail lowongan: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   // Fungsi untuk menghitung sisa hari hingga batas lamaran
@@ -408,10 +440,7 @@ class _LowonganList extends StatelessWidget {
   final List<LokerUmum> lowonganList;
   final Function(LokerUmum) onItemTap;
 
-  const _LowonganList({
-    required this.lowonganList,
-    required this.onItemTap,
-  });
+  const _LowonganList({required this.lowonganList, required this.onItemTap});
 
   @override
   Widget build(BuildContext context) {
@@ -463,7 +492,8 @@ class _JobCard extends StatefulWidget {
   State<_JobCard> createState() => __JobCardState();
 }
 
-class __JobCardState extends State<_JobCard> with SingleTickerProviderStateMixin {
+class __JobCardState extends State<_JobCard>
+    with SingleTickerProviderStateMixin {
   bool isSaved = false;
   late AnimationController _bookmarkController;
   late Animation<double> _bookmarkScale;
@@ -535,11 +565,15 @@ class __JobCardState extends State<_JobCard> with SingleTickerProviderStateMixin
                     child: Row(
                       children: [
                         const SizedBox(width: 16),
-                        const Icon(Icons.bolt, color: Color(0xFFFFCC00), size: 18),
+                        const Icon(
+                          Icons.bolt,
+                          color: Color(0xFFFFCC00),
+                          size: 18,
+                        ),
                         const SizedBox(width: 4),
                         Text(
-                          widget.daysLeft == 0 
-                              ? 'Hari terakhir!' 
+                          widget.daysLeft == 0
+                              ? 'Hari terakhir!'
                               : 'Sisa ${widget.daysLeft} hari',
                           style: const TextStyle(
                             color: Colors.white,
@@ -561,9 +595,7 @@ class __JobCardState extends State<_JobCard> with SingleTickerProviderStateMixin
                 child: Container(
                   width: 40,
                   height: 36,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
-                  ),
+                  decoration: BoxDecoration(color: const Color(0xFFF8FAFC)),
                   child: widget.lowongan.logo.isNotEmpty
                       ? ClipRRect(
                           child: Image.network(
@@ -662,11 +694,7 @@ class __JobCardState extends State<_JobCard> with SingleTickerProviderStateMixin
               ),
 
               // ✅ Salary persis seperti beranda
-              Positioned(
-                left: 16,
-                top: 172,
-                child: _buildSalary(),
-              ),
+              Positioned(left: 16, top: 172, child: _buildSalary()),
 
               // ✅ Tags persis seperti beranda
               Positioned(
@@ -675,15 +703,20 @@ class __JobCardState extends State<_JobCard> with SingleTickerProviderStateMixin
                 child: Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+                        border: Border.all(
+                          color: Colors.black.withValues(alpha: 0.06),
+                        ),
                       ),
                       child: Text(
-                        widget.lowongan.lokasi.length > 25 
-                            ? '${widget.lowongan.lokasi.substring(0, 25)}...' 
+                        widget.lowongan.lokasi.length > 25
+                            ? '${widget.lowongan.lokasi.substring(0, 25)}...'
                             : widget.lowongan.lokasi,
                         style: const TextStyle(
                           color: Colors.black,
@@ -696,11 +729,16 @@ class __JobCardState extends State<_JobCard> with SingleTickerProviderStateMixin
                     if (widget.lowongan.opsiKerjaRemote) ...[
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+                          border: Border.all(
+                            color: Colors.black.withValues(alpha: 0.06),
+                          ),
                         ),
                         child: const Text(
                           'Remote',
@@ -746,10 +784,10 @@ class __JobCardState extends State<_JobCard> with SingleTickerProviderStateMixin
         .trim();
 
     return Text(
-      cleanDescription.isNotEmpty 
-          ? (cleanDescription.length > 55 
-              ? '${cleanDescription.substring(0, 55)}...' 
-              : cleanDescription)
+      cleanDescription.isNotEmpty
+          ? (cleanDescription.length > 55
+                ? '${cleanDescription.substring(0, 55)}...'
+                : cleanDescription)
           : 'Tidak ada deskripsi',
       style: const TextStyle(
         color: Color(0xFF404040),
@@ -798,7 +836,7 @@ class __JobCardState extends State<_JobCard> with SingleTickerProviderStateMixin
   String _formatTimeAgo(DateTime tanggalPosting) {
     final now = DateTime.now();
     final difference = now.difference(tanggalPosting);
-    
+
     if (difference.inDays == 0) {
       return 'Hari ini';
     } else if (difference.inDays == 1) {
