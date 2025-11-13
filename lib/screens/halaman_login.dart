@@ -18,6 +18,7 @@ class _HalamanLoginState extends State<HalamanLogin> {
   final FocusNode _passwordFocus = FocusNode();
 
   bool _obscurePassword = true;
+  bool _isLoading = false; // Tambah state loading
 
   // Validasi error messages
   String? _emailError;
@@ -33,6 +34,9 @@ class _HalamanLoginState extends State<HalamanLogin> {
   }
 
   void _handleLogin() async {
+    // Jika sedang loading, jangan proses lagi
+    if (_isLoading) return;
+
     setState(() {
       _emailError = null;
       _passwordError = null;
@@ -41,41 +45,74 @@ class _HalamanLoginState extends State<HalamanLogin> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
+    // Validasi dasar
     if (email.isEmpty) {
       setState(() => _emailError = "Email tidak boleh kosong");
       return;
     }
+
+    // Validasi format email
+    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
+      setState(() => _emailError = "Format email tidak valid");
+      return;
+    }
+
     if (password.isEmpty) {
       setState(() => _passwordError = "Password tidak boleh kosong");
       return;
     }
 
-    // ✅ Clear old session data sebelum login
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    // Set loading state
+    setState(() {
+      _isLoading = true;
+    });
 
-    final result = await ApiService().loginTalent(email, password);
-
-    // ✅ Jika login berhasil dan ada token
-    if (result['accessToken'] != null) {
+    try {
+      // ✅ Clear old session data sebelum login
       final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
 
-      await prefs.setString('token', result['accessToken']);
-      await prefs.setString('refreshToken', result['refreshToken']);
-      await prefs.setString('talentId', result['talentId']);
-      await prefs.setString('nama', result['message']); // opsional
+      final result = await ApiService().loginTalent(email, password);
 
-      print("TOKEN: ${prefs.getString('token')}");
-      print("TALENT ID: ${prefs.getString('talentId')}");
+      // ✅ Jika login berhasil dan ada token
+      if (result['accessToken'] != null) {
+        final prefs = await SharedPreferences.getInstance();
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HalamanBeranda()),
-      );
-    } else {
-      setState(() {
-        _passwordError = result['message'] ?? 'Login gagal';
-      });
+        await prefs.setString('token', result['accessToken']);
+        await prefs.setString('refreshToken', result['refreshToken']);
+        await prefs.setString('talentId', result['talentId']);
+        await prefs.setString('nama', result['message']);
+
+        print("TOKEN: ${prefs.getString('token')}");
+        print("TALENT ID: ${prefs.getString('talentId')}");
+
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HalamanBeranda()),
+          );
+        }
+      } else {
+        // ✅ Tampilkan pesan error dari server
+        if (mounted) {
+          setState(() {
+            _passwordError = result['message'] ?? 'Login gagal';
+          });
+        }
+      }
+    } catch (e) {
+      // ✅ Handle unexpected errors
+      if (mounted) {
+        setState(() {
+          _passwordError = 'Terjadi kesalahan tak terduga';
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -189,28 +226,45 @@ class _HalamanLoginState extends State<HalamanLogin> {
 
               const SizedBox(height: 38),
 
-              // Button Masuk
+              // Button Masuk dengan Loading
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 46),
                 child: GestureDetector(
-                  onTap: _handleLogin,
+                  onTap: _isLoading
+                      ? null
+                      : _handleLogin, // Disable ketika loading
                   child: Container(
                     width: double.infinity,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1548F5),
+                      color: _isLoading
+                          ? const Color(0xFF1548F5).withOpacity(
+                              0.7,
+                            ) // Sedikit transparan ketika loading
+                          : const Color(0xFF1548F5),
                       borderRadius: BorderRadius.circular(45),
                     ),
-                    child: const Center(
-                      child: Text(
-                        'Masuk',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                    child: Center(
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                          : const Text(
+                              'Masuk',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                     ),
                   ),
                 ),
@@ -232,18 +286,22 @@ class _HalamanLoginState extends State<HalamanLogin> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const RegisterPage(),
-                        ),
-                      );
-                    },
-                    child: const Text(
+                    onTap: _isLoading
+                        ? null // Disable ketika loading
+                        : () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const RegisterPage(),
+                              ),
+                            );
+                          },
+                    child: Text(
                       'Daftar disini',
                       style: TextStyle(
-                        color: Color(0xFF1548F5),
+                        color: _isLoading
+                            ? const Color(0xFF1548F5).withOpacity(0.5)
+                            : const Color(0xFF1548F5),
                         fontSize: 12,
                         fontFamily: 'Poppins',
                         fontWeight: FontWeight.w500,

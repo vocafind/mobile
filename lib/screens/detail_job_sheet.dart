@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jobfair/api/api_service.dart';
 import 'package:jobfair/models/loker_umum_detail_model.dart';
 
 class JobDetailSheet extends StatefulWidget {
@@ -12,6 +13,55 @@ class JobDetailSheet extends StatefulWidget {
 
 class _JobDetailSheetState extends State<JobDetailSheet> {
   int _selectedTab = 0;
+  bool _isLoading = false; // Tambah state loading
+  final ApiService _apiService = ApiService(); // Instance service
+
+
+
+  // Fungsi untuk melamar loker
+  Future<void> _lamarLoker() async {
+    if (widget.loker?.lowonganId == null) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await _apiService.lamarLokerUmum(
+        widget.loker!.lowonganId,
+      );
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response.message),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+
+        // Close sheet setelah berhasil
+        Navigator.of(context).pop(true); // Return true untuk trigger refresh
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -237,7 +287,7 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
         borderRadius: BorderRadius.circular(50),
       ),
       child: Row(
-        children: [_buildTab('Deskripsi', 0), _buildTab('Perusahaan', 1)],
+        children: [_buildTab('Detail', 0), _buildTab('Perusahaan', 1)],
       ),
     );
   }
@@ -399,7 +449,7 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
                   loker.namaPerusahaan,
                   style: const TextStyle(
                     color: Color(0xFF1A1A1A),
-                    fontSize: 18,
+                    fontSize: 14,
                     fontFamily: 'SF Pro',
                     fontWeight: FontWeight.w500,
                   ),
@@ -457,7 +507,6 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
             ],
           ),
         ),
-
 
         // Kebijakan Kerja
         if (loker?.kebijakanKerja != null && loker!.kebijakanKerja!.isNotEmpty)
@@ -645,11 +694,9 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
         ],
       ),
       child: ElevatedButton(
-        onPressed: (isKuotaPenuh || isExpired)
+        onPressed: (isKuotaPenuh || isExpired || _isLoading)
             ? null
-            : () {
-                // Handle apply action
-              },
+            : _lamarLoker, // Panggil fungsi lamar
         style: ElevatedButton.styleFrom(
           backgroundColor: (isKuotaPenuh || isExpired)
               ? Colors.grey
@@ -660,19 +707,28 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
           ),
           elevation: 0,
         ),
-        child: Text(
-          isKuotaPenuh
-              ? 'Kuota Penuh'
-              : isExpired
-              ? 'Lowongan Ditutup'
-              : 'Lamar Sekarang',
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontFamily: 'Poppins',
-            fontWeight: FontWeight.w500,
-          ),
-        ),
+        child: _isLoading
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : Text(
+                isKuotaPenuh
+                    ? 'Kuota Penuh'
+                    : isExpired
+                    ? 'Lowongan Ditutup'
+                    : 'Lamar Sekarang',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
       ),
     );
   }

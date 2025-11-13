@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:jobfair/api/api_client.dart';
+import 'package:jobfair/models/lamar_loker.dart';
 import 'package:jobfair/models/talent_award_model.dart';
 import 'package:jobfair/models/talent_certification_model.dart';
 import 'package:jobfair/models/talent_education_model.dart';
@@ -59,7 +60,7 @@ class ApiService {
     return await request.send();
   }
 
-  // ================== LOGIN ==================
+  // ================== LOGIN - VERSI SIMPLIFIED ==================
   Future<Map<String, dynamic>> loginTalent(
     String email,
     String password,
@@ -79,14 +80,63 @@ class ApiService {
         await _saveTokens(
           response.data['accessToken'],
           response.data['refreshToken'],
-          response.data['expiresIn'] ?? 900, // Default 15 menit
+          response.data['expiresIn'] ?? 900,
         );
       }
 
       return response.data;
     } on DioException catch (e) {
       print("❌ Login error: ${e.message}");
+      print("❌ Error type: ${e.type}");
+      print("❌ Response: ${e.response?.data}");
+      print("❌ Status code: ${e.response?.statusCode}");
+
+      // ✅ Handle network errors
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.connectionError) {
+        return {"message": "Periksa koneksi internet Anda"};
+      }
+
+      // ✅ Handle no internet connection
+      if (e.type == DioExceptionType.unknown && 
+          e.error?.toString().contains("SocketException") == true) {
+        return {"message": "Tidak ada koneksi internet"};
+      }
+
+      // ✅ Handle server response errors
+      if (e.response != null) {
+        final statusCode = e.response!.statusCode;
+        final responseData = e.response!.data;
+
+        switch (statusCode) {
+          case 400:
+          case 401:
+            // Try to get specific error message from server
+            final serverMessage = responseData?['message'] ?? 
+                                responseData?['error'] ??
+                                "Email atau password salah";
+            return {"message": serverMessage};
+          
+          case 500:
+          case 502:
+          case 503:
+            return {"message": "Server sedang gangguan. Coba lagi nanti"};
+          
+          default:
+            final serverMessage = responseData?['message'] ?? 
+                                responseData?['error'] ??
+                                "Terjadi kesalahan";
+            return {"message": serverMessage};
+        }
+      }
+
+      // ✅ Default error message
       return {"message": "Gagal terhubung ke server"};
+    } catch (e) {
+      print("❌ Non-Dio error: $e");
+      return {"message": "Terjadi kesalahan sistem"};
     }
   }
 
@@ -142,8 +192,11 @@ class ApiService {
     }
   }
 
-  //  -----------------------------------------------------------------------Data Diri
 
+
+
+
+  //  -----------------------------------------------------------------------Data Diri
   // ================== GET PROFIL / DATA DIRI ==================
   Future<TalentProfileModel?> getProfilDataDiri() async {
     final prefs = await SharedPreferences.getInstance();
@@ -251,8 +304,10 @@ class ApiService {
     }
   }
 
-  //-----------------------------------------------------------------------SOSMED
 
+
+
+  //-----------------------------------------------------------------------SOSMED
   // ================== GET SOCIAL MEDIA ==================
   Future<List<SocialMediaModel>> getSocialMedia() async {
     final prefs = await SharedPreferences.getInstance();
@@ -409,7 +464,9 @@ class ApiService {
   }
 
   // ================== DELETE MINAT KARIR ==================
-  Future<Map<String, dynamic>> deleteCareerInterest(String careerInterestId) async {
+  Future<Map<String, dynamic>> deleteCareerInterest(
+    String careerInterestId,
+  ) async {
     try {
       final response = await _dio.delete(
         ApiConfig.deleteCareerInterest(careerInterestId),
@@ -1609,9 +1666,6 @@ class ApiService {
     }
   }
 
-
-
-
   // ================== GET LOKER DETAIL BY ID ==================
   Future<LokerUmumDetail?> getLokerUmumDetailById(String id) async {
     final url = Uri.parse(ApiConfig.lokerById(id));
@@ -1633,4 +1687,168 @@ class ApiService {
       return null;
     }
   }
+
+
+
+
+
+
+
+
+
+
+  // --------------------------------------------------------------------------LAMAR LOKER-----------------------------------------------------------
+  // ================== LAMAR LOKER UMUM ==================
+    Future<LamarLokerResponse> lamarLokerUmum(String lowonganId) async {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      final talentId = prefs.getString('talentId');
+
+      if (token == null || talentId == null) {
+        print("❌ Token atau TalentId tidak ditemukan");
+        throw Exception('Unauthorized');
+      }
+
+      try {
+        // Set headers dengan token
+        _dio.options.headers = {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        };
+
+        final response = await _dio.post(
+          ApiConfig.Lamarloker(lowonganId),
+        );
+
+        print("POST Lamar Loker - STATUS: ${response.statusCode}");
+        print("POST Lamar Loker - BODY: ${response.data}");
+
+        if (response.statusCode == 200) {
+          return LamarLokerResponse.fromJson(response.data);
+        } else {
+          print("⚠️ Gagal melamar loker: ${response.data}");
+          throw Exception(response.data['message'] ?? 'Failed to apply job');
+        }
+      } on DioException catch (e) {
+        print("❌ Error melamar loker: ${e.message}");
+        
+        // Handle specific error responses
+        if (e.response != null) {
+          final errorData = e.response!.data;
+          final errorMessage = errorData['message'] ?? 'Terjadi kesalahan saat melamar';
+          throw Exception(errorMessage);
+        }
+        
+        throw Exception('Terjadi kesalahan jaringan');
+      }
+    }
+
+
+
+  // ================== GET LAMARAN SAYA ==================
+    Future<List<LamaranSaya>> getLamaranSaya() async {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      final talentId = prefs.getString('talentId');
+
+      if (token == null || talentId == null) {
+        print("❌ Token atau TalentId tidak ditemukan");
+        throw Exception('Unauthorized');
+      }
+
+      try {
+        // Set headers dengan token
+        _dio.options.headers = {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        };
+
+        final response = await _dio.get(
+          ApiConfig.getLamaranSaya(),
+        );
+
+        print("GET Lamaran Saya - STATUS: ${response.statusCode}");
+        print("GET Lamaran Saya - BODY: ${response.data}");
+
+        if (response.statusCode == 200) {
+          final List<dynamic> data = response.data;
+          return data.map((json) => LamaranSaya.fromJson(json)).toList();
+        } else {
+          print("⚠️ Gagal ambil data lamaran: ${response.data}");
+          throw Exception('Failed to load job applications');
+        }
+      } on DioException catch (e) {
+        print("❌ Error ambil lamaran: ${e.message}");
+        
+        if (e.response != null) {
+          final errorData = e.response!.data;
+          final errorMessage = errorData['message'] ?? 'Terjadi kesalahan saat mengambil data lamaran';
+          throw Exception(errorMessage);
+        }
+        
+        throw Exception('Terjadi kesalahan jaringan');
+      }
+    }
+
+    // ================== BATAL LAMARAN ==================
+    Future<BatalLamaranResponse> batalkanLamaran(String lamaranId) async {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      final talentId = prefs.getString('talentId');
+
+      if (token == null || talentId == null) {
+        print("❌ Token atau TalentId tidak ditemukan");
+        throw Exception('Unauthorized');
+      }
+
+      try {
+        // Set headers dengan token
+        _dio.options.headers = {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        };
+
+        final response = await _dio.delete(
+          ApiConfig.batalkanLamaran(lamaranId),
+        );
+
+        print("DELETE Batalkan Lamaran - STATUS: ${response.statusCode}");
+        print("DELETE Batalkan Lamaran - BODY: ${response.data}");
+
+        if (response.statusCode == 200) {
+          return BatalLamaranResponse.fromJson(response.data);
+        } else {
+          print("⚠️ Gagal batalkan lamaran: ${response.data}");
+          throw Exception(response.data['message'] ?? 'Failed to cancel application');
+        }
+      } on DioException catch (e) {
+        print("❌ Error batalkan lamaran: ${e.message}");
+        
+        if (e.response != null) {
+          final errorData = e.response!.data;
+          final errorMessage = errorData['message'] ?? 'Terjadi kesalahan saat membatalkan lamaran';
+          throw Exception(errorMessage);
+        }
+        
+        throw Exception('Terjadi kesalahan jaringan');
+      }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
