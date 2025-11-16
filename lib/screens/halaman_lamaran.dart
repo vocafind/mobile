@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:jobfair/models/lamar_loker.dart';
 import 'package:jobfair/widget/bottom_navbar.dart';
 import 'package:jobfair/widget/header.dart';
 import 'package:jobfair/screens/detail_lamaran.dart';
+import 'package:jobfair/api/api_service.dart';
 
 class HalamanLamaran extends StatefulWidget {
   const HalamanLamaran({super.key});
@@ -13,6 +15,63 @@ class HalamanLamaran extends StatefulWidget {
 class _HalamanLamaranState extends State<HalamanLamaran> {
   int _selectedMainTab = 0; // 0 = Umum, 1 = Job fair
   int _selectedFilterTab = 0; // 0 = Semua, 1 = Pending, 2 = Ditinjau, 3 = Interview
+  
+  final ApiService _apiService = ApiService();
+  List<LamaranSaya> _allLamaran = [];
+  List<LamaranSaya> _filteredLamaran = [];
+  bool _isLoading = true;
+  bool _hasError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLamaran();
+  }
+
+  Future<void> _loadLamaran() async {
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+    });
+
+    try {
+      final lamaran = await _apiService.getLamaranSaya();
+      setState(() {
+        _allLamaran = lamaran;
+        _filteredLamaran = lamaran;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _hasError = true;
+      });
+      print("Error loading lamaran: $e");
+    }
+  }
+
+  void _filterLamaran() {
+    if (_selectedFilterTab == 0) {
+      // Semua
+      setState(() {
+        _filteredLamaran = _allLamaran;
+      });
+    } else {
+      // Filter berdasarkan status
+      final statusMap = {
+        1: 'pending',
+        2: 'ditinjau', 
+        3: 'interview'
+      };
+      
+      final status = statusMap[_selectedFilterTab];
+      setState(() {
+        _filteredLamaran = _allLamaran
+            .where((lamaran) => lamaran.status.toLowerCase() == status)
+            .toList();
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -129,18 +188,118 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
 
           // Application List
           Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.only(bottom: 100),
-              itemCount: 5,
-              separatorBuilder: (context, index) => const SizedBox(height: 0),
-              itemBuilder: (context, index) {
-                return _buildApplicationCard(index);
-              },
-            ),
+            child: _buildContent(),
           ),
         ],
       ),
       bottomNavigationBar: const BottomNavBar(currentIndex: 3),
+    );
+  }
+
+  Widget _buildContent() {
+    if (_isLoading) {
+      return _buildLoadingState();
+    }
+    
+    if (_hasError) {
+      return _buildErrorState();
+    }
+    
+    if (_filteredLamaran.isEmpty) {
+      return _buildEmptyState();
+    }
+    
+    return RefreshIndicator(
+      onRefresh: _loadLamaran,
+      child: ListView.separated(
+        padding: const EdgeInsets.only(bottom: 100),
+        itemCount: _filteredLamaran.length,
+        separatorBuilder: (context, index) => const SizedBox(height: 0),
+        itemBuilder: (context, index) {
+          return _buildApplicationCard(_filteredLamaran[index]);
+        },
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return ListView.separated(
+      padding: const EdgeInsets.only(bottom: 100),
+      itemCount: 3,
+      separatorBuilder: (context, index) => const SizedBox(height: 0),
+      itemBuilder: (context, index) {
+        return _buildApplicationCardSkeleton();
+      },
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, size: 60, color: Color(0xFFDC2626)),
+          const SizedBox(height: 16),
+          const Text(
+            'Gagal memuat data lamaran',
+            style: TextStyle(
+              fontSize: 16,
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF515151),
+            ),
+          ),
+          const SizedBox(height: 8),
+          ElevatedButton(
+            onPressed: _loadLamaran,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1E40AF),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: const Text(
+              'Coba Lagi',
+              style: TextStyle(
+                color: Colors.white,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.work_outline, size: 60, color: Color(0xFFB8B8B8)),
+          const SizedBox(height: 16),
+          const Text(
+            'Belum ada lamaran',
+            style: TextStyle(
+              fontSize: 16,
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF515151),
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Ayo lamar lowongan yang sesuai dengan minat kamu',
+            style: TextStyle(
+              fontSize: 14,
+              fontFamily: 'Poppins',
+              color: Color(0xFFB8B8B8),
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 
@@ -150,6 +309,7 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
       onTap: () {
         setState(() {
           _selectedFilterTab = index;
+          _filterLamaran();
         });
       },
       child: AnimatedContainer(
@@ -178,49 +338,21 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
     );
   }
 
-  Widget _buildApplicationCard(int index) {
-    // Data untuk demo - setiap card
-    final jobTitles = [
-      'Fulltime Backend Developer',
-      'Frontend Developer',
-      'Mobile Developer',
-      'UI/UX Designer',
-      'Data Analyst'
-    ];
-    
-    final companies = [
-      'Inforsys Indonesia',
-      'Tech Startup Inc',
-      'Digital Solutions',
-      'Creative Agency',
-      'Data Corp'
-    ];
-    
-    final statuses = ['Pending', 'Ditinjau', 'Interview', 'Diterima', 'Ditolak'];
-    final colors = [
-      const Color(0xFFFF9500), // Orange - Pending
-      const Color(0xFF00C8B3), // Mint - Ditinjau
-      const Color(0xFF0088FF), // Blue - Interview
-      const Color(0xFF34C759), // Green - Diterima
-      const Color(0xFFFF383C), // Red - Ditolak
-    ];
-
-    final jobTitle = jobTitles[index % jobTitles.length];
-    final company = companies[index % companies.length];
-    final status = statuses[index % statuses.length];
-    final color = colors[index % colors.length];
+  Widget _buildApplicationCard(LamaranSaya lamaran) {
+    final lowongan = lamaran.lowongan;
+    final company = lowongan.company;
 
     return GestureDetector(
       onTap: () {
         // Show detail lamaran bottom sheet
         DetailLamaran.show(
           context,
-          jobTitle: jobTitle,
-          companyName: company,
-          location: 'Politeknik Negeri Batam',
-          date: '19 Sep 2025',
-          qrCode: '374829-LMNQ-102938',
-          status: status,
+          jobTitle: lowongan.posisi,
+          companyName: company.namaPerusahaan,
+          location: lowongan.lokasi,
+          date: _formatDate(lamaran.appliedAt),
+          qrCode: lamaran.applyId.substring(0, 8).toUpperCase(),
+          status: lamaran.statusText,
         );
       },
       child: Container(
@@ -251,16 +383,27 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(4),
-                            child: Image.asset(
-                              'assets/icons/icon.png',
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Icon(Icons.business, size: 24);
-                              },
-                            ),
-                          ),
+                          child: company.logo.isNotEmpty
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    company.logo,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Image.asset(
+                                        'assets/icons/icon.png',
+                                        fit: BoxFit.contain,
+                                      );
+                                    },
+                                  ),
+                                )
+                              : Padding(
+                                  padding: const EdgeInsets.all(4),
+                                  child: Image.asset(
+                                    'assets/icons/icon.png',
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
                         ),
                         const SizedBox(width: 10),
 
@@ -269,9 +412,9 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Fulltime Backend Developer',
-                                style: TextStyle(
+                              Text(
+                                lowongan.posisi,
+                                style: const TextStyle(
                                   color: Colors.black,
                                   fontSize: 16,
                                   fontFamily: 'Poppins',
@@ -283,7 +426,7 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Inforsys Indonesia',
+                                company.namaPerusahaan,
                                 style: TextStyle(
                                   color: const Color(0xFF3C3C43).withValues(alpha: 0.6),
                                   fontSize: 14,
@@ -291,6 +434,8 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                                   fontWeight: FontWeight.w400,
                                   height: 1.3,
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ),
@@ -300,9 +445,11 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                     const SizedBox(height: 13),
 
                     // Description
-                    const Text(
-                      'Bertanggung jawab dalam  mengelola, dan mengoptimal siste . . .',
-                      style: TextStyle(
+                    Text(
+                      lowongan.cleanDescription.length > 55
+                          ? '${lowongan.cleanDescription.substring(0, 55)}...'
+                          : lowongan.cleanDescription,
+                      style: const TextStyle(
                         color: Color(0xFF404040),
                         fontSize: 14,
                         fontFamily: 'Poppins',
@@ -331,9 +478,9 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Dilamar 16 Sep 2025',
-                    style: TextStyle(
+                  Text(
+                    'Dilamar ${_formatDate(lamaran.appliedAt)}',
+                    style: const TextStyle(
                       color: Color(0xFF464E5E),
                       fontSize: 12,
                       fontFamily: 'SF Pro',
@@ -347,11 +494,11 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: color,
+                      color: lamaran.statusColor,
                       borderRadius: BorderRadius.circular(24),
                     ),
                     child: Text(
-                      status,
+                      lamaran.statusText,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 14,
@@ -368,5 +515,138 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
         ),
       ),
     );
+  }
+
+  Widget _buildApplicationCardSkeleton() {
+    return Container(
+      height: 181,
+      margin: const EdgeInsets.only(left: 16, right: 16, bottom: 17),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(34),
+      ),
+      child: Column(
+        children: [
+          // Content Area Skeleton
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 17, 16, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header Skeleton
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Logo Skeleton
+                      Container(
+                        width: 40,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      // Title Skeleton
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: double.infinity,
+                              height: 16,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade200,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              width: 120,
+                              height: 14,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade200,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 13),
+                  // Description Skeleton
+                  Container(
+                    width: double.infinity,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: 200,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Divider
+          Container(
+            height: 1,
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            color: const Color(0xFFE9E9E9),
+          ),
+          // Footer Skeleton
+          Container(
+            height: 54,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  width: 100,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                Container(
+                  width: 60,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final day = date.day;
+    final month = _getMonthName(date.month);
+    final year = date.year;
+    return '$day $month $year';
+  }
+
+  String _getMonthName(int month) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+    ];
+    return months[month - 1];
   }
 }

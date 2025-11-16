@@ -1790,6 +1790,58 @@ class ApiService {
       }
     }
 
+  // ================== GET LOWONGAN YANG SUDAH DILAMAR ==================
+  Future<List<String>> getLowonganSudahDilamar() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final talentId = prefs.getString('talentId');
+
+    if (token == null || talentId == null) {
+      print("❌ Token atau TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      // Set headers dengan token
+      _dio.options.headers = {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      };
+
+      final response = await _dio.get(
+        ApiConfig.getLamaranSaya(),
+      );
+
+      print("GET Lowongan Sudah Dilamar - STATUS: ${response.statusCode}");
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        
+        // Extract hanya lowonganId dari data lamaran
+        final appliedJobIds = data.map<String>((lamaran) {
+          return lamaran['lowonganId'] as String;
+        }).toList();
+
+        print("✅ Lowongan yang sudah dilamar: $appliedJobIds");
+        return appliedJobIds;
+      } else {
+        print("⚠️ Gagal ambil data lowongan yang sudah dilamar: ${response.data}");
+        throw Exception('Failed to load applied jobs');
+      }
+    } on DioException catch (e) {
+      print("❌ Error ambil lowongan yang sudah dilamar: ${e.message}");
+      
+      if (e.response != null) {
+        final errorData = e.response!.data;
+        final errorMessage = errorData['message'] ?? 'Terjadi kesalahan saat mengambil data lowongan yang sudah dilamar';
+        throw Exception(errorMessage);
+      }
+      
+      throw Exception('Terjadi kesalahan jaringan');
+    }
+  }
+
+
     // ================== BATAL LAMARAN ==================
     Future<BatalLamaranResponse> batalkanLamaran(String lamaranId) async {
       final prefs = await SharedPreferences.getInstance();

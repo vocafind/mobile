@@ -135,8 +135,6 @@ class ApiConfig {
 
   // ------------------------------------------------------------- Lamar Loker Umum
   static String Lamarloker(String lowonganId) => "$baseUrl/Lamar/lokerUmum/$lowonganId";                   // Lamar Loker UUmum
-  // Get Lamaran Saya
-  static String getLamaranSaya() => "$baseUrl/Lamar/lamaran-saya";
-  // Batalkan Lamaran
-  static String batalkanLamaran(String lamaranId) => "$baseUrl/Lamar/batal/$lamaranId";
+  static String getLamaranSaya() => "$baseUrl/Lamar/lamaran-saya";                                         // Get Lamaran Saya
+  static String batalkanLamaran(String lamaranId) => "$baseUrl/Lamar/batal/$lamaranId";                    // Batalkan Lamaran
 }

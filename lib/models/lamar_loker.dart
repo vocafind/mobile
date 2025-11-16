@@ -1,4 +1,6 @@
 // models/lamar_model.dart
+import 'dart:ui';
+
 class LamarLokerResponse {
   final String message;
   final String? applyId;
@@ -22,7 +24,7 @@ class LamaranSaya {
   final String status;
   final DateTime createdAt;
   final DateTime appliedAt;
-  final LowonganInfo lowongan;
+  final LowonganLamaran lowongan;
 
   LamaranSaya({
     required this.applyId,
@@ -40,50 +42,94 @@ class LamaranSaya {
       status: json['status'] ?? '',
       createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toString()),
       appliedAt: DateTime.parse(json['appliedAt'] ?? DateTime.now().toString()),
-      lowongan: LowonganInfo.fromJson(json['Lowongan'] ?? {}),
+      lowongan: LowonganLamaran.fromJson(json['lowongan'] ?? {}),
     );
+  }
+
+  // Get status color
+  Color get statusColor {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return const Color(0xFFFF9500); // Orange
+      case 'ditinjau':
+        return const Color(0xFF00C8B3); // Mint
+      case 'interview':
+        return const Color(0xFF0088FF); // Blue
+      case 'diterima':
+        return const Color(0xFF34C759); // Green
+      case 'ditolak':
+        return const Color(0xFFFF383C); // Red
+      default:
+        return const Color(0xFFFF9500); // Default Orange
+    }
+  }
+
+  // Get status text in Indonesian
+  String get statusText {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'Pending';
+      case 'ditinjau':
+        return 'Ditinjau';
+      case 'interview':
+        return 'Interview';
+      case 'diterima':
+        return 'Diterima';
+      case 'ditolak':
+        return 'Ditolak';
+      default:
+        return status;
+    }
   }
 }
 
-class LowonganInfo {
-  final String judul;
-  final String deskripsi;
+class LowonganLamaran {
+  final String posisi;
+  final String deskripsiPekerjaan;
   final String lokasi;
   final String gaji;
-  final CompanyInfo company;
+  final CompanyLamaran company;
 
-  LowonganInfo({
-    required this.judul,
-    required this.deskripsi,
+  LowonganLamaran({
+    required this.posisi,
+    required this.deskripsiPekerjaan,
     required this.lokasi,
     required this.gaji,
     required this.company,
   });
 
-  factory LowonganInfo.fromJson(Map<String, dynamic> json) {
-    return LowonganInfo(
-      judul: json['Judul'] ?? '',
-      deskripsi: json['Deskripsi'] ?? '',
-      lokasi: json['Lokasi'] ?? '',
-      gaji: json['Gaji']?.toString() ?? '',
-      company: CompanyInfo.fromJson(json['Company'] ?? {}),
+  factory LowonganLamaran.fromJson(Map<String, dynamic> json) {
+    return LowonganLamaran(
+      posisi: json['posisi'] ?? '',
+      deskripsiPekerjaan: json['deskripsiPekerjaan'] ?? '',
+      lokasi: json['lokasi'] ?? '',
+      gaji: json['gaji'] ?? '',
+      company: CompanyLamaran.fromJson(json['company'] ?? {}),
     );
+  }
+
+  // Clean HTML tags from description
+  String get cleanDescription {
+    return deskripsiPekerjaan
+        .replaceAll(RegExp(r'<[^>]*>'), '')
+        .replaceAll('&nbsp;', ' ')
+        .trim();
   }
 }
 
-class CompanyInfo {
-  final String nama;
+class CompanyLamaran {
+  final String namaPerusahaan;
   final String logo;
 
-  CompanyInfo({
-    required this.nama,
+  CompanyLamaran({
+    required this.namaPerusahaan,
     required this.logo,
   });
 
-  factory CompanyInfo.fromJson(Map<String, dynamic> json) {
-    return CompanyInfo(
-      nama: json['Nama'] ?? '',
-      logo: json['Logo'] ?? '',
+  factory CompanyLamaran.fromJson(Map<String, dynamic> json) {
+    return CompanyLamaran(
+      namaPerusahaan: json['namaPerusahaan'] ?? '',
+      logo: json['logo'] ?? '',
     );
   }
 }

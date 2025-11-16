@@ -43,7 +43,7 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
     );
   }
 
-  // Fungsi untuk melamar loker
+  // Di fungsi _lamarLoker di JobDetailSheet
   Future<void> _lamarLoker() async {
     if (widget.loker?.lowonganId == null) return;
 
@@ -59,19 +59,19 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
       if (mounted) {
         _showSnackBar(response.message);
 
+        // Refresh data di halaman pencarian
         Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) Navigator.of(context).pop(true);
+          if (mounted) {
+            Navigator.of(
+              context,
+            ).pop(true); // Return true untuk trigger refresh
+          }
         });
       }
     } catch (e) {
       if (mounted) {
-        // Hapus "Exception:" dari pesan error
-        String errorMessage = e.toString();
-        if (errorMessage.startsWith('Exception:')) {
-          errorMessage = errorMessage.substring(10).trim();
-        }
-
-        _showSnackBar(errorMessage, isError: true);
+        final cleanError = e.toString().replaceAll('Exception:', '').trim();
+        _showSnackBar(cleanError, isError: true);
       }
     } finally {
       if (mounted) {

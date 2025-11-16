@@ -25,11 +25,12 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
   List<LokerUmum> _filteredLowongan = [];
   bool _isLoading = true;
   bool _hasError = false;
+  List<String> _appliedJobIds = [];
 
   @override
   void initState() {
     super.initState();
-    _loadLowongan();
+    _loadData();
   }
 
   @override
@@ -40,25 +41,39 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
     super.dispose();
   }
 
-  Future<void> _loadLowongan() async {
+  Future<void> _loadData() async {
     setState(() {
       _isLoading = true;
       _hasError = false;
     });
 
     try {
-      final lowongan = await _apiService.getAllLokerUmum();
+      // Load lowongan dan data lamaran secara bersamaan dengan type annotation
+      final results = await Future.wait<dynamic>([
+        _apiService.getAllLokerUmum(),
+        _apiService.getLowonganSudahDilamar(),
+      ]);
+
+      // Cast ke tipe yang benar
+      final lowongan = results[0] as List<LokerUmum>;
+      final appliedIds = results[1] as List<String>;
+
       setState(() {
         _allLowongan = lowongan;
         _filteredLowongan = lowongan;
+        _appliedJobIds = appliedIds;
         _isLoading = false;
       });
+
+      print(
+        "✅ Data loaded: ${lowongan.length} lowongan, ${appliedIds.length} sudah dilamar",
+      );
     } catch (e) {
       setState(() {
         _isLoading = false;
         _hasError = true;
       });
-      print("Error loading lowongan: $e");
+      print("❌ Error loading data: $e");
     }
   }
 
@@ -105,7 +120,12 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
           isScrollControlled: true,
           backgroundColor: Colors.transparent,
           builder: (context) => JobDetailSheet(loker: detailLowongan),
-        );
+        ).then((shouldRefresh) {
+          // Handle refresh setelah melamar
+          if (shouldRefresh == true) {
+            _loadData(); // Refresh data
+          }
+        });
       }
     } catch (e) {
       // Tutup loading jika error
@@ -177,7 +197,7 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
                     valueListenable: _selectedTab,
                     builder: (context, selectedTab, child) {
                       return RefreshIndicator(
-                        onRefresh: _loadLowongan,
+                        onRefresh: _loadData,
                         child: SingleChildScrollView(
                           controller: _scrollController,
                           child: Column(
@@ -192,6 +212,7 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
                               else
                                 _LowonganList(
                                   lowonganList: _filteredLowongan,
+                                  appliedJobIds: _appliedJobIds,
                                   onItemTap: _showJobDetail,
                                 ),
                               const SizedBox(height: 24),
@@ -269,7 +290,7 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
           ),
           const SizedBox(height: 8),
           ElevatedButton(
-            onPressed: _loadLowongan,
+            onPressed: _loadData,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF1E40AF),
               shape: RoundedRectangleBorder(
@@ -438,9 +459,14 @@ class _TabButton extends StatelessWidget {
 // ✅ Extract Lowongan List dengan data real
 class _LowonganList extends StatelessWidget {
   final List<LokerUmum> lowonganList;
+  final List<String> appliedJobIds;
   final Function(LokerUmum) onItemTap;
 
-  const _LowonganList({required this.lowonganList, required this.onItemTap});
+  const _LowonganList({
+    required this.lowonganList,
+    required this.appliedJobIds,
+    required this.onItemTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -450,6 +476,7 @@ class _LowonganList extends StatelessWidget {
         children: lowonganList.map((lowongan) {
           final daysLeft = _calculateDaysLeft(lowongan.batasLamaran);
           final isUrgent = daysLeft <= 10 && daysLeft >= 0;
+          final isApplied = appliedJobIds.contains(lowongan.lowonganId);
 
           return Column(
             children: [
@@ -457,6 +484,7 @@ class _LowonganList extends StatelessWidget {
                 lowongan: lowongan,
                 isUrgent: isUrgent,
                 daysLeft: daysLeft,
+                isApplied: isApplied,
                 onTap: () => onItemTap(lowongan),
               ),
               const SizedBox(height: 16),
@@ -479,12 +507,14 @@ class _JobCard extends StatefulWidget {
   final LokerUmum lowongan;
   final bool isUrgent;
   final int daysLeft;
+  final bool isApplied;
   final VoidCallback onTap;
 
   const _JobCard({
     required this.lowongan,
     required this.isUrgent,
     required this.daysLeft,
+    required this.isApplied,
     required this.onTap,
   });
 
@@ -547,8 +577,47 @@ class __JobCardState extends State<_JobCard>
           ),
           child: Stack(
             children: [
-              // ✅ Urgent badge persis seperti beranda
-              if (widget.isUrgent) ...[
+              // ✅ Sudah dilamar badge (Priority 1)
+              if (widget.isApplied) ...[
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: Container(
+                    width: 145,
+                    height: 29,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF4CAF50), // Warna hijau
+                      borderRadius: BorderRadius.only(
+                        topRight: Radius.circular(34),
+                        bottomLeft: Radius.circular(90),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 12),
+                        const Icon(
+                          Icons.check_circle,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Sudah dilamar',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+
+              // ✅ Urgent badge (Priority 2 - hanya tampil jika belum dilamar)
+              if (widget.isUrgent && !widget.isApplied) ...[
                 Positioned(
                   left: 0,
                   top: 0,
