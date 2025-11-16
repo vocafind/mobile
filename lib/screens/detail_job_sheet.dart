@@ -13,10 +13,35 @@ class JobDetailSheet extends StatefulWidget {
 
 class _JobDetailSheetState extends State<JobDetailSheet> {
   int _selectedTab = 0;
-  bool _isLoading = false; // Tambah state loading
-  final ApiService _apiService = ApiService(); // Instance service
+  bool _isLoading = false;
+  final ApiService _apiService = ApiService();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
+  // Tambahkan GlobalKey untuk ScaffoldMessenger
+  final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
+      GlobalKey<ScaffoldMessengerState>();
 
+  // Fungsi snackbar dengan GlobalKey
+  void _showSnackBar(String message, {bool isError = false}) {
+    _scaffoldMessengerKey.currentState?.showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.w500,
+            fontFamily: 'Poppins',
+          ),
+        ),
+        backgroundColor: isError ? Colors.red[100] : Colors.white,
+        behavior: SnackBarBehavior.floating,
+        elevation: 2,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
 
   // Fungsi untuk melamar loker
   Future<void> _lamarLoker() async {
@@ -31,28 +56,22 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
         widget.loker!.lowonganId,
       );
 
-      // Show success message
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response.message),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        _showSnackBar(response.message);
 
-        // Close sheet setelah berhasil
-        Navigator.of(context).pop(true); // Return true untuk trigger refresh
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) Navigator.of(context).pop(true);
+        });
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        // Hapus "Exception:" dari pesan error
+        String errorMessage = e.toString();
+        if (errorMessage.startsWith('Exception:')) {
+          errorMessage = errorMessage.substring(10).trim();
+        }
+
+        _showSnackBar(errorMessage, isError: true);
       }
     } finally {
       if (mounted) {
@@ -70,44 +89,52 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
       minChildSize: 0.5,
       maxChildSize: 0.95,
       builder: (context, scrollController) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-            boxShadow: [
-              BoxShadow(
-                color: Color(0x40000000),
-                blurRadius: 4,
-                offset: Offset(0, -4),
+        return ScaffoldMessenger(
+          // BUNGKUS DENGAN ScaffoldMessenger
+          key: _scaffoldMessengerKey,
+          child: Scaffold(
+            key: _scaffoldKey,
+            backgroundColor: Colors.transparent,
+            body: Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0x40000000),
+                    blurRadius: 4,
+                    offset: Offset(0, -4),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Column(
-            children: [
-              // Drag Handle
-              _buildDragHandle(),
+              child: Column(
+                children: [
+                  // Drag Handle
+                  _buildDragHandle(),
 
-              // Scrollable Content
-              Expanded(
-                child: ListView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.fromLTRB(18, 30, 18, 100),
-                  children: [
-                    _buildHeader(),
-                    const SizedBox(height: 24),
-                    _buildInfoCards(),
-                    const SizedBox(height: 24),
-                    _buildTabNavigation(),
-                    const SizedBox(height: 22),
-                    if (_selectedTab == 0) _buildDescriptionTab(),
-                    if (_selectedTab == 1) _buildCompanyTab(),
-                  ],
-                ),
+                  // Scrollable Content
+                  Expanded(
+                    child: ListView(
+                      controller: scrollController,
+                      padding: const EdgeInsets.fromLTRB(18, 30, 18, 100),
+                      children: [
+                        _buildHeader(),
+                        const SizedBox(height: 24),
+                        _buildInfoCards(),
+                        const SizedBox(height: 24),
+                        _buildTabNavigation(),
+                        const SizedBox(height: 22),
+                        if (_selectedTab == 0) _buildDescriptionTab(),
+                        if (_selectedTab == 1) _buildCompanyTab(),
+                      ],
+                    ),
+                  ),
+
+                  // Fixed Apply Button
+                  _buildApplyButton(),
+                ],
               ),
-
-              // Fixed Apply Button
-              _buildApplyButton(),
-            ],
+            ),
           ),
         );
       },
@@ -696,7 +723,7 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
       child: ElevatedButton(
         onPressed: (isKuotaPenuh || isExpired || _isLoading)
             ? null
-            : _lamarLoker, // Panggil fungsi lamar
+            : _lamarLoker,
         style: ElevatedButton.styleFrom(
           backgroundColor: (isKuotaPenuh || isExpired)
               ? Colors.grey
