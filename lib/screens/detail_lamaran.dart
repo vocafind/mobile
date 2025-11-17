@@ -1,43 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:jobfair/models/lamar_loker.dart';
 
 class DetailLamaran extends StatefulWidget {
-  final String jobTitle;
-  final String companyName;
-  final String location;
-  final String date;
-  final String qrCode;
-  final String status;
+  final LamaranSaya lamaran; // GUNAKAN MODEL LAMARANSAYA
 
   const DetailLamaran({
     super.key,
-    required this.jobTitle,
-    required this.companyName,
-    required this.location,
-    required this.date,
-    required this.qrCode,
-    required this.status,
+    required this.lamaran,
   });
 
   static void show(
     BuildContext context, {
-    required String jobTitle,
-    required String companyName,
-    required String location,
-    required String date,
-    required String qrCode,
-    required String status,
+    required LamaranSaya lamaran, // GUNAKAN MODEL LAMARANSAYA
   }) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => DetailLamaran(
-        jobTitle: jobTitle,
-        companyName: companyName,
-        location: location,
-        date: date,
-        qrCode: qrCode,
-        status: status,
+        lamaran: lamaran,
       ),
     );
   }
@@ -50,108 +31,133 @@ class _DetailLamaranState extends State<DetailLamaran> {
   // Menyimpan status aktif untuk timeline
   String _activeTimeline = 'pending';
 
-  // Data untuk setiap fase timeline
-  final Map<String, Map<String, dynamic>> _timelineData = {
-    'pending': {
-      'title': 'Pending',
-      'icon': Icons.access_time_rounded,
-      'isCompleted': true,
-      'description': 'Lamaran Anda sedang dalam antrian',
-      'details': [
-        {
-          'icon': Icons.schedule_rounded,
-          'title': 'Waktu Submit',
-          'value': '12 Januari 2024, 14:30 WIB',
-        },
-        {
-          'icon': Icons.info_rounded,
-          'title': 'Status',
-          'value': 'Menunggu review dari HR',
-        },
-      ],
-    },
-    'ditinjau': {
-      'title': 'Ditinjau',
-      'icon': Icons.remove_red_eye_rounded,
-      'isCompleted': true,
-      'description': 'Tim HR sedang meninjau lamaran Anda',
-      'details': [
-        {
-          'icon': Icons.schedule_rounded,
-          'title': 'Waktu Direview',
-          'value': '15 Januari 2024',
-        },
-        {
-          'icon': Icons.info_rounded,
-          'title': 'Hasil Review',
-          'value': 'Kualifikasi memenuhi syarat',
-        },
-      ],
-    },
-    'interview': {
-      'title': 'Interview',
-      'icon': Icons.people_rounded,
-      'isCompleted': true,
-      'description': 'Anda dijadwalkan untuk wawancara',
-      'details': [
-        {
-          'icon': Icons.calendar_today_rounded,
-          'title': 'Tanggal Interview',
-          'value': '20 Januari 2024',
-        },
-        {
-          'icon': Icons.access_time_rounded,
-          'title': 'Waktu',
-          'value': '10:00 - 11:00 WIB',
-        },
-        {
-          'icon': Icons.video_call_rounded,
-          'title': 'Platform',
-          'value': 'Google Meet',
-        },
-        {
-          'icon': Icons.link_rounded,
-          'title': 'Link Meeting',
-          'value': 'meet.google.com/abc-defg-hij',
-          'isLink': true,
-        },
-        {
-          'icon': Icons.person_rounded,
-          'title': 'Interviewer',
-          'value': 'Sarah Johnson & Team Lead',
-        },
-      ],
-    },
-    'diterima': {
-      'title': 'Hasil',
-      'icon': Icons.check_circle_rounded,
-      'isCompleted': true,
-      'isSuccess': true,
-      'description': 'Selamat! Lamaran Anda diterima',
-      'details': [
-        {
-          'icon': Icons.celebration_rounded,
-          'title': 'Tanggal Diterima',
-          'value': '25 Januari 2024',
-        },
-        {
-          'icon': Icons.work_rounded,
-          'title': 'Posisi',
-          'value': 'Software Engineer',
-        },
-        {
-          'icon': Icons.business_rounded,
-          'title': 'Departemen',
-          'value': 'Engineering Team',
-        },
-        {
-          'icon': Icons.calendar_today_rounded,
-          'title': 'Tanggal Mulai',
-          'value': '1 Februari 2024',
-        },
-      ],
-    },
-  };
+  // Helper functions untuk format tanggal dan waktu
+  String _formatDate(DateTime date) {
+    return '${date.day} ${_getMonthName(date.month)} ${date.year}';
+  }
+
+  String _formatTime(DateTime date) {
+    return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')} WIB';
+  }
+
+  String _getMonthName(int month) {
+    const months = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    return months[month - 1];
+  }
+
+  // Data untuk setiap fase timeline - SESUAIKAN DENGAN STATUS
+  Map<String, Map<String, dynamic>> get _timelineData {
+    return {
+      'pending': {
+        'title': 'Pending',
+        'icon': Icons.access_time_rounded,
+        'isCompleted': widget.lamaran.status == 'pending' || 
+                       widget.lamaran.status == 'ditinjau' || 
+                       widget.lamaran.status == 'interview' || 
+                       widget.lamaran.status == 'diterima',
+        'description': 'Lamaran Anda sedang dalam antrian',
+        'details': [
+          {
+            'icon': Icons.schedule_rounded,
+            'title': 'Waktu Submit',
+            'value': '${_formatDate(widget.lamaran.appliedAt)}, ${_formatTime(widget.lamaran.appliedAt)}',
+          },
+          {
+            'icon': Icons.info_rounded,
+            'title': 'Status',
+            'value': 'Menunggu review dari HR',
+          },
+        ],
+      },
+      'ditinjau': {
+        'title': 'Ditinjau',
+        'icon': Icons.remove_red_eye_rounded,
+        'isCompleted': widget.lamaran.status == 'ditinjau' || 
+                       widget.lamaran.status == 'interview' || 
+                       widget.lamaran.status == 'diterima',
+        'description': 'Tim HR sedang meninjau lamaran Anda',
+        'details': [
+          {
+            'icon': Icons.schedule_rounded,
+            'title': 'Waktu Direview',
+            'value': '${_formatDate(widget.lamaran.createdAt)}',
+          },
+          {
+            'icon': Icons.info_rounded,
+            'title': 'Hasil Review',
+            'value': 'Kualifikasi memenuhi syarat',
+          },
+        ],
+      },
+      'interview': {
+        'title': 'Interview',
+        'icon': Icons.people_rounded,
+        'isCompleted': widget.lamaran.status == 'interview' || 
+                       widget.lamaran.status == 'diterima',
+        'description': 'Anda dijadwalkan untuk wawancara',
+        'details': [
+          {
+            'icon': Icons.calendar_today_rounded,
+            'title': 'Tanggal Interview',
+            'value': '20 Januari 2024', // Bisa disesuaikan dengan data actual
+          },
+          {
+            'icon': Icons.access_time_rounded,
+            'title': 'Waktu',
+            'value': '10:00 - 11:00 WIB',
+          },
+          {
+            'icon': Icons.video_call_rounded,
+            'title': 'Platform',
+            'value': 'Google Meet',
+          },
+          {
+            'icon': Icons.link_rounded,
+            'title': 'Link Meeting',
+            'value': 'meet.google.com/abc-defg-hij',
+            'isLink': true,
+          },
+          {
+            'icon': Icons.person_rounded,
+            'title': 'Interviewer',
+            'value': 'Sarah Johnson & Team Lead',
+          },
+        ],
+      },
+      'diterima': {
+        'title': 'Hasil',
+        'icon': Icons.check_circle_rounded,
+        'isCompleted': widget.lamaran.status == 'diterima',
+        'isSuccess': true,
+        'description': 'Selamat! Lamaran Anda diterima',
+        'details': [
+          {
+            'icon': Icons.celebration_rounded,
+            'title': 'Tanggal Diterima',
+            'value': '25 Januari 2024',
+          },
+          {
+            'icon': Icons.work_rounded,
+            'title': 'Posisi',
+            'value': widget.lamaran.lowongan.posisi,
+          },
+          {
+            'icon': Icons.business_rounded,
+            'title': 'Departemen',
+            'value': 'Engineering Team',
+          },
+          {
+            'icon': Icons.calendar_today_rounded,
+            'title': 'Tanggal Mulai',
+            'value': '1 Februari 2024',
+          },
+        ],
+      },
+    };
+  }
 
   void _setActiveTimeline(String timeline) {
     setState(() {
@@ -182,7 +188,7 @@ class _DetailLamaranState extends State<DetailLamaran> {
 
           // Header Section dengan style seperti JobDetailSheet
           Container(
-            color: Colors.white, // TAMBAHKAN INI
+            color: Colors.white,
             padding: const EdgeInsets.fromLTRB(18, 30, 18, 24),
             child: Column(
               children: [
@@ -200,17 +206,28 @@ class _DetailLamaranState extends State<DetailLamaran> {
                         border: Border.all(color: const Color(0xFFF1F5F9)),
                       ),
                       padding: const EdgeInsets.all(8),
-                      child: Image.asset(
-                        'assets/icons/icon.png',
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Icon(
-                            Icons.business,
-                            size: 36,
-                            color: Color(0xFF162781),
-                          );
-                        },
-                      ),
+                      child: widget.lamaran.lowongan.company.logo.startsWith('http')
+                          ? Image.network(
+                              widget.lamaran.lowongan.company.logo,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Image.asset(
+                                  'assets/icons/icon.png',
+                                  fit: BoxFit.contain,
+                                );
+                              },
+                            )
+                          : Image.asset(
+                              widget.lamaran.lowongan.company.logo,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Icon(
+                                  Icons.business,
+                                  size: 36,
+                                  color: Color(0xFF162781),
+                                );
+                              },
+                            ),
                     ),
                     const SizedBox(width: 20),
 
@@ -220,7 +237,7 @@ class _DetailLamaranState extends State<DetailLamaran> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            widget.jobTitle,
+                            widget.lamaran.lowongan.posisi,
                             style: const TextStyle(
                               color: Color(0xFF1A1A1A),
                               fontSize: 24,
@@ -231,7 +248,7 @@ class _DetailLamaranState extends State<DetailLamaran> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            widget.companyName,
+                            widget.lamaran.lowongan.company.namaPerusahaan,
                             style: const TextStyle(
                               color: Color(0xFF515151),
                               fontSize: 16,
@@ -265,7 +282,7 @@ class _DetailLamaranState extends State<DetailLamaran> {
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  widget.location,
+                                  widget.lamaran.lowongan.lokasi,
                                   style: const TextStyle(
                                     color: Color(0xFF464E5E),
                                     fontSize: 12,
@@ -462,11 +479,9 @@ class _DetailLamaranState extends State<DetailLamaran> {
                       activeData['title'],
                       style: const TextStyle(
                         color: Color(0xFF191919),
-                        fontSize: 20, // Ukuran font seperti di JobDetailSheet
-                        fontFamily:
-                            'SF Pro', // Font family seperti JobDetailSheet
-                        fontWeight:
-                            FontWeight.w500, // Weight seperti JobDetailSheet
+                        fontSize: 20,
+                        fontFamily: 'SF Pro',
+                        fontWeight: FontWeight.w500,
                         height: 1.2,
                       ),
                     ),
@@ -507,9 +522,9 @@ class _DetailLamaranState extends State<DetailLamaran> {
                 Text(
                   activeData['description'],
                   style: const TextStyle(
-                    color: Color(0xFF515151), // Warna seperti JobDetailSheet
+                    color: Color(0xFF515151),
                     fontSize: 14,
-                    fontFamily: 'SF Pro', // Font family seperti JobDetailSheet
+                    fontFamily: 'SF Pro',
                     fontWeight: FontWeight.w400,
                     height: 1.4,
                   ),
@@ -518,7 +533,7 @@ class _DetailLamaranState extends State<DetailLamaran> {
             ),
           ),
 
-          const SizedBox(height: 24), // Spacing seperti JobDetailSheet
+          const SizedBox(height: 24),
           // Detail Items
           if (activeData['details'] != null)
             ..._buildDetailItems(activeData['details']),
@@ -571,9 +586,9 @@ class _DetailLamaranState extends State<DetailLamaran> {
                 Text(
                   title,
                   style: const TextStyle(
-                    color: Color(0xFF515151), // Warna seperti JobDetailSheet
+                    color: Color(0xFF515151),
                     fontSize: 13,
-                    fontFamily: 'SF Pro', // Font family seperti JobDetailSheet
+                    fontFamily: 'SF Pro',
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -588,8 +603,7 @@ class _DetailLamaranState extends State<DetailLamaran> {
                       style: const TextStyle(
                         color: Color(0xFF2345F7),
                         fontSize: 14,
-                        fontFamily:
-                            'SF Pro', // Font family seperti JobDetailSheet
+                        fontFamily: 'SF Pro',
                         fontWeight: FontWeight.w600,
                         decoration: TextDecoration.underline,
                       ),
@@ -601,8 +615,7 @@ class _DetailLamaranState extends State<DetailLamaran> {
                     style: const TextStyle(
                       color: Color(0xFF1A1A1A),
                       fontSize: 14,
-                      fontFamily:
-                          'SF Pro', // Font family seperti JobDetailSheet
+                      fontFamily: 'SF Pro',
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -638,7 +651,7 @@ class _DetailLamaranState extends State<DetailLamaran> {
                 style: TextStyle(
                   color: Color(0xFF1A1A1A),
                   fontSize: 15,
-                  fontFamily: 'SF Pro', // Font family seperti JobDetailSheet
+                  fontFamily: 'SF Pro',
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -678,7 +691,7 @@ class _DetailLamaranState extends State<DetailLamaran> {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    widget.qrCode,
+                    widget.lamaran.applyId, // Gunakan applyId sebagai QR code
                     style: const TextStyle(
                       color: Color(0xFF162781),
                       fontSize: 13,
@@ -695,7 +708,7 @@ class _DetailLamaranState extends State<DetailLamaran> {
                   style: TextStyle(
                     color: Color(0xFF6B7280),
                     fontSize: 12,
-                    fontFamily: 'SF Pro', // Font family seperti JobDetailSheet
+                    fontFamily: 'SF Pro',
                     fontWeight: FontWeight.w400,
                   ),
                 ),
@@ -746,8 +759,7 @@ class _DetailLamaranState extends State<DetailLamaran> {
                     style: TextStyle(
                       color: Color(0xFF2643D7),
                       fontSize: 14,
-                      fontFamily:
-                          'SF Pro', // Font family seperti JobDetailSheet
+                      fontFamily: 'SF Pro',
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -786,7 +798,7 @@ class _DetailLamaranState extends State<DetailLamaran> {
                 style: TextStyle(
                   color: Color(0xFF1A1A1A),
                   fontSize: 14,
-                  fontFamily: 'SF Pro', // Font family seperti JobDetailSheet
+                  fontFamily: 'SF Pro',
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -796,9 +808,9 @@ class _DetailLamaranState extends State<DetailLamaran> {
           const Text(
             'Email konfirmasi dan detail kontrak telah dikirim ke email Anda. Silakan periksa inbox Anda.',
             style: TextStyle(
-              color: Color(0xFF515151), // Warna seperti JobDetailSheet
+              color: Color(0xFF515151),
               fontSize: 13,
-              fontFamily: 'SF Pro', // Font family seperti JobDetailSheet
+              fontFamily: 'SF Pro',
               fontWeight: FontWeight.w400,
             ),
           ),

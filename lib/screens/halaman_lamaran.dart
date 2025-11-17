@@ -336,15 +336,10 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
 
     return GestureDetector(
       onTap: () {
-        // Show detail lamaran bottom sheet
+        // Show detail lamaran bottom sheet - UPDATE INI
         DetailLamaran.show(
           context,
-          jobTitle: lowongan.posisi,
-          companyName: company.namaPerusahaan,
-          location: lowongan.lokasi,
-          date: _formatDate(lamaran.appliedAt),
-          qrCode: lamaran.applyId.substring(0, 8).toUpperCase(),
-          status: lamaran.statusText,
+          lamaran: lamaran, // PASS LAMARANSAYA OBJECT
         );
       },
       child: Container(
