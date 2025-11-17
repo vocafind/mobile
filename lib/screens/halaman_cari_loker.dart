@@ -758,9 +758,9 @@ class __JobCardState extends State<_JobCard>
                     _formatSalary(widget.lowongan.gaji),
                     style: const TextStyle(
                       color: Color(0xFF1B56FD),
-                      fontSize: 16,
+                      fontSize: 18,
                       fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
 
@@ -798,7 +798,7 @@ class __JobCardState extends State<_JobCard>
                             'Remote',
                             style: TextStyle(
                               color: Color(0xFF2E7D32),
-                              fontSize: 10,
+                              fontSize: 14,
                               fontFamily: 'Poppins',
                               fontWeight: FontWeight.w500,
                             ),
@@ -809,51 +809,51 @@ class __JobCardState extends State<_JobCard>
 
                   const SizedBox(height: 8),
 
-                  // ✅ Experience & Contract - DIBAWAH TAGS
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF8E1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          widget.lowongan.tingkatPengalaman,
-                          style: const TextStyle(
-                            color: Color(0xFFF57C00),
-                            fontSize: 10,
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE8F0FE),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          widget.lowongan.kontrakDurasi,
-                          style: const TextStyle(
-                            color: Color(0xFF1B56FD),
-                            fontSize: 10,
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  // // ✅ Experience & Contract - DIBAWAH TAGS
+                  // Wrap(
+                  //   spacing: 8,
+                  //   runSpacing: 8,
+                  //   children: [
+                  //     Container(
+                  //       padding: const EdgeInsets.symmetric(
+                  //         horizontal: 8,
+                  //         vertical: 4,
+                  //       ),
+                  //       decoration: BoxDecoration(
+                  //         color: const Color(0xFFFFF8E1),
+                  //         borderRadius: BorderRadius.circular(12),
+                  //       ),
+                  //       child: Text(
+                  //         widget.lowongan.tingkatPengalaman,
+                  //         style: const TextStyle(
+                  //           color: Color(0xFFF57C00),
+                  //           fontSize: 10,
+                  //           fontFamily: 'Poppins',
+                  //           fontWeight: FontWeight.w500,
+                  //         ),
+                  //       ),
+                  //     ),
+                  //     Container(
+                  //       padding: const EdgeInsets.symmetric(
+                  //         horizontal: 8,
+                  //         vertical: 4,
+                  //       ),
+                  //       decoration: BoxDecoration(
+                  //         color: const Color(0xFFE8F0FE),
+                  //         borderRadius: BorderRadius.circular(12),
+                  //       ),
+                  //       child: Text(
+                  //         widget.lowongan.kontrakDurasi,
+                  //         style: const TextStyle(
+                  //           color: Color(0xFF1B56FD),
+                  //           fontSize: 10,
+                  //           fontFamily: 'Poppins',
+                  //           fontWeight: FontWeight.w500,
+                  //         ),
+                  //       ),
+                  //     ),
+                  //   ],
+                  // ),
 
                   const Spacer(),
 
@@ -909,7 +909,7 @@ class __JobCardState extends State<_JobCard>
             text.length > 12 ? '${text.substring(0, 12)}...' : text, // ✅ Lebih pendek
             style: TextStyle(
               color: Colors.grey.shade600,
-              fontSize: 10,
+              fontSize: 12,
               fontFamily: 'Poppins',
               fontWeight: FontWeight.w400,
             ),
