@@ -6,15 +6,14 @@ class DetailLamaran extends StatefulWidget {
 
   const DetailLamaran({super.key, required this.lamaran});
 
-  static void show(
-    BuildContext context, {
-    required LamaranSaya lamaran,
-  }) {
+  static void show(BuildContext context, {required LamaranSaya lamaran}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => DetailLamaran(lamaran: lamaran),
+      builder: (context) => Builder(
+        builder: (bottomSheetContext) => DetailLamaran(lamaran: lamaran),
+      ),
     );
   }
 
@@ -64,8 +63,18 @@ class _DetailLamaranState extends State<DetailLamaran> {
 
   String _getMonthName(int month) {
     const months = [
-      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
     ];
     return months[month - 1];
   }
@@ -80,7 +89,7 @@ class _DetailLamaranState extends State<DetailLamaran> {
       'pending': 1,
       'reviewed': 2,
       'interview': 3,
-      'accepted': 4
+      'accepted': 4,
     };
     return statusOrder[widget.lamaran.status.toLowerCase()] ?? 1;
   }
@@ -90,7 +99,7 @@ class _DetailLamaranState extends State<DetailLamaran> {
     if (widget.lamaran.status.toLowerCase() == 'reject_interview') {
       return timelineKey == 'pending';
     }
-    
+
     final timelineOrder = _getTimelineOrder(timelineKey);
     final currentStatusOrder = _getCurrentStatusOrder();
     return timelineOrder <= currentStatusOrder;
@@ -120,9 +129,7 @@ class _DetailLamaranState extends State<DetailLamaran> {
         ),
         backgroundColor: const Color(0xFF6B7280),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         duration: const Duration(seconds: 3),
         margin: const EdgeInsets.all(16),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -139,35 +146,40 @@ class _DetailLamaranState extends State<DetailLamaran> {
       'pending': {
         'title': 'Pending',
         'icon': Icons.access_time_rounded,
-        'isCompleted': currentStatus == 'pending' || 
-                       currentStatus == 'reviewed' || 
-                       currentStatus == 'interview' || 
-                       currentStatus == 'accepted' ||
-                       isRejected,
-        'description': isRejected 
+        'isCompleted':
+            currentStatus == 'pending' ||
+            currentStatus == 'reviewed' ||
+            currentStatus == 'interview' ||
+            currentStatus == 'accepted' ||
+            isRejected,
+        'description': isRejected
             ? 'Lamaran Anda telah ditolak setelah proses review'
             : 'Lamaran Anda sedang dalam antrian',
         'details': [
           {
             'icon': Icons.schedule_rounded,
             'title': 'Waktu Submit',
-            'value': '${_formatDate(widget.lamaran.appliedAt)}, ${_formatTime(widget.lamaran.appliedAt)}',
+            'value':
+                '${_formatDate(widget.lamaran.appliedAt)}, ${_formatTime(widget.lamaran.appliedAt)}',
           },
           {
             'icon': Icons.info_rounded,
             'title': 'Status',
-            'value': isRejected ? 'Ditolak setelah review' : 'Menunggu review dari HR',
+            'value': isRejected
+                ? 'Ditolak setelah review'
+                : 'Menunggu review dari HR',
           },
         ],
       },
       'reviewed': {
         'title': 'Ditinjau',
         'icon': Icons.remove_red_eye_rounded,
-        'isCompleted': currentStatus == 'reviewed' || 
-                       currentStatus == 'interview' || 
-                       currentStatus == 'accepted' ||
-                       isRejected,
-        'description': isRejected 
+        'isCompleted':
+            currentStatus == 'reviewed' ||
+            currentStatus == 'interview' ||
+            currentStatus == 'accepted' ||
+            isRejected,
+        'description': isRejected
             ? 'Tim HR telah meninjau lamaran Anda'
             : 'Tim HR sedang meninjau lamaran Anda',
         'details': [
@@ -179,15 +191,17 @@ class _DetailLamaranState extends State<DetailLamaran> {
           {
             'icon': Icons.info_rounded,
             'title': 'Hasil Review',
-            'value': isRejected ? 'Tidak memenuhi kualifikasi' : 'Kualifikasi memenuhi syarat',
+            'value': isRejected
+                ? 'Tidak memenuhi kualifikasi'
+                : 'Kualifikasi memenuhi syarat',
           },
         ],
       },
       'interview': {
         'title': 'Interview',
         'icon': Icons.people_rounded,
-        'isCompleted': currentStatus == 'interview' || 
-                       currentStatus == 'accepted',
+        'isCompleted':
+            currentStatus == 'interview' || currentStatus == 'accepted',
         'description': 'Anda dijadwalkan untuk wawancara',
         'details': [
           {
@@ -263,7 +277,8 @@ class _DetailLamaranState extends State<DetailLamaran> {
 
   @override
   Widget build(BuildContext context) {
-    final isRejected = widget.lamaran.status.toLowerCase() == 'reject_interview';
+    final isRejected =
+        widget.lamaran.status.toLowerCase() == 'reject_interview';
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.9,
@@ -300,7 +315,10 @@ class _DetailLamaranState extends State<DetailLamaran> {
                         border: Border.all(color: const Color(0xFFF1F5F9)),
                       ),
                       padding: const EdgeInsets.all(8),
-                      child: widget.lamaran.lowongan.company.logo.startsWith('http')
+                      child:
+                          widget.lamaran.lowongan.company.logo.startsWith(
+                            'http',
+                          )
                           ? Image.network(
                               widget.lamaran.lowongan.company.logo,
                               fit: BoxFit.contain,
@@ -525,16 +543,14 @@ class _DetailLamaranState extends State<DetailLamaran> {
     final backgroundColor = !isAccessible
         ? const Color(0xFFE5E8EB) // Abu-abu untuk yang tidak bisa diakses
         : (isActive
-            ? const Color(0xFF0088FF) // Biru untuk aktif
-            : (isCompleted 
-                ? const Color(0xFF34C759) // Hijau untuk selesai
-                : const Color(0xFFBDBDBD))); // Abu-abu untuk belum selesai
+              ? const Color(0xFF0088FF) // Biru untuk aktif
+              : (isCompleted
+                    ? const Color(0xFF34C759) // Hijau untuk selesai
+                    : const Color(0xFFBDBDBD))); // Abu-abu untuk belum selesai
 
     final textColor = !isAccessible
         ? const Color(0xFF9CA3AF) // Abu-abu untuk text yang tidak bisa diakses
-        : (isActive
-            ? const Color(0xFF0088FF)
-            : const Color(0xFF9CA3AF));
+        : (isActive ? const Color(0xFF0088FF) : const Color(0xFF9CA3AF));
 
     return GestureDetector(
       onTap: isAccessible ? onTap : () => _showNotAvailableSnackbar(title),
@@ -557,9 +573,9 @@ class _DetailLamaranState extends State<DetailLamaran> {
                   : null,
             ),
             child: Icon(
-              icon, 
-              color: !isAccessible ? const Color(0xFFBDBDBD) : Colors.white, 
-              size: 24
+              icon,
+              color: !isAccessible ? const Color(0xFFBDBDBD) : Colors.white,
+              size: 24,
             ),
           ),
           const SizedBox(height: 8),
@@ -665,7 +681,7 @@ class _DetailLamaranState extends State<DetailLamaran> {
           ),
 
           const SizedBox(height: 24),
-          
+
           if (activeData['details'] != null)
             ..._buildDetailItems(activeData['details']),
 
