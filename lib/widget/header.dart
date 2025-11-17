@@ -1,19 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; 
 import 'package:jobfair/screens/halaman_notifikasi.dart';
+import 'package:jobfair/screens/halaman_bookmark.dart'; // Import halaman bookmark
 
 class HeaderWidget extends StatelessWidget {
   final bool showNotification;
   final bool showFilter;
+  final bool showBookmark; // ✅ Tambahkan parameter untuk bookmark
   final VoidCallback? onNotificationTap;
   final VoidCallback? onFilterTap;
+  final VoidCallback? onBookmarkTap; // ✅ Tambahkan callback untuk bookmark
 
   const HeaderWidget({
     super.key,
     this.showNotification = true,
     this.showFilter = false,
+    this.showBookmark = true, // ✅ Default true untuk menampilkan bookmark
     this.onNotificationTap,
     this.onFilterTap,
+    this.onBookmarkTap,
   });
 
   @override
@@ -72,10 +77,41 @@ class HeaderWidget extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
+              
+              // ✅ BOOKMARK ICON (conditional)
+              if (showBookmark)
+                GestureDetector(
+                  onTap: onBookmarkTap ?? () {
+                    // Default navigation ke halaman bookmark
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const HalamanBookmark(),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.bookmark_border,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              
+              // ✅ Spacing antara bookmark dan notification
+              if (showBookmark && showNotification) const SizedBox(width: 12),
+              
               // Notification button (conditional)
               if (showNotification)
                 GestureDetector(
-                  onTap: () {
+                  onTap: onNotificationTap ?? () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -97,24 +133,25 @@ class HeaderWidget extends StatelessWidget {
                     ),
                   ),
                 ),
+              
+              // ✅ Spacing antara notification dan filter
+              if (showNotification && showFilter) const SizedBox(width: 12),
+              
               // Filter button (conditional)
               if (showFilter)
-                Padding(
-                  padding: const EdgeInsets.only(left: 12),
-                  child: GestureDetector(
-                    onTap: onFilterTap,
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.tune,
-                        color: Colors.white,
-                        size: 24,
-                      ),
+                GestureDetector(
+                  onTap: onFilterTap,
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.tune,
+                      color: Colors.white,
+                      size: 20,
                     ),
                   ),
                 ),

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import '/widget/bottom_navbar.dart';
 import 'halaman_notifikasi.dart';
-
-
+import 'halaman_bookmark.dart'; // Import halaman bookmark
 
 class HalamanBeranda extends StatefulWidget {
   const HalamanBeranda({super.key});
@@ -106,7 +105,7 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
   }
 }
 
-// ✅ Extract Header sebagai widget terpisah
+// ✅ Extract Header sebagai widget terpisah (MODIFIED)
 class _AnimatedHeader extends StatelessWidget {
   final bool showSearchOnly;
   final double topPadding;
@@ -195,28 +194,61 @@ class _AnimatedHeader extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const NotificationPage(),
+                  
+                  // ✅ TAMBAHKAN ICON BOOKMARK DI SAMPING NOTIFICATION
+                  Row(
+                    children: [
+                      // Bookmark Icon
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const HalamanBookmark(),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.bookmark_border,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                         ),
-                      );
-                    },
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.notifications_outlined,
-                        color: Colors.white,
-                        size: 20,
+                      const SizedBox(width: 12),
+                      
+                      // Notification Icon
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const NotificationPage(),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.notifications_outlined,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),
