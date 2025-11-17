@@ -47,7 +47,117 @@ class DetailLamaran extends StatefulWidget {
 }
 
 class _DetailLamaranState extends State<DetailLamaran> {
-  int _selectedTab = 0; // 0 = Status Lamaran, 1 = Deskripsi
+  // Menyimpan status aktif untuk timeline
+  String _activeTimeline = 'pending';
+
+  // Data untuk setiap fase timeline
+  final Map<String, Map<String, dynamic>> _timelineData = {
+    'pending': {
+      'title': 'Pending',
+      'icon': Icons.access_time_rounded,
+      'isCompleted': true,
+      'description': 'Lamaran Anda sedang dalam antrian',
+      'details': [
+        {
+          'icon': Icons.schedule_rounded,
+          'title': 'Waktu Submit',
+          'value': '12 Januari 2024, 14:30 WIB',
+        },
+        {
+          'icon': Icons.info_rounded,
+          'title': 'Status',
+          'value': 'Menunggu review dari HR',
+        },
+      ],
+    },
+    'ditinjau': {
+      'title': 'Ditinjau',
+      'icon': Icons.remove_red_eye_rounded,
+      'isCompleted': true,
+      'description': 'Tim HR sedang meninjau lamaran Anda',
+      'details': [
+        {
+          'icon': Icons.schedule_rounded,
+          'title': 'Waktu Direview',
+          'value': '15 Januari 2024',
+        },
+        {
+          'icon': Icons.info_rounded,
+          'title': 'Hasil Review',
+          'value': 'Kualifikasi memenuhi syarat',
+        },
+      ],
+    },
+    'interview': {
+      'title': 'Interview',
+      'icon': Icons.people_rounded,
+      'isCompleted': true,
+      'description': 'Anda dijadwalkan untuk wawancara',
+      'details': [
+        {
+          'icon': Icons.calendar_today_rounded,
+          'title': 'Tanggal Interview',
+          'value': '20 Januari 2024',
+        },
+        {
+          'icon': Icons.access_time_rounded,
+          'title': 'Waktu',
+          'value': '10:00 - 11:00 WIB',
+        },
+        {
+          'icon': Icons.video_call_rounded,
+          'title': 'Platform',
+          'value': 'Google Meet',
+        },
+        {
+          'icon': Icons.link_rounded,
+          'title': 'Link Meeting',
+          'value': 'meet.google.com/abc-defg-hij',
+          'isLink': true,
+        },
+        {
+          'icon': Icons.person_rounded,
+          'title': 'Interviewer',
+          'value': 'Sarah Johnson & Team Lead',
+        },
+      ],
+    },
+    'diterima': {
+      'title': 'Hasil',
+      'icon': Icons.check_circle_rounded,
+      'isCompleted': true,
+      'isSuccess': true,
+      'description': 'Selamat! Lamaran Anda diterima',
+      'details': [
+        {
+          'icon': Icons.celebration_rounded,
+          'title': 'Tanggal Diterima',
+          'value': '25 Januari 2024',
+        },
+        {
+          'icon': Icons.work_rounded,
+          'title': 'Posisi',
+          'value': 'Software Engineer',
+        },
+        {
+          'icon': Icons.business_rounded,
+          'title': 'Departemen',
+          'value': 'Engineering Team',
+        },
+        {
+          'icon': Icons.calendar_today_rounded,
+          'title': 'Tanggal Mulai',
+          'value': '1 Februari 2024',
+        },
+      ],
+    },
+  };
+
+  void _setActiveTimeline(String timeline) {
+    setState(() {
+      _activeTimeline = timeline;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,67 +169,52 @@ class _DetailLamaranState extends State<DetailLamaran> {
       ),
       child: Column(
         children: [
-          // Drag Handle
-          Center(
-            child: Container(
-              width: 40,
-              height: 5,
-              margin: const EdgeInsets.only(top: 12, bottom: 16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE0E0E0),
-                borderRadius: BorderRadius.circular(3),
-              ),
+          // Drag Handle - Diubah seperti JobDetailSheet
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            width: 143,
+            height: 5,
+            decoration: BoxDecoration(
+              color: const Color(0xFF162781).withOpacity(0.9),
+              borderRadius: BorderRadius.circular(20),
             ),
           ),
 
-          // Header Section with Gradient Background
+          // Header Section dengan style seperti JobDetailSheet
           Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFF162781).withValues(alpha:0.05),
-                  const Color(0xFF2345F7).withValues(alpha:0.02),
-                ],
-              ),
-            ),
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+            color: Colors.white, // TAMBAHKAN INI
+            padding: const EdgeInsets.fromLTRB(18, 30, 18, 24),
             child: Column(
               children: [
-                // Company Logo and Title
+                // Company Logo and Title - Diubah seperti JobDetailSheet
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Logo with Shadow
+                    // Logo dengan style JobDetailSheet
                     Container(
-                      width: 70,
-                      height: 70,
+                      width: 60,
+                      height: 53,
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha:0.08),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFF1F5F9)),
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: Image.asset(
-                          'assets/icons/icon.png',
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Icon(Icons.business, size: 36, color: Color(0xFF162781));
-                          },
-                        ),
+                      padding: const EdgeInsets.all(8),
+                      child: Image.asset(
+                        'assets/icons/icon.png',
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(
+                            Icons.business,
+                            size: 36,
+                            color: Color(0xFF162781),
+                          );
+                        },
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 20),
 
-                    // Title and Company
+                    // Title and Company - Diubah seperti JobDetailSheet
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -128,33 +223,36 @@ class _DetailLamaranState extends State<DetailLamaran> {
                             widget.jobTitle,
                             style: const TextStyle(
                               color: Color(0xFF1A1A1A),
-                              fontSize: 22,
+                              fontSize: 24,
                               fontFamily: 'SF Pro',
-                              fontWeight: FontWeight.w600,
-                              height: 1.3,
-                              letterSpacing: -0.3,
+                              fontWeight: FontWeight.w500,
+                              height: 1.25,
                             ),
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 8),
                           Text(
                             widget.companyName,
-                            style: TextStyle(
-                              color: const Color(0xFF515151).withValues(alpha:0.9),
+                            style: const TextStyle(
+                              color: Color(0xFF515151),
                               fontSize: 16,
                               fontFamily: 'SF Pro',
                               fontWeight: FontWeight.w400,
                               height: 1.5,
                             ),
                           ),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 8),
+
+                          // Location Tag - Diubah seperti JobDetailSheet
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF162781).withValues(alpha:0.08),
+                              color: Colors.white,
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: const Color(0xFF162781).withValues(alpha:0.2),
-                                width: 1,
+                                color: const Color(0xFFE2E2E2),
                               ),
                             ),
                             child: Row(
@@ -163,16 +261,16 @@ class _DetailLamaranState extends State<DetailLamaran> {
                                 Icon(
                                   Icons.location_on_outlined,
                                   size: 14,
-                                  color: const Color(0xFF162781).withValues(alpha:0.7),
+                                  color: const Color(0xFF464E5E),
                                 ),
                                 const SizedBox(width: 4),
-                                const Text(
-                                  'Remote',
-                                  style: TextStyle(
-                                    color: Color(0xFF162781),
-                                    fontSize: 13,
+                                Text(
+                                  widget.location,
+                                  style: const TextStyle(
+                                    color: Color(0xFF464E5E),
+                                    fontSize: 12,
                                     fontFamily: 'SF Pro',
-                                    fontWeight: FontWeight.w500,
+                                    fontWeight: FontWeight.w400,
                                   ),
                                 ),
                               ],
@@ -182,595 +280,332 @@ class _DetailLamaranState extends State<DetailLamaran> {
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 24),
-
-                // Tab Buttons with Enhanced Design
-                Container(
-                  height: 50,
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5F7FA),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: const Color(0xFFE5E8EB),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      // Status Lamaran Tab
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _selectedTab = 0;
-                            });
-                          },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 250),
-                            curve: Curves.easeInOut,
-                            decoration: BoxDecoration(
-                              gradient: _selectedTab == 0
-                                  ? LinearGradient(
-                                      colors: [
-                                        const Color(0xFF162781),
-                                        const Color(0xFF2345F7),
-                                      ],
-                                    )
-                                  : null,
-                              color: _selectedTab == 0 ? null : Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: _selectedTab == 0
-                                  ? [
-                                      BoxShadow(
-                                        color: const Color(0xFF162781).withValues(alpha:0.3),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ]
-                                  : null,
-                            ),
-                            child: Center(
-                              child: Text(
-                                'Status Lamaran',
-                                style: TextStyle(
-                                  color: _selectedTab == 0 ? Colors.white : const Color(0xFF6B7280),
-                                  fontSize: 15,
-                                  fontFamily: 'Poppins',
-                                  fontWeight: _selectedTab == 0 ? FontWeight.w600 : FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Deskripsi Tab
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _selectedTab = 1;
-                            });
-                          },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 250),
-                            curve: Curves.easeInOut,
-                            decoration: BoxDecoration(
-                              gradient: _selectedTab == 1
-                                  ? LinearGradient(
-                                      colors: [
-                                        const Color(0xFF162781),
-                                        const Color(0xFF2345F7),
-                                      ],
-                                    )
-                                  : null,
-                              color: _selectedTab == 1 ? null : Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: _selectedTab == 1
-                                  ? [
-                                      BoxShadow(
-                                        color: const Color(0xFF162781).withValues(alpha:0.3),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ]
-                                  : null,
-                            ),
-                            child: Center(
-                              child: Text(
-                                'Deskripsi',
-                                style: TextStyle(
-                                  color: _selectedTab == 1 ? Colors.white : const Color(0xFF6B7280),
-                                  fontSize: 15,
-                                  fontFamily: 'Poppins',
-                                  fontWeight: _selectedTab == 1 ? FontWeight.w600 : FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               ],
             ),
           ),
 
           // Divider
-          Container(
-            height: 1,
-            color: const Color(0xFFE5E8EB),
-          ),
+          Container(height: 1, color: const Color(0xFFE9E9E9)),
 
-          const SizedBox(height: 8),
+          // Timeline Horizontal di atas
+          _buildHorizontalTimeline(),
 
-          // Content Area
-          Expanded(
-            child: _selectedTab == 0
-                ? _buildStatusLamaranContent()
-                : _buildDeskripsiContent(),
-          ),
+          // Content Area - Menampilkan konten berdasarkan timeline yang aktif
+          Expanded(child: _buildActiveContent()),
         ],
       ),
     );
   }
 
-  Widget _buildStatusLamaranContent() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 30),
+  Widget _buildHorizontalTimeline() {
+    final List<Map<String, dynamic>> timelineSteps = [
+      _timelineData['pending']!,
+      _timelineData['ditinjau']!,
+      _timelineData['interview']!,
+      _timelineData['diterima']!,
+    ];
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildStatusItem(
-            title: 'Pending',
-            description: 'Lamaran Anda sedang dalam antrian',
-            icon: Icons.access_time_rounded,
-            isCompleted: true,
-            showLine: true,
-          ),
-          _buildStatusItem(
-            title: 'Ditinjau',
-            description: 'Tim HR sedang meninjau lamaran Anda',
-            icon: Icons.remove_red_eye_rounded,
-            isCompleted: true,
-            showLine: true,
-          ),
-          _buildStatusItem(
-            title: 'Interview',
-            description: 'Anda dijadwalkan untuk wawancara',
-            icon: Icons.people_rounded,
-            isCompleted: widget.status == 'Interview' || widget.status == 'Diterima',
-            showLine: true,
-            actionText: 'Lihat Jadwal',
-            actionColor: const Color(0xFF2345F7),
-          ),
-          _buildStatusItem(
-            title: 'Diterima',
-            description: 'Selamat! Lamaran Anda diterima',
-            icon: Icons.check_circle_rounded,
-            isCompleted: widget.status == 'Diterima',
-            isSuccess: true,
-            showLine: false,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatusItem({
-    required String title,
-    required String description,
-    required IconData icon,
-    required bool isCompleted,
-    required bool showLine,
-    bool isSuccess = false,
-    String? actionText,
-    Color? actionColor,
-  }) {
-    final iconColor = isSuccess 
-        ? const Color(0xFF34C759) 
-        : (isCompleted ? const Color(0xFF0088FF) : const Color(0xFFBDBDBD));
-    
-    return Column(
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Icon Circle with Animation
-            Column(
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: iconColor,
-                    shape: BoxShape.circle,
-                    boxShadow: isCompleted
-                        ? [
-                            BoxShadow(
-                              color: iconColor.withValues(alpha:0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ]
-                        : null,
-                  ),
-                  child: Icon(
-                    icon,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-                if (showLine)
-                  Container(
-                    width: 2,
-                    height: 70,
-                    margin: const EdgeInsets.only(top: 8),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          const Color(0xFF2643D7).withValues(alpha:0.5),
-                          const Color(0xFF2643D7).withValues(alpha:0.2),
-                        ],
-                      ),
-                    ),
-                  ),
-              ],
+          // Timeline Progress Bar
+          Container(
+            height: 4,
+            margin: const EdgeInsets.symmetric(horizontal: 20),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE5E8EB),
+              borderRadius: BorderRadius.circular(2),
             ),
-            const SizedBox(width: 16),
-
-            // Content
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final progress =
+                    (_timelineData.keys.toList().indexOf(_activeTimeline) + 1) /
+                    _timelineData.length;
+                return Stack(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          title,
-                          style: TextStyle(
-                            color: isCompleted ? const Color(0xFF191919) : const Color(0xFF9CA3AF),
-                            fontSize: 18,
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w600,
-                            height: 1.4,
-                          ),
-                        ),
-                        if (isCompleted)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF34C759).withValues(alpha:0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.check_circle_rounded,
-                                  color: const Color(0xFF34C759),
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 4),
-                                const Text(
-                                  'Selesai',
-                                  style: TextStyle(
-                                    color: Color(0xFF34C759),
-                                    fontSize: 12,
-                                    fontFamily: 'SF Pro',
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      description,
-                      style: TextStyle(
-                        color: isCompleted ? const Color(0xFF6B7280) : const Color(0xFFBDBDBD),
-                        fontSize: 14,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w400,
-                        height: 1.5,
+                    // Background
+                    Container(
+                      width: constraints.maxWidth,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE5E8EB),
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                    if (actionText != null) ...[
-                      const SizedBox(height: 8),
-                      GestureDetector(
-                        onTap: () {
-                          // Handle action
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: actionColor?.withValues(alpha:0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                actionText,
-                                style: TextStyle(
-                                  color: actionColor ?? const Color(0xFF2345F7),
-                                  fontSize: 13,
-                                  fontFamily: 'SF Pro',
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Icon(
-                                Icons.arrow_forward_ios_rounded,
-                                size: 12,
-                                color: actionColor ?? const Color(0xFF2345F7),
-                              ),
-                            ],
-                          ),
+                    // Progress
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      width: constraints.maxWidth * progress,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF0088FF), Color(0xFF2345F7)],
                         ),
+                        borderRadius: BorderRadius.circular(2),
                       ),
-                    ],
+                    ),
                   ],
-                ),
-              ),
+                );
+              },
             ),
-          ],
-        ),
-        if (showLine) const SizedBox(height: 8),
-      ],
+          ),
+          const SizedBox(height: 16),
+
+          // Timeline Items
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: timelineSteps.asMap().entries.map((entry) {
+              final index = entry.key;
+              final step = entry.value;
+              final stepKey = _timelineData.keys.elementAt(index);
+              final isActive = _activeTimeline == stepKey;
+              final isCompleted = step['isCompleted'] ?? false;
+
+              return _buildTimelineStep(
+                title: step['title'],
+                icon: step['icon'],
+                isActive: isActive,
+                isCompleted: isCompleted,
+                onTap: () => _setActiveTimeline(stepKey),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildDeskripsiContent() {
+  Widget _buildTimelineStep({
+    required String title,
+    required IconData icon,
+    required bool isActive,
+    required bool isCompleted,
+    required VoidCallback onTap,
+  }) {
+    final backgroundColor = isActive
+        ? const Color(0xFF0088FF)
+        : (isCompleted ? const Color(0xFF34C759) : const Color(0xFFBDBDBD));
+
+    final textColor = isActive
+        ? const Color(0xFF0088FF)
+        : const Color(0xFF9CA3AF);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          // Icon Circle
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              shape: BoxShape.circle,
+              boxShadow: isActive || isCompleted
+                  ? [
+                      BoxShadow(
+                        color: backgroundColor.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Icon(icon, color: Colors.white, size: 24),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 12,
+              fontFamily: 'Poppins',
+              fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActiveContent() {
+    final activeData = _timelineData[_activeTimeline]!;
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 30),
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 30),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Company Info Card
+          // Header Section - Diubah style heading seperti JobDetailSheet
           Container(
+            width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFF162781).withValues(alpha:0.05),
-                  const Color(0xFF2345F7).withValues(alpha:0.02),
-                ],
-              ),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: const Color(0xFF162781).withValues(alpha:0.1),
-                width: 1,
-              ),
+              border: Border.all(color: const Color(0xFFE5E8EB), width: 1),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Icon(
-                      Icons.business_rounded,
-                      size: 20,
-                      color: const Color(0xFF162781).withValues(alpha:0.7),
-                    ),
-                    const SizedBox(width: 8),
                     Text(
-                      widget.companyName,
+                      activeData['title'],
                       style: const TextStyle(
-                        color: Color(0xFF1A1A1A),
-                        fontSize: 16,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF191919),
+                        fontSize: 20, // Ukuran font seperti di JobDetailSheet
+                        fontFamily:
+                            'SF Pro', // Font family seperti JobDetailSheet
+                        fontWeight:
+                            FontWeight.w500, // Weight seperti JobDetailSheet
+                        height: 1.2,
                       ),
                     ),
+                    if (activeData['isCompleted'] ?? false)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF34C759).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.check_circle_rounded,
+                              color: const Color(0xFF34C759),
+                              size: 14,
+                            ),
+                            const SizedBox(width: 4),
+                            const Text(
+                              'Selesai',
+                              style: TextStyle(
+                                color: Color(0xFF34C759),
+                                fontSize: 11,
+                                fontFamily: 'SF Pro',
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.location_on_rounded,
-                      size: 18,
-                      color: const Color(0xFF6B7280),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      widget.location,
-                      style: const TextStyle(
-                        color: Color(0xFF6B7280),
-                        fontSize: 14,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.calendar_today_rounded,
-                      size: 18,
-                      color: const Color(0xFF6B7280),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      widget.date,
-                      style: const TextStyle(
-                        color: Color(0xFF6B7280),
-                        fontSize: 14,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ],
+                Text(
+                  activeData['description'],
+                  style: const TextStyle(
+                    color: Color(0xFF515151), // Warna seperti JobDetailSheet
+                    fontSize: 14,
+                    fontFamily: 'SF Pro', // Font family seperti JobDetailSheet
+                    fontWeight: FontWeight.w400,
+                    height: 1.4,
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
 
-          // Instructions Section
-          const Text(
-            'Instruksi QR Code',
-            style: TextStyle(
-              color: Color(0xFF1A1A1A),
-              fontSize: 16,
-              fontFamily: 'Poppins',
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildInstructionItem(
-            icon: Icons.save_alt_rounded,
-            text: 'Simpan QR code ini',
-          ),
-          const SizedBox(height: 12),
-          _buildInstructionItem(
-            icon: Icons.qr_code_scanner_rounded,
-            text: 'Tunjukkan kepada petugas',
-          ),
-          const SizedBox(height: 12),
-          _buildInstructionItem(
-            icon: Icons.verified_rounded,
-            text: 'Pastikan QR code terlihat jelas',
-          ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24), // Spacing seperti JobDetailSheet
+          // Detail Items
+          if (activeData['details'] != null)
+            ..._buildDetailItems(activeData['details']),
 
-          // QR Code Section
-          Center(
+          // QR Code khusus untuk interview
+          if (_activeTimeline == 'interview') _buildInterviewQRCode(),
+
+          // Email konfirmasi khusus untuk diterima
+          if (_activeTimeline == 'diterima') _buildEmailConfirmation(),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildDetailItems(List<dynamic> details) {
+    return details.map<Widget>((detail) {
+      return _buildDetailItem(
+        icon: detail['icon'],
+        title: detail['title'],
+        value: detail['value'],
+        isLink: detail['isLink'] ?? false,
+      );
+    }).toList();
+  }
+
+  Widget _buildDetailItem({
+    required IconData icon,
+    required String title,
+    required String value,
+    bool isLink = false,
+  }) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E8EB), width: 1),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20, color: const Color(0xFF6B7280)),
+          const SizedBox(width: 12),
+          Expanded(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: const Color(0xFF2643D7).withValues(alpha:0.3),
-                      width: 2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF2643D7).withValues(alpha:0.1),
-                        blurRadius: 20,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 240,
-                        height: 240,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF5F7FA),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Icon(
-                          Icons.qr_code_2_rounded,
-                          size: 160,
-                          color: Colors.grey[300],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF162781).withValues(alpha:0.05),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          widget.qrCode,
-                          style: const TextStyle(
-                            color: Color(0xFF162781),
-                            fontSize: 15,
-                            fontFamily: 'SF Pro',
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ),
-                    ],
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Color(0xFF515151), // Warna seperti JobDetailSheet
+                    fontSize: 13,
+                    fontFamily: 'SF Pro', // Font family seperti JobDetailSheet
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 24),
-
-                // Download Button
-                GestureDetector(
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Row(
-                          children: [
-                            Icon(Icons.check_circle, color: Colors.white),
-                            SizedBox(width: 12),
-                            Text('QR Code berhasil diunduh'),
-                          ],
-                        ),
-                        backgroundColor: const Color(0xFF34C759),
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                const SizedBox(height: 4),
+                if (isLink)
+                  GestureDetector(
+                    onTap: () {
+                      // Handle link tap
+                    },
+                    child: Text(
+                      value,
+                      style: const TextStyle(
+                        color: Color(0xFF2345F7),
+                        fontSize: 14,
+                        fontFamily:
+                            'SF Pro', // Font family seperti JobDetailSheet
+                        fontWeight: FontWeight.w600,
+                        decoration: TextDecoration.underline,
                       ),
-                    );
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFF162781),
-                          Color(0xFF2345F7),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF162781).withValues(alpha:0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
                     ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.download_rounded,
-                          color: Colors.white,
-                          size: 22,
-                        ),
-                        SizedBox(width: 12),
-                        Text(
-                          'Unduh QR Code',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+                  )
+                else
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      color: Color(0xFF1A1A1A),
+                      fontSize: 14,
+                      fontFamily:
+                          'SF Pro', // Font family seperti JobDetailSheet
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                ),
               ],
             ),
           ),
@@ -779,41 +614,192 @@ class _DetailLamaranState extends State<DetailLamaran> {
     );
   }
 
-  Widget _buildInstructionItem({required IconData icon, required String text}) {
+  Widget _buildInterviewQRCode() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F7FA),
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFFE5E8EB),
+          color: const Color(0xFF2643D7).withOpacity(0.2),
           width: 1,
         ),
       ),
-      child: Row(
+      child: Column(
         children: [
+          const Row(
+            children: [
+              Icon(Icons.qr_code_2_rounded, color: Color(0xFF2643D7), size: 20),
+              SizedBox(width: 8),
+              Text(
+                'QR Code untuk Check-in',
+                style: TextStyle(
+                  color: Color(0xFF1A1A1A),
+                  fontSize: 15,
+                  fontFamily: 'SF Pro', // Font family seperti JobDetailSheet
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF2643D7).withValues(alpha:0.1),
-              shape: BoxShape.circle,
+              color: const Color(0xFFF5F7FA),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE5E8EB)),
             ),
-            child: Icon(
-              icon,
-              size: 20,
-              color: const Color(0xFF2643D7),
+            child: Column(
+              children: [
+                Container(
+                  width: 160,
+                  height: 160,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.qr_code_2_rounded,
+                    size: 120,
+                    color: Colors.grey[300],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF162781).withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    widget.qrCode,
+                    style: const TextStyle(
+                      color: Color(0xFF162781),
+                      fontSize: 13,
+                      fontFamily: 'SF Pro',
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Tunjukkan QR code ini saat check-in interview',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFF6B7280),
+                    fontSize: 12,
+                    fontFamily: 'SF Pro', // Font family seperti JobDetailSheet
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(
-                color: Color(0xFF1A1A1A),
-                fontSize: 14,
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w500,
+          const SizedBox(height: 16),
+          GestureDetector(
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Row(
+                    children: [
+                      Icon(Icons.check_circle, color: Colors.white),
+                      SizedBox(width: 12),
+                      Text('QR Code berhasil diunduh'),
+                    ],
+                  ),
+                  backgroundColor: const Color(0xFF34C759),
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              );
+            },
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2643D7).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFF2643D7).withOpacity(0.3),
+                ),
               ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.download_rounded,
+                    color: Color(0xFF2643D7),
+                    size: 18,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Unduh QR Code',
+                    style: TextStyle(
+                      color: Color(0xFF2643D7),
+                      fontSize: 14,
+                      fontFamily:
+                          'SF Pro', // Font family seperti JobDetailSheet
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmailConfirmation() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF34C759).withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF34C759).withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.email_rounded,
+                color: const Color(0xFF34C759),
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Email Konfirmasi',
+                style: TextStyle(
+                  color: Color(0xFF1A1A1A),
+                  fontSize: 14,
+                  fontFamily: 'SF Pro', // Font family seperti JobDetailSheet
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Email konfirmasi dan detail kontrak telah dikirim ke email Anda. Silakan periksa inbox Anda.',
+            style: TextStyle(
+              color: Color(0xFF515151), // Warna seperti JobDetailSheet
+              fontSize: 13,
+              fontFamily: 'SF Pro', // Font family seperti JobDetailSheet
+              fontWeight: FontWeight.w400,
             ),
           ),
         ],

@@ -466,7 +466,7 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                             ),
                           ),
                         ),
-                        
+
                         // Remote Tag jika tersedia
                         if (lowongan.opsiKerjaRemote) ...[
                           const SizedBox(width: 8),
