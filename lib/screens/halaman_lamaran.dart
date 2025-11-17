@@ -14,8 +14,9 @@ class HalamanLamaran extends StatefulWidget {
 
 class _HalamanLamaranState extends State<HalamanLamaran> {
   int _selectedMainTab = 0; // 0 = Umum, 1 = Job fair
-  int _selectedFilterTab = 0; // 0 = Semua, 1 = Pending, 2 = Ditinjau, 3 = Interview
-  
+  int _selectedFilterTab =
+      0; // 0 = Semua, 1 = Pending, 2 = Ditinjau, 3 = Interview
+
   final ApiService _apiService = ApiService();
   List<LamaranSaya> _allLamaran = [];
   List<LamaranSaya> _filteredLamaran = [];
@@ -58,12 +59,8 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
       });
     } else {
       // Filter berdasarkan status
-      final statusMap = {
-        1: 'pending',
-        2: 'ditinjau', 
-        3: 'interview'
-      };
-      
+      final statusMap = {1: 'pending', 2: 'ditinjau', 3: 'interview'};
+
       final status = statusMap[_selectedFilterTab];
       setState(() {
         _filteredLamaran = _allLamaran
@@ -81,10 +78,7 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
       body: Column(
         children: [
           // Fixed Header
-          const HeaderWidget(
-            showNotification: true,
-            showFilter: false,
-          ),
+          const HeaderWidget(showNotification: true, showFilter: false),
 
           // Main Tabs (Umum & Job fair)
           Container(
@@ -187,9 +181,7 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
           ),
 
           // Application List
-          Expanded(
-            child: _buildContent(),
-          ),
+          Expanded(child: _buildContent()),
         ],
       ),
       bottomNavigationBar: const BottomNavBar(currentIndex: 3),
@@ -200,15 +192,15 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
     if (_isLoading) {
       return _buildLoadingState();
     }
-    
+
     if (_hasError) {
       return _buildErrorState();
     }
-    
+
     if (_filteredLamaran.isEmpty) {
       return _buildEmptyState();
     }
-    
+
     return RefreshIndicator(
       onRefresh: _loadLamaran,
       child: ListView.separated(
@@ -428,7 +420,9 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                               Text(
                                 company.namaPerusahaan,
                                 style: TextStyle(
-                                  color: const Color(0xFF3C3C43).withValues(alpha: 0.6),
+                                  color: const Color(
+                                    0xFF3C3C43,
+                                  ).withValues(alpha: 0.6),
                                   fontSize: 14,
                                   fontFamily: 'Poppins',
                                   fontWeight: FontWeight.w400,
@@ -444,20 +438,62 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                     ),
                     const SizedBox(height: 13),
 
-                    // Description
-                    Text(
-                      lowongan.cleanDescription.length > 55
-                          ? '${lowongan.cleanDescription.substring(0, 55)}...'
-                          : lowongan.cleanDescription,
-                      style: const TextStyle(
-                        color: Color(0xFF404040),
-                        fontSize: 14,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w300,
-                        height: 1.8,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                    // Location and Remote Tags (style seperti halaman cari loker)
+                    Row(
+                      children: [
+                        // Location Tag
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(
+                              color: Colors.black.withValues(alpha: 0.06),
+                            ),
+                          ),
+                          child: Text(
+                            lowongan.lokasi.length > 25
+                                ? '${lowongan.lokasi.substring(0, 25)}...'
+                                : lowongan.lokasi,
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 14,
+                              fontFamily: 'SF Pro',
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
+                        
+                        // Remote Tag jika tersedia
+                        if (lowongan.opsiKerjaRemote) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                color: Colors.black.withValues(alpha: 0.06),
+                              ),
+                            ),
+                            child: const Text(
+                              'Remote',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 14,
+                                fontFamily: 'SF Pro',
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ),
@@ -576,23 +612,27 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                     ],
                   ),
                   const SizedBox(height: 13),
-                  // Description Skeleton
-                  Container(
-                    width: double.infinity,
-                    height: 14,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    width: 200,
-                    height: 14,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
+                  // Tags Skeleton
+                  Row(
+                    children: [
+                      Container(
+                        width: 100,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 60,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -644,8 +684,18 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
 
   String _getMonthName(int month) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
     ];
     return months[month - 1];
   }

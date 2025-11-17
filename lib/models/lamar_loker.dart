@@ -5,10 +5,7 @@ class LamarLokerResponse {
   final String message;
   final String? applyId;
 
-  LamarLokerResponse({
-    required this.message,
-    this.applyId,
-  });
+  LamarLokerResponse({required this.message, this.applyId});
 
   factory LamarLokerResponse.fromJson(Map<String, dynamic> json) {
     return LamarLokerResponse(
@@ -88,6 +85,7 @@ class LowonganLamaran {
   final String deskripsiPekerjaan;
   final String lokasi;
   final String gaji;
+  final bool opsiKerjaRemote;
   final CompanyLamaran company;
 
   LowonganLamaran({
@@ -95,6 +93,7 @@ class LowonganLamaran {
     required this.deskripsiPekerjaan,
     required this.lokasi,
     required this.gaji,
+    required this.opsiKerjaRemote,
     required this.company,
   });
 
@@ -104,6 +103,8 @@ class LowonganLamaran {
       deskripsiPekerjaan: json['deskripsiPekerjaan'] ?? '',
       lokasi: json['lokasi'] ?? '',
       gaji: json['gaji'] ?? '',
+      opsiKerjaRemote:
+      json['opsiKerjaRemote'] == true || json['opsiKerjaRemote'] == 'true',
       company: CompanyLamaran.fromJson(json['company'] ?? {}),
     );
   }
@@ -121,10 +122,7 @@ class CompanyLamaran {
   final String namaPerusahaan;
   final String logo;
 
-  CompanyLamaran({
-    required this.namaPerusahaan,
-    required this.logo,
-  });
+  CompanyLamaran({required this.namaPerusahaan, required this.logo});
 
   factory CompanyLamaran.fromJson(Map<String, dynamic> json) {
     return CompanyLamaran(
@@ -137,13 +135,9 @@ class CompanyLamaran {
 class BatalLamaranResponse {
   final String message;
 
-  BatalLamaranResponse({
-    required this.message,
-  });
+  BatalLamaranResponse({required this.message});
 
   factory BatalLamaranResponse.fromJson(Map<String, dynamic> json) {
-    return BatalLamaranResponse(
-      message: json['message'] ?? '',
-    );
+    return BatalLamaranResponse(message: json['message'] ?? '');
   }
 }
