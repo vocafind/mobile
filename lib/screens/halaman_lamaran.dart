@@ -14,8 +14,7 @@ class HalamanLamaran extends StatefulWidget {
 
 class _HalamanLamaranState extends State<HalamanLamaran> {
   int _selectedMainTab = 0; // 0 = Umum, 1 = Job fair
-  int _selectedFilterTab =
-      0; // 0 = Semua, 1 = Pending, 2 = Ditinjau, 3 = Interview
+  int _selectedFilterTab = 0; // 0 = Semua, 1 = Pending, 2 = Ditinjau, 3 = Interview, 4 = Diterima, 5 = Ditolak
 
   final ApiService _apiService = ApiService();
   List<LamaranSaya> _allLamaran = [];
@@ -58,15 +57,23 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
         _filteredLamaran = _allLamaran;
       });
     } else {
-      // Filter berdasarkan status
-      final statusMap = {1: 'pending', 2: 'ditinjau', 3: 'interview'};
+      // Filter berdasarkan status - SESUAIKAN DENGAN MODEL
+      final statusMap = {
+        1: 'pending', 
+        2: 'reviewed', 
+        3: 'interview', 
+        4: 'accepted', 
+        5: 'reject_interview'
+      };
 
       final status = statusMap[_selectedFilterTab];
-      setState(() {
-        _filteredLamaran = _allLamaran
-            .where((lamaran) => lamaran.status.toLowerCase() == status)
-            .toList();
-      });
+      if (status != null) {
+        setState(() {
+          _filteredLamaran = _allLamaran
+              .where((lamaran) => lamaran.status.toLowerCase() == status)
+              .toList();
+        });
+      }
     }
   }
 
@@ -159,7 +166,7 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
             ),
           ),
 
-          // Filter Tabs
+          // Filter Tabs - SESUAIKAN DENGAN MODEL
           Container(
             height: 42,
             padding: const EdgeInsets.only(left: 15, bottom: 8),
@@ -175,6 +182,10 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                   _buildFilterTab('Ditinjau', 2),
                   const SizedBox(width: 9),
                   _buildFilterTab('Interview', 3),
+                  const SizedBox(width: 9),
+                  _buildFilterTab('Diterima', 4),
+                  const SizedBox(width: 9),
+                  _buildFilterTab('Ditolak', 5),
                 ],
               ),
             ),
@@ -336,10 +347,9 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
 
     return GestureDetector(
       onTap: () {
-        // Show detail lamaran bottom sheet - UPDATE INI
         DetailLamaran.show(
           context,
-          lamaran: lamaran, // PASS LAMARANSAYA OBJECT
+          lamaran: lamaran,
         );
       },
       child: Container(
@@ -415,9 +425,7 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                               Text(
                                 company.namaPerusahaan,
                                 style: TextStyle(
-                                  color: const Color(
-                                    0xFF3C3C43,
-                                  ).withValues(alpha: 0.6),
+                                  color: const Color(0xFF3C3C43).withValues(alpha: 0.6),
                                   fontSize: 14,
                                   fontFamily: 'Poppins',
                                   fontWeight: FontWeight.w400,
@@ -433,7 +441,7 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                     ),
                     const SizedBox(height: 13),
 
-                    // Location and Remote Tags (style seperti halaman cari loker)
+                    // Location and Remote Tags
                     Row(
                       children: [
                         // Location Tag
@@ -679,18 +687,8 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
 
   String _getMonthName(int month) {
     const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'Mei',
-      'Jun',
-      'Jul',
-      'Agu',
-      'Sep',
-      'Okt',
-      'Nov',
-      'Des',
+      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
     ];
     return months[month - 1];
   }

@@ -48,7 +48,7 @@ class LamaranSaya {
     switch (status.toLowerCase()) {
       case 'pending':
         return const Color(0xFFFF9500); // Orange
-      case 'ditinjau':
+      case 'reviewed':
         return const Color(0xFF00C8B3); // Mint
       case 'interview':
         return const Color(0xFF0088FF); // Blue
@@ -66,13 +66,13 @@ class LamaranSaya {
     switch (status.toLowerCase()) {
       case 'pending':
         return 'Pending';
-      case 'ditinjau':
+      case 'reviewed':
         return 'Ditinjau';
       case 'interview':
         return 'Interview';
-      case 'diterima':
+      case 'accepted':
         return 'Diterima';
-      case 'ditolak':
+      case 'reject_interview':
         return 'Ditolak';
       default:
         return status;
