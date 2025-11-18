@@ -4,7 +4,7 @@ class LokerUmum {
   final String logo;
   final String posisi;
   final String deskripsiPekerjaan;
-  final String? minimalLulusan;
+  final String minimalLulusan;
   final String status;
   final String lokasi;
   final String gaji;
@@ -24,7 +24,7 @@ class LokerUmum {
     required this.logo,
     required this.posisi,
     required this.deskripsiPekerjaan,
-    this.minimalLulusan,
+    required this.minimalLulusan,
     required this.status,
     required this.lokasi,
     required this.gaji,

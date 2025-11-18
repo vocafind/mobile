@@ -19,6 +19,8 @@ class LamaranSaya {
   final String applyId;
   final String lowonganId;
   final String status;
+  final String? interview;
+  final String? locationInterview;
   final DateTime createdAt;
   final DateTime appliedAt;
   final LowonganLamaran lowongan;
@@ -30,6 +32,8 @@ class LamaranSaya {
     required this.createdAt,
     required this.appliedAt,
     required this.lowongan,
+    this.interview,
+    this.locationInterview,
   });
 
   factory LamaranSaya.fromJson(Map<String, dynamic> json) {
@@ -37,6 +41,8 @@ class LamaranSaya {
       applyId: json['applyId'] ?? '',
       lowonganId: json['lowonganId'] ?? '',
       status: json['status'] ?? '',
+      interview: json['interview'],
+      locationInterview: json['location_interview'],
       createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toString()),
       appliedAt: DateTime.parse(json['appliedAt'] ?? DateTime.now().toString()),
       lowongan: LowonganLamaran.fromJson(json['lowongan'] ?? {}),
@@ -52,9 +58,9 @@ class LamaranSaya {
         return const Color(0xFF00C8B3); // Mint
       case 'interview':
         return const Color(0xFF0088FF); // Blue
-      case 'diterima':
+      case 'accepted':
         return const Color(0xFF34C759); // Green
-      case 'ditolak':
+      case 'reject_interview':
         return const Color(0xFFFF383C); // Red
       default:
         return const Color(0xFFFF9500); // Default Orange
@@ -77,6 +83,14 @@ class LamaranSaya {
       default:
         return status;
     }
+  }
+
+  // Check if has interview data
+  bool get hasInterviewData {
+    return interview != null && 
+           interview!.isNotEmpty && 
+           locationInterview != null && 
+           locationInterview!.isNotEmpty;
   }
 }
 
@@ -103,8 +117,7 @@ class LowonganLamaran {
       deskripsiPekerjaan: json['deskripsiPekerjaan'] ?? '',
       lokasi: json['lokasi'] ?? '',
       gaji: json['gaji'] ?? '',
-      opsiKerjaRemote:
-      json['opsiKerjaRemote'] == true || json['opsiKerjaRemote'] == 'true',
+      opsiKerjaRemote: json['opsiKerjaRemote'] == true || json['opsiKerjaRemote'] == 'true',
       company: CompanyLamaran.fromJson(json['company'] ?? {}),
     );
   }
