@@ -139,202 +139,223 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
     );
   }
 
- void _showAddEditModal({SocialMediaModel? socialMedia}) {
-  final isEdit = socialMedia != null;
-  
-  if (socialMedia != null) {
-    _platformController.text = socialMedia.platform;
-    _usernameController.text = socialMedia.username;
-    _urlController.text = socialMedia.url;
-  } else {
-    _clearControllers();
+  // ✅ Fungsi validasi URL yang ketat - HARUS lengkap dengan http/https
+  bool _isValidUrl(String url) {
+    try {
+      final uri = Uri.tryParse(url);
+      return uri != null && 
+             uri.hasScheme && 
+             (uri.scheme == 'http' || uri.scheme == 'https') &&
+             uri.host.isNotEmpty;
+    } catch (e) {
+      return false;
+    }
   }
 
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) => Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: Container(
-        height: MediaQuery.of(context).size.height * 0.75,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+  void _showAddEditModal({SocialMediaModel? socialMedia}) {
+    final isEdit = socialMedia != null;
+    
+    if (socialMedia != null) {
+      _platformController.text = socialMedia.platform;
+      _usernameController.text = socialMedia.username;
+      _urlController.text = socialMedia.url;
+    } else {
+      _clearControllers();
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
-        child: Column(
-          children: [
-            // Header
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(color: Colors.grey.shade200),
+        child: Container(
+          height: MediaQuery.of(context).size.height * 0.75,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: Colors.grey.shade200),
+                  ),
                 ),
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  Expanded(
-                    child: Text(
-                      isEdit ? 'Edit Media Sosial' : 'Tambah Media Sosial',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'Poppins',
-                      ),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      if (_platformController.text.isEmpty ||
-                          _usernameController.text.isEmpty ||
-                          _urlController.text.isEmpty) {
-                        _showSnackBar('Semua field harus diisi', isError: true);
-                        return;
-                      }
-
-                      final newSocialMedia = SocialMediaModel(
-                        socialId: socialMedia?.socialId,
-                        platform: _platformController.text,
-                        username: _usernameController.text,
-                        url: _urlController.text,
-                      );
-
-                      Navigator.pop(context);
-
-                      if (isEdit) {
-                        _updateSocialMedia(newSocialMedia);
-                      } else {
-                        _addSocialMedia(newSocialMedia);
-                      }
-                    },
-                    child: const Text(
-                      'Simpan',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'Poppins',
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Form
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    // Keterangan
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE8F5E9),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFF81C784)),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(
-                            Icons.info_outline,
-                            color: Color(0xFF388E3C),
-                            size: 20,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Tambahkan akun media sosial Anda untuk memudahkan perusahaan mengenal profil Anda lebih baik.',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.green.shade900,
-                                fontFamily: 'Poppins',
-                                height: 1.4,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
                     ),
-                    const SizedBox(height: 24),
-
-                    _buildTextField(
-                      controller: _platformController,
-                      label: 'Platform',
-                      hint: 'Contoh: Instagram, LinkedIn, Facebook',
-                      icon: Icons.share_outlined,
-                      required: true,
-                    ),
-                    const SizedBox(height: 16),
-
-                    _buildTextField(
-                      controller: _usernameController,
-                      label: 'Username',
-                      hint: 'Contoh: johndoe atau @johndoe',
-                      icon: Icons.alternate_email_outlined,
-                      required: true,
-                    ),
-                    const SizedBox(height: 16),
-
-                    _buildTextField(
-                      controller: _urlController,
-                      label: 'URL Profil',
-                      hint: 'Contoh: https://instagram.com/johndoe',
-                      icon: Icons.link_outlined,
-                      required: true,
-                      helperText: 'Pastikan URL lengkap dan valid',
-                    ),
-
-                    // Tombol Hapus (hanya untuk edit)
-                    if (isEdit) ...[
-                      const SizedBox(height: 32),
-                      Center(
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            _showDeleteConfirmation(socialMedia);
-                          },
-                          icon: const Icon(Icons.delete_outline, color: Colors.red),
-                          label: const Text(
-                            'Hapus Media Sosial',
-                            style: TextStyle(
-                              color: Colors.red,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.red),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 12,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
+                    Expanded(
+                      child: Text(
+                        isEdit ? 'Edit Media Sosial' : 'Tambah Media Sosial',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Poppins',
                         ),
                       ),
-                    ],
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        if (_platformController.text.isEmpty ||
+                            _usernameController.text.isEmpty ||
+                            _urlController.text.isEmpty) {
+                          _showSnackBar('Semua field harus diisi', isError: true);
+                          return;
+                        }
+
+                        // ✅ Validasi URL yang ketat - HARUS lengkap
+                        final url = _urlController.text.trim();
+                        
+                        if (!_isValidUrl(url)) {
+                          _showSnackBar('URL harus lengkap dengan http:// atau https:// (contoh: https://instagram.com/johndoe)', isError: true);
+                          return;
+                        }
+
+                        final newSocialMedia = SocialMediaModel(
+                          socialId: socialMedia?.socialId,
+                          platform: _platformController.text,
+                          username: _usernameController.text,
+                          url: url,
+                        );
+
+                        Navigator.pop(context);
+
+                        if (isEdit) {
+                          _updateSocialMedia(newSocialMedia);
+                        } else {
+                          _addSocialMedia(newSocialMedia);
+                        }
+                      },
+                      child: const Text(
+                        'Simpan',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
-            ),
-          ],
+
+              // Form
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Keterangan
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8F5E9),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFF81C784)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(
+                              Icons.info_outline,
+                              color: Color(0xFF388E3C),
+                              size: 20,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Tambahkan akun media sosial Anda untuk memudahkan perusahaan mengenal profil Anda lebih baik.',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.green.shade900,
+                                  fontFamily: 'Poppins',
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      _buildTextField(
+                        controller: _platformController,
+                        label: 'Platform',
+                        hint: 'Contoh: Instagram, LinkedIn, Facebook',
+                        icon: Icons.share_outlined,
+                        required: true,
+                      ),
+                      const SizedBox(height: 16),
+
+                      _buildTextField(
+                        controller: _usernameController,
+                        label: 'Username',
+                        hint: 'Contoh: johndoe atau @johndoe',
+                        icon: Icons.alternate_email_outlined,
+                        required: true,
+                      ),
+                      const SizedBox(height: 16),
+
+                      _buildUrlTextField(
+                        controller: _urlController,
+                        label: 'URL Profil',
+                        hint: 'https://instagram.com/johndoe',
+                        icon: Icons.link_outlined,
+                        required: true,
+                        helperText: 'Harus URL lengkap dengan http:// atau https://',
+                      ),
+
+                      // Tombol Hapus (hanya untuk edit)
+                      if (isEdit) ...[
+                        const SizedBox(height: 32),
+                        Center(
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              _showDeleteConfirmation(socialMedia);
+                            },
+                            icon: const Icon(Icons.delete_outline, color: Colors.red),
+                            label: const Text(
+                              'Hapus Media Sosial',
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Colors.red),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildTextField({
     required TextEditingController controller,
@@ -406,6 +427,119 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
               fontFamily: 'Poppins',
             ),
           ),
+        ),
+      ],
+    );
+  }
+
+  // ✅ Widget khusus untuk URL TextField dengan validasi ketat
+  Widget _buildUrlTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    bool required = false,
+    String? helperText,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                fontFamily: 'Poppins',
+                color: Color(0xFF515151),
+              ),
+            ),
+            if (required)
+              const Text(
+                ' *',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          keyboardType: TextInputType.url,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+              color: Colors.grey.shade400,
+              fontSize: 14,
+              fontFamily: 'Poppins',
+            ),
+            prefixIcon: Icon(icon, color: Colors.grey.shade600, size: 20),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFF113CEE), width: 2),
+            ),
+            filled: true,
+            fillColor: Colors.grey.shade50,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            helperText: helperText,
+            helperStyle: TextStyle(
+              fontSize: 11,
+              color: Colors.grey.shade600,
+              fontFamily: 'Poppins',
+            ),
+            // ✅ Tambahkan suffix icon untuk indikator validasi
+            suffixIcon: ValueListenableBuilder<TextEditingValue>(
+              valueListenable: controller,
+              builder: (context, value, child) {
+                if (value.text.isEmpty) return const SizedBox();
+                
+                final isValid = _isValidUrl(value.text.trim());
+                
+                return Icon(
+                  isValid ? Icons.check_circle : Icons.error_outline,
+                  color: isValid ? Colors.green : Colors.red,
+                  size: 20,
+                );
+              },
+            ),
+          ),
+        ),
+        // ✅ Tambahkan pesan validasi real-time
+        ValueListenableBuilder<TextEditingValue>(
+          valueListenable: controller,
+          builder: (context, value, child) {
+            if (value.text.isEmpty) return const SizedBox();
+            
+            final isValid = _isValidUrl(value.text.trim());
+            
+            if (!isValid) {
+              return Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Text(
+                  'URL harus lengkap dengan http:// atau https://',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.red.shade700,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+              );
+            }
+            
+            return const SizedBox();
+          },
         ),
       ],
     );
@@ -683,6 +817,18 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
                       fontFamily: 'Poppins',
                       fontWeight: FontWeight.w300,
                     ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    socialMedia.url,
+                    style: TextStyle(
+                      color: Colors.blue.shade700,
+                      fontSize: 12,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w400,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
                 ],
               ),
