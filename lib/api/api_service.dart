@@ -193,6 +193,51 @@ class ApiService {
   }
 
 
+  // ================== SIMPLE LOGOUT ==================
+  Future<bool> logout() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token != null) {
+        final response = await _dio.post(
+          ApiConfig.logout,
+          options: Options(
+            headers: {
+              "Authorization": "Bearer $token",
+              "Content-Type": "application/json",
+            },
+          ),
+        );
+        
+        print("✅ Logout success: ${response.statusCode}");
+      }
+
+      // 🔒 Clear semua data lokal
+      await prefs.remove('token');
+      await prefs.remove('refreshToken');
+      await prefs.remove('tokenExpiry');
+      await prefs.remove('userRole');
+      await prefs.remove('talentId');
+      await prefs.remove('cachedProfile');
+
+      return true;
+    } catch (e) {
+      print("❌ Logout error: $e");
+      
+      // 🔒 Tetap clear data lokal meski error
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('token');
+      await prefs.remove('refreshToken');
+      await prefs.remove('tokenExpiry');
+      await prefs.remove('userRole');
+      await prefs.remove('talentId');
+      await prefs.remove('cachedProfile');
+      
+      return true; // Tetap return true karena data lokal sudah dihapus
+    }
+  }
+
 
 
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:jobfair/screens/halaman_login.dart';
 import 'package:jobfair/screens/profil/keamanan_privasi.dart';
 import 'package:jobfair/api/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -244,6 +245,7 @@ class _ProfileHeaderState extends State<ProfileHeader>
     );
   }
 
+  // ✅ FIXED: Fungsi logout yang benar-benar aman
   void _showLogoutConfirmation(BuildContext context) {
     showDialog(
       context: context,
@@ -263,10 +265,57 @@ class _ProfileHeaderState extends State<ProfileHeader>
                 style: TextStyle(fontFamily: 'SF Pro', color: Colors.grey)),
           ),
           TextButton(
-            onPressed: () {
-              Navigator.pop(context);
+            onPressed: () async {
+              // ✅ Simpan context sebelum menutup dialog
+              final navigator = Navigator.of(context);
+              
+              // Tutup dialog konfirmasi
+              navigator.pop();
+              
+              // ✅ Tampilkan loading indicator menggunakan context yang valid
               ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Berhasil logout')));
+                const SnackBar(
+                  content: Row(
+                    children: [
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Text('Sedang logout...'),
+                    ],
+                  ),
+                  duration: Duration(seconds: 3),
+                ),
+              );
+
+              try {
+                // Panggil service logout
+                final apiService = ApiService();
+                await apiService.logout();
+
+                // ✅ Gunakan navigator yang sudah disimpan
+                navigator.pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const HalamanLogin()),
+                  (route) => false,
+                );
+
+                // ✅ Simpan status untuk pesan sukses di halaman login
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('showLogoutSuccess', true);
+
+              } catch (e) {
+                print("Logout error: $e");
+                // ✅ Tetap redirect ke login meski ada error
+                navigator.pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const HalamanLogin()),
+                  (route) => false,
+                );
+              }
             },
             child: const Text(
               'Logout',
