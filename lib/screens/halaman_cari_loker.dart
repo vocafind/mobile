@@ -18,33 +18,58 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
 
   // ✅ ValueNotifier untuk state management efisien
   final ValueNotifier<int> _selectedTab = ValueNotifier<int>(0);
-  final ValueNotifier<int> _currentPage = ValueNotifier<int>(0);
 
   // Data lowongan
   List<LokerUmum> _allLowongan = [];
   List<LokerUmum> _filteredLowongan = [];
   bool _isLoading = true;
   bool _hasError = false;
+  bool _isLoadingMore = false;
   List<String> _appliedJobIds = [];
+
+  // Lazy loading state
+  int _currentPage = 1;
+  bool _hasMoreData = true;
+  final int _itemsPerPage = 10;
+
+  // Filter state
+  final ValueNotifier<Map<String, dynamic>> _filterState = ValueNotifier<Map<String, dynamic>>({
+    'jenisPekerjaan': '',
+    'lokasi': '',
+    'gaji': '',
+    'pengalaman': '',
+  });
 
   @override
   void initState() {
     super.initState();
     _loadData();
+    _setupScrollController();
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
     _selectedTab.dispose();
-    _currentPage.dispose();
+    _filterState.dispose();
     super.dispose();
+  }
+
+  void _setupScrollController() {
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 200) {
+        _loadMoreData();
+      }
+    });
   }
 
   Future<void> _loadData() async {
     setState(() {
       _isLoading = true;
       _hasError = false;
+      _currentPage = 1;
+      _hasMoreData = true;
     });
 
     try {
@@ -60,7 +85,7 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
 
       setState(() {
         _allLowongan = lowongan;
-        _filteredLowongan = lowongan;
+        _filteredLowongan = _getPaginatedData(lowongan, 1);
         _appliedJobIds = appliedIds;
         _isLoading = false;
       });
@@ -77,22 +102,163 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
     }
   }
 
+  Future<void> _loadMoreData() async {
+    if (_isLoadingMore || !_hasMoreData) return;
+
+    setState(() {
+      _isLoadingMore = true;
+    });
+
+    // Simulate API delay
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    try {
+      final nextPage = _currentPage + 1;
+      final newData = _getPaginatedData(_allLowongan, nextPage);
+
+      if (newData.isNotEmpty) {
+        setState(() {
+          _filteredLowongan.addAll(newData);
+          _currentPage = nextPage;
+        });
+      } else {
+        setState(() {
+          _hasMoreData = false;
+        });
+      }
+    } catch (e) {
+      print("❌ Error loading more data: $e");
+    } finally {
+      setState(() {
+        _isLoadingMore = false;
+      });
+    }
+  }
+
+  List<LokerUmum> _getPaginatedData(List<LokerUmum> data, int page) {
+    final startIndex = (page - 1) * _itemsPerPage;
+    if (startIndex >= data.length) {
+      return [];
+    }
+    final endIndex = startIndex + _itemsPerPage;
+    return data.sublist(
+      startIndex,
+      endIndex > data.length ? data.length : endIndex,
+    );
+  }
+
   void _onTabChanged(int index) {
     _selectedTab.value = index;
-    _currentPage.value = 0;
+    _currentPage = 1;
+    _hasMoreData = true;
 
     // Filter data berdasarkan tab
     if (index == 0) {
       // Semua lowongan
       setState(() {
-        _filteredLowongan = _allLowongan;
+        _filteredLowongan = _getPaginatedData(_allLowongan, 1);
       });
     } else {
       // Rekomendasi AI - untuk sekarang tampilkan semua juga
       setState(() {
-        _filteredLowongan = _allLowongan;
+        _filteredLowongan = _getPaginatedData(_allLowongan, 1);
       });
     }
+  }
+
+  // ✅ Fungsi untuk menerapkan filter
+  void _applyFilters(Map<String, dynamic> filters) {
+    _filterState.value = filters;
+    _currentPage = 1;
+    _hasMoreData = true;
+    
+    List<LokerUmum> filtered = _allLowongan;
+
+    // Filter berdasarkan jenis pekerjaan
+    if (filters['jenisPekerjaan'] != null && filters['jenisPekerjaan'].isNotEmpty) {
+      filtered = filtered.where((loker) => 
+        loker.jenisPekerjaan.toLowerCase().contains(filters['jenisPekerjaan'].toLowerCase())
+      ).toList();
+    }
+
+    // Filter berdasarkan lokasi
+    if (filters['lokasi'] != null && filters['lokasi'].isNotEmpty) {
+      filtered = filtered.where((loker) => 
+        loker.lokasi.toLowerCase().contains(filters['lokasi'].toLowerCase())
+      ).toList();
+    }
+
+    // Filter berdasarkan pengalaman
+    if (filters['pengalaman'] != null && filters['pengalaman'].isNotEmpty) {
+      filtered = filtered.where((loker) => 
+        loker.tingkatPengalaman.toLowerCase().contains(filters['pengalaman'].toLowerCase())
+      ).toList();
+    }
+
+    // Filter berdasarkan gaji
+    if (filters['gaji'] != null && filters['gaji'].isNotEmpty) {
+      final gajiFilter = filters['gaji'];
+      if (gajiFilter == '0-5') {
+        filtered = filtered.where((loker) {
+          final gaji = _parseGaji(loker.gaji);
+          return gaji <= 5000000;
+        }).toList();
+      } else if (gajiFilter == '5-10') {
+        filtered = filtered.where((loker) {
+          final gaji = _parseGaji(loker.gaji);
+          return gaji > 5000000 && gaji <= 10000000;
+        }).toList();
+      } else if (gajiFilter == '10+') {
+        filtered = filtered.where((loker) {
+          final gaji = _parseGaji(loker.gaji);
+          return gaji > 10000000;
+        }).toList();
+      }
+    }
+
+    setState(() {
+      _filteredLowongan = _getPaginatedData(filtered, 1);
+    });
+  }
+
+  // Helper function untuk parse gaji
+  double _parseGaji(String gaji) {
+    try {
+      // Remove non-digit characters except decimal point
+      final cleaned = gaji.replaceAll(RegExp(r'[^\d]'), '');
+      return double.tryParse(cleaned) ?? 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  // ✅ Fungsi untuk reset filter
+  void _resetFilters() {
+    _filterState.value = {
+      'jenisPekerjaan': '',
+      'lokasi': '',
+      'gaji': '',
+      'pengalaman': '',
+    };
+    _currentPage = 1;
+    _hasMoreData = true;
+    setState(() {
+      _filteredLowongan = _getPaginatedData(_allLowongan, 1);
+    });
+  }
+
+  // ✅ Fungsi untuk membuka filter dialog
+  void _showFilterDialog() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => FilterBottomSheet(
+        currentFilters: _filterState.value,
+        onApplyFilters: _applyFilters,
+        onResetFilters: _resetFilters,
+      ),
+    );
   }
 
   // ✅ Fungsi untuk membuka detail lowongan
@@ -143,25 +309,12 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
     }
   }
 
-  // Fungsi untuk menghitung sisa hari hingga batas lamaran
-  int _calculateDaysLeft(DateTime batasLamaran) {
-    final now = DateTime.now();
-    final difference = batasLamaran.difference(now);
-    return difference.inDays;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
       body: Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/fullip.jpg'),
-            fit: BoxFit.cover,
-            alignment: Alignment(0, -0.9),
-          ),
-        ),
+        color: const Color(0xFFFAFAFA), // Background color sederhana
         child: Column(
           children: [
             // Fixed Header
@@ -174,6 +327,7 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
                 return _FilterTabs(
                   selectedTab: selectedTab,
                   onTabChanged: _onTabChanged,
+                  onFilterTap: _showFilterDialog,
                 );
               },
             ),
@@ -181,9 +335,9 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
             // ✅ Main content dengan ValueListenableBuilder
             Expanded(
               child: Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFAFAFA).withValues(alpha: 0.95),
-                  borderRadius: const BorderRadius.only(
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFAFAFA),
+                  borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(37),
                     topRight: Radius.circular(37),
                   ),
@@ -198,46 +352,90 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
                     builder: (context, selectedTab, child) {
                       return RefreshIndicator(
                         onRefresh: _loadData,
-                        child: SingleChildScrollView(
+                        child: CustomScrollView(
                           controller: _scrollController,
-                          child: Column(
-                            children: [
-                              const SizedBox(height: 17),
-                              if (_isLoading)
-                                _buildLoadingState()
-                              else if (_hasError)
-                                _buildErrorState()
-                              else if (_filteredLowongan.isEmpty)
-                                _buildEmptyState()
-                              else
-                                _LowonganList(
-                                  lowonganList: _filteredLowongan,
-                                  appliedJobIds: _appliedJobIds,
-                                  onItemTap: _showJobDetail,
-                                ),
-                              const SizedBox(height: 24),
-                              ValueListenableBuilder<int>(
-                                valueListenable: _currentPage,
-                                builder: (context, currentPage, child) {
-                                  return EnhancedPagination(
-                                    currentPage: currentPage,
-                                    totalPages: 4,
-                                    onPageChanged: (page) {
-                                      _currentPage.value = page;
-                                      _scrollController.animateTo(
-                                        0,
-                                        duration: const Duration(
-                                          milliseconds: 300,
-                                        ),
-                                        curve: Curves.easeOut,
-                                      );
-                                    },
-                                  );
-                                },
+                          slivers: [
+                            SliverToBoxAdapter(
+                              child: Column(
+                                children: [
+                                  const SizedBox(height: 17),
+                                  if (_isLoading)
+                                    _buildLoadingState()
+                                  else if (_hasError)
+                                    _buildErrorState()
+                                  else if (_filteredLowongan.isEmpty)
+                                    _buildEmptyState()
+                                ],
                               ),
-                              const SizedBox(height: 100),
-                            ],
-                          ),
+                            ),
+
+                            // List lowongan
+                            if (!_isLoading && !_hasError && _filteredLowongan.isNotEmpty)
+                              SliverList(
+                                delegate: SliverChildBuilderDelegate(
+                                  (context, index) {
+                                    if (index < _filteredLowongan.length) {
+                                      final lowongan = _filteredLowongan[index];
+                                      final daysLeft = _calculateDaysLeft(lowongan.batasLamaran);
+                                      final isUrgent = daysLeft <= 10 && daysLeft >= 0;
+                                      final isApplied = _appliedJobIds.contains(lowongan.lowonganId);
+
+                                      return Padding(
+                                        padding: EdgeInsets.fromLTRB(
+                                          16, 
+                                          index == 0 ? 0 : 0, 
+                                          16, 
+                                          16
+                                        ),
+                                        child: _JobCard(
+                                          lowongan: lowongan,
+                                          isUrgent: isUrgent,
+                                          daysLeft: daysLeft,
+                                          isApplied: isApplied,
+                                          onTap: () => _showJobDetail(lowongan),
+                                        ),
+                                      );
+                                    }
+                                    return null;
+                                  },
+                                  childCount: _filteredLowongan.length,
+                                ),
+                              ),
+
+                            // Loading more indicator
+                            if (_isLoadingMore)
+                              const SliverToBoxAdapter(
+                                child: Padding(
+                                  padding: EdgeInsets.all(16.0),
+                                  child: Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                ),
+                              ),
+
+                            // End of list indicator
+                            if (!_hasMoreData && _filteredLowongan.isNotEmpty)
+                              const SliverToBoxAdapter(
+                                child: Padding(
+                                  padding: EdgeInsets.all(16.0),
+                                  child: Center(
+                                    child: Text(
+                                      'Tidak ada lowongan lagi',
+                                      style: TextStyle(
+                                        color: Color(0xFF666666),
+                                        fontSize: 14,
+                                        fontFamily: 'Poppins',
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                            // Bottom spacing
+                            const SliverToBoxAdapter(
+                              child: SizedBox(height: 100),
+                            ),
+                          ],
                         ),
                       );
                     },
@@ -345,14 +543,25 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
       ),
     );
   }
+
+  int _calculateDaysLeft(DateTime batasLamaran) {
+    final now = DateTime.now();
+    final difference = batasLamaran.difference(now);
+    return difference.inDays;
+  }
 }
 
 // ✅ Extract Filter Tabs sebagai StatelessWidget
 class _FilterTabs extends StatelessWidget {
   final int selectedTab;
   final Function(int) onTabChanged;
+  final VoidCallback onFilterTap;
 
-  const _FilterTabs({required this.selectedTab, required this.onTabChanged});
+  const _FilterTabs({
+    required this.selectedTab, 
+    required this.onTabChanged,
+    required this.onFilterTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -391,14 +600,17 @@ class _FilterTabs extends StatelessWidget {
           ),
           const SizedBox(width: 5),
           // Filter button
-          Container(
-            width: 45,
-            height: 45,
-            decoration: BoxDecoration(
-              color: const Color(0xFF162781).withValues(alpha: 0.9),
-              shape: BoxShape.circle,
+          GestureDetector(
+            onTap: onFilterTap,
+            child: Container(
+              width: 45,
+              height: 45,
+              decoration: BoxDecoration(
+                color: const Color(0xFF162781).withValues(alpha: 0.9),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.tune, color: Colors.white, size: 18),
             ),
-            child: const Icon(Icons.tune, color: Colors.white, size: 18),
           ),
         ],
       ),
@@ -456,53 +668,268 @@ class _TabButton extends StatelessWidget {
   }
 }
 
-// ✅ Extract Lowongan List dengan data real
-class _LowonganList extends StatelessWidget {
-  final List<LokerUmum> lowonganList;
-  final List<String> appliedJobIds;
-  final Function(LokerUmum) onItemTap;
+// ✅ Filter Bottom Sheet (tetap sama seperti sebelumnya)
+class FilterBottomSheet extends StatefulWidget {
+  final Map<String, dynamic> currentFilters;
+  final Function(Map<String, dynamic>) onApplyFilters;
+  final VoidCallback onResetFilters;
 
-  const _LowonganList({
-    required this.lowonganList,
-    required this.appliedJobIds,
-    required this.onItemTap,
+  const FilterBottomSheet({
+    super.key,
+    required this.currentFilters,
+    required this.onApplyFilters,
+    required this.onResetFilters,
   });
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        children: lowonganList.map((lowongan) {
-          final daysLeft = _calculateDaysLeft(lowongan.batasLamaran);
-          final isUrgent = daysLeft <= 10 && daysLeft >= 0;
-          final isApplied = appliedJobIds.contains(lowongan.lowonganId);
+  State<FilterBottomSheet> createState() => _FilterBottomSheetState();
+}
 
-          return Column(
-            children: [
-              _JobCard(
-                lowongan: lowongan,
-                isUrgent: isUrgent,
-                daysLeft: daysLeft,
-                isApplied: isApplied,
-                onTap: () => onItemTap(lowongan),
-              ),
-              const SizedBox(height: 16),
-            ],
-          );
-        }).toList(),
+class _FilterBottomSheetState extends State<FilterBottomSheet> {
+  late Map<String, dynamic> _selectedFilters;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedFilters = Map<String, dynamic>.from(widget.currentFilters);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.8,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(25),
+          topRight: Radius.circular(25),
+        ),
       ),
+      child: Column(
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: Colors.grey.shade200),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Filter Lowongan',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Row(
+                  children: [
+                    TextButton(
+                      onPressed: widget.onResetFilters,
+                      child: const Text(
+                        'Reset',
+                        style: TextStyle(
+                          color: Color(0xFF666666),
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    ElevatedButton(
+                      onPressed: () {
+                        widget.onApplyFilters(_selectedFilters);
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1E40AF),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text(
+                        'Terapkan',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Jenis Pekerjaan
+                  _buildFilterSection(
+                    title: 'Jenis Pekerjaan',
+                    options: ['Full-time', 'Part-time', 'Contract', 'Internship', 'Remote'],
+                    selectedValue: _selectedFilters['jenisPekerjaan'],
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedFilters['jenisPekerjaan'] = value;
+                      });
+                    },
+                  ),
+
+                  const SizedBox(height: 25),
+
+                  // Lokasi
+                  _buildFilterSection(
+                    title: 'Lokasi',
+                    options: ['Jakarta', 'Bandung', 'Surabaya', 'Yogyakarta', 'Semarang', 'Bali'],
+                    selectedValue: _selectedFilters['lokasi'],
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedFilters['lokasi'] = value;
+                      });
+                    },
+                  ),
+
+                  const SizedBox(height: 25),
+
+                  // Rentang Gaji
+                  _buildSalaryFilterSection(),
+
+                  const SizedBox(height: 25),
+
+                  // Tingkat Pengalaman
+                  _buildFilterSection(
+                    title: 'Pengalaman',
+                    options: ['Fresh Graduate', '1-3 tahun', '3-5 tahun', '5+ tahun'],
+                    selectedValue: _selectedFilters['pengalaman'],
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedFilters['pengalaman'] = value;
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      )
     );
   }
 
-  static int _calculateDaysLeft(DateTime batasLamaran) {
-    final now = DateTime.now();
-    final difference = batasLamaran.difference(now);
-    return difference.inDays;
+  Widget _buildFilterSection({
+    required String title,
+    required List<String> options,
+    required String selectedValue,
+    required Function(String) onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 16,
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: options.map((option) {
+            final isSelected = selectedValue == option;
+            return GestureDetector(
+              onTap: () => onChanged(isSelected ? '' : option),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: isSelected ? const Color(0xFF1E40AF) : Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected ? const Color(0xFF1E40AF) : Colors.grey.shade300,
+                  ),
+                ),
+                child: Text(
+                  option,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : Colors.grey.shade700,
+                    fontFamily: 'Poppins',
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSalaryFilterSection() {
+    final salaryOptions = [
+      {'label': 'Rp 0 - 5 juta', 'value': '0-5'},
+      {'label': 'Rp 5 - 10 juta', 'value': '5-10'},
+      {'label': 'Rp 10+ juta', 'value': '10+'},
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Rentang Gaji',
+          style: TextStyle(
+            fontSize: 16,
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: salaryOptions.map((option) {
+            final isSelected = _selectedFilters['gaji'] == option['value'];
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedFilters['gaji'] = isSelected ? '' : option['value'];
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: isSelected ? const Color(0xFF1E40AF) : Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected ? const Color(0xFF1E40AF) : Colors.grey.shade300,
+                  ),
+                ),
+                child: Text(
+                  option['label']!,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : Colors.grey.shade700,
+                    fontFamily: 'Poppins',
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
   }
 }
 
-// ✅ Job Card yang SIMPLE - TANPA DESKRIPSI dengan layout fixed
+// ✅ Job Card (tetap sama seperti sebelumnya)
 class _JobCard extends StatefulWidget {
   final LokerUmum lowongan;
   final bool isUrgent;
@@ -561,7 +988,7 @@ class __JobCardState extends State<_JobCard>
       onTap: widget.onTap,
       child: Container(
         width: double.infinity,
-        height: 220, // ✅ Sedikit lebih tinggi untuk menghindari overlap
+        height: 220,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -575,14 +1002,13 @@ class __JobCardState extends State<_JobCard>
         ),
         child: Stack(
           children: [
-            // ✅ Sudah dilamar badge - DI ATAS SEMUA
             if (widget.isApplied)
               Positioned(
                 right: 0,
                 top: 0,
                 child: Container(
                   width: 130,
-                  height: 28, // ✅ Sedikit lebih tinggi
+                  height: 28,
                   decoration: const BoxDecoration(
                     color: Color(0xFF4CAF50),
                     borderRadius: BorderRadius.only(
@@ -609,14 +1035,13 @@ class __JobCardState extends State<_JobCard>
                 ),
               ),
 
-            // ✅ Urgent badge (hanya tampil jika belum dilamar) - DI ATAS SEMUA
             if (widget.isUrgent && !widget.isApplied)
               Positioned(
                 left: 0,
                 top: 0,
                 child: Container(
                   width: 130,
-                  height: 28, // ✅ Sedikit lebih tinggi
+                  height: 28,
                   decoration: const BoxDecoration(
                     color: Color(0xFF0E37EB),
                     borderRadius: BorderRadius.only(
@@ -645,17 +1070,14 @@ class __JobCardState extends State<_JobCard>
                 ),
               ),
 
-            // ✅ Main Content dengan padding yang disesuaikan
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 40, 16, 16), // ✅ Top padding lebih besar untuk badge
+              padding: const EdgeInsets.fromLTRB(16, 40, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ✅ Header Row (Company logo, title, bookmark)
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Company Logo
                       Container(
                         width: 40,
                         height: 40,
@@ -684,11 +1106,10 @@ class __JobCardState extends State<_JobCard>
                       ),
                       const SizedBox(width: 12),
                       
-                      // Job Title & Company - DIBERI BATAS MAX WIDTH
                       Expanded(
                         child: ConstrainedBox(
                           constraints: const BoxConstraints(
-                            maxWidth: 200, // ✅ Batas maksimal width
+                            maxWidth: 200,
                           ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -721,7 +1142,6 @@ class __JobCardState extends State<_JobCard>
                         ),
                       ),
                       
-                      // Bookmark
                       GestureDetector(
                         onTap: _toggleBookmark,
                         child: ScaleTransition(
@@ -753,7 +1173,6 @@ class __JobCardState extends State<_JobCard>
 
                   const SizedBox(height: 12),
 
-                  // ✅ Salary
                   Text(
                     _formatSalary(widget.lowongan.gaji),
                     style: const TextStyle(
@@ -766,24 +1185,20 @@ class __JobCardState extends State<_JobCard>
 
                   const SizedBox(height: 12),
 
-                  // ✅ Tags Row - DIBAWAH SALARY
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      // Location
                       _buildTag(
                         icon: Icons.location_on,
                         text: widget.lowongan.lokasi,
                       ),
                       
-                      // Job Type
                       _buildTag(
                         icon: Icons.work_outline,
                         text: widget.lowongan.jenisPekerjaan,
                       ),
                       
-                      // Remote badge jika ada
                       if (widget.lowongan.opsiKerjaRemote)
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -807,57 +1222,8 @@ class __JobCardState extends State<_JobCard>
                     ],
                   ),
 
-                  const SizedBox(height: 8),
-
-                  // // ✅ Experience & Contract - DIBAWAH TAGS
-                  // Wrap(
-                  //   spacing: 8,
-                  //   runSpacing: 8,
-                  //   children: [
-                  //     Container(
-                  //       padding: const EdgeInsets.symmetric(
-                  //         horizontal: 8,
-                  //         vertical: 4,
-                  //       ),
-                  //       decoration: BoxDecoration(
-                  //         color: const Color(0xFFFFF8E1),
-                  //         borderRadius: BorderRadius.circular(12),
-                  //       ),
-                  //       child: Text(
-                  //         widget.lowongan.tingkatPengalaman,
-                  //         style: const TextStyle(
-                  //           color: Color(0xFFF57C00),
-                  //           fontSize: 10,
-                  //           fontFamily: 'Poppins',
-                  //           fontWeight: FontWeight.w500,
-                  //         ),
-                  //       ),
-                  //     ),
-                  //     Container(
-                  //       padding: const EdgeInsets.symmetric(
-                  //         horizontal: 8,
-                  //         vertical: 4,
-                  //       ),
-                  //       decoration: BoxDecoration(
-                  //         color: const Color(0xFFE8F0FE),
-                  //         borderRadius: BorderRadius.circular(12),
-                  //       ),
-                  //       child: Text(
-                  //         widget.lowongan.kontrakDurasi,
-                  //         style: const TextStyle(
-                  //           color: Color(0xFF1B56FD),
-                  //           fontSize: 10,
-                  //           fontFamily: 'Poppins',
-                  //           fontWeight: FontWeight.w500,
-                  //         ),
-                  //       ),
-                  //     ),
-                  //   ],
-                  // ),
-
                   const Spacer(),
 
-                  // ✅ Footer (Posted time) - DI BAWAH
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -871,7 +1237,6 @@ class __JobCardState extends State<_JobCard>
                         ),
                       ),
                       
-                      // Applicants count
                       Text(
                         '${widget.lowongan.jumlahPelamar} pelamar',
                         style: const TextStyle(
@@ -906,7 +1271,7 @@ class __JobCardState extends State<_JobCard>
           Icon(icon, size: 12, color: Colors.grey.shade600),
           const SizedBox(width: 4),
           Text(
-            text.length > 12 ? '${text.substring(0, 12)}...' : text, // ✅ Lebih pendek
+            text.length > 12 ? '${text.substring(0, 12)}...' : text,
             style: TextStyle(
               color: Colors.grey.shade600,
               fontSize: 12,
@@ -946,7 +1311,7 @@ class __JobCardState extends State<_JobCard>
   }
 }
 
-// ✅ Skeleton loading yang disesuaikan
+// ✅ Skeleton loading (tetap sama)
 class _JobCardSkeleton extends StatelessWidget {
   const _JobCardSkeleton();
 
@@ -954,7 +1319,7 @@ class _JobCardSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      height: 220, // ✅ Disesuaikan dengan tinggi baru
+      height: 220,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -967,11 +1332,10 @@ class _JobCardSkeleton extends StatelessWidget {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 40, 16, 16), // ✅ Padding sama dengan card asli
+        padding: const EdgeInsets.fromLTRB(16, 40, 16, 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header skeleton
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1019,7 +1383,6 @@ class _JobCardSkeleton extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            // Salary skeleton
             Container(
               width: 100,
               height: 16,
@@ -1029,7 +1392,6 @@ class _JobCardSkeleton extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            // Tags skeleton
             Row(
               children: [
                 Container(
@@ -1051,31 +1413,7 @@ class _JobCardSkeleton extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            // Experience skeleton
-            Row(
-              children: [
-                Container(
-                  width: 70,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  width: 60,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ],
-            ),
             const Spacer(),
-            // Footer skeleton
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -1099,61 +1437,6 @@ class _JobCardSkeleton extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-// ✅ Optimized Pagination
-class EnhancedPagination extends StatelessWidget {
-  final int currentPage;
-  final int totalPages;
-  final Function(int) onPageChanged;
-
-  const EnhancedPagination({
-    super.key,
-    required this.currentPage,
-    required this.totalPages,
-    required this.onPageChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(totalPages, (index) {
-          final isActive = currentPage == index;
-          double size = 8;
-
-          if (isActive) {
-            size = 10;
-          } else if (index == currentPage - 1 || index == currentPage + 1) {
-            size = 8;
-          } else {
-            size = 6;
-          }
-
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: GestureDetector(
-              onTap: () => onPageChanged(index),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-                width: size,
-                height: size,
-                decoration: BoxDecoration(
-                  color: isActive
-                      ? const Color(0xFF1E40AF)
-                      : const Color(0xFFD1D5DB),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-          );
-        }),
       ),
     );
   }
