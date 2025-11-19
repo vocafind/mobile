@@ -312,7 +312,7 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
                         hint: 'https://instagram.com/johndoe',
                         icon: Icons.link_outlined,
                         required: true,
-                        helperText: 'Harus URL lengkap dengan http:// atau https://',
+                        // helperText: 'Harus URL lengkap dengan http:// atau https://',
                       ),
 
                       // Tombol Hapus (hanya untuk edit)
