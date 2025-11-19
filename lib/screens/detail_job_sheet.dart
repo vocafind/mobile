@@ -11,15 +11,102 @@ class JobDetailSheet extends StatefulWidget {
   State<JobDetailSheet> createState() => _JobDetailSheetState();
 }
 
-class _JobDetailSheetState extends State<JobDetailSheet> {
+class _JobDetailSheetState extends State<JobDetailSheet> 
+    with SingleTickerProviderStateMixin { // ✅ TAMBAHKAN INI
   int _selectedTab = 0;
   bool _isLoading = false;
+  bool _isSaved = false;
+  bool _checkingSavedStatus = true;
   final ApiService _apiService = ApiService();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   // Tambahkan GlobalKey untuk ScaffoldMessenger
   final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
       GlobalKey<ScaffoldMessengerState>();
+
+  // Animation controller untuk bookmark
+  late AnimationController _bookmarkController;
+  late Animation<double> _bookmarkScale;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    // Initialize animation controller - FIXED
+    _bookmarkController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this, // ✅ SEKSUDah BISA PAKAI 'this' karena sudah pakai SingleTickerProviderStateMixin
+    );
+    _bookmarkScale = Tween<double>(begin: 1.0, end: 1.3).animate(
+      CurvedAnimation(parent: _bookmarkController, curve: Curves.easeInOut),
+    );
+    
+    // Check saved status ketika detail dibuka
+    _checkSavedStatus();
+  }
+
+  @override
+  void dispose() {
+    _bookmarkController.dispose();
+    super.dispose();
+  }
+
+  // Fungsi untuk mengecek status saved job
+  Future<void> _checkSavedStatus() async {
+    if (widget.loker?.lowonganId == null) {
+      setState(() {
+        _checkingSavedStatus = false;
+      });
+      return;
+    }
+
+    try {
+      final isSaved = await _apiService.checkIfJobIsSaved(widget.loker!.lowonganId);
+      setState(() {
+        _isSaved = isSaved;
+        _checkingSavedStatus = false;
+      });
+    } catch (e) {
+      print("❌ Error checking saved status: $e");
+      setState(() {
+        _checkingSavedStatus = false;
+      });
+    }
+  }
+
+  // Fungsi untuk toggle save/unsave job
+  Future<void> _toggleSaveJob() async {
+    if (widget.loker?.lowonganId == null) return;
+
+    // Update UI immediately for better UX
+    setState(() {
+      _isSaved = !_isSaved;
+    });
+    
+    // Play animation
+    _bookmarkController.forward().then((_) {
+      _bookmarkController.reverse();
+    });
+
+    try {
+      if (_isSaved) {
+        // Save job
+        await _apiService.saveJob(widget.loker!.lowonganId);
+        print("✅ Job saved: ${widget.loker!.lowonganId}");
+      } else {
+        // Unsave job
+        await _apiService.unsaveJobByLowonganId(widget.loker!.lowonganId);
+        print("✅ Job unsaved: ${widget.loker!.lowonganId}");
+      }
+    } catch (e) {
+      // Rollback UI state if API call fails
+      setState(() {
+        _isSaved = !_isSaved;
+      });
+      print("❌ Error toggling save job: $e");
+      // Tidak perlu show snackbar sesuai permintaan
+    }
+  }
 
   // Fungsi snackbar dengan GlobalKey
   void _showSnackBar(String message, {bool isError = false}) {
@@ -62,9 +149,7 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
         // Refresh data di halaman pencarian
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) {
-            Navigator.of(
-              context,
-            ).pop(true); // Return true untuk trigger refresh
+            Navigator.of(context).pop(true); // Return true untuk trigger refresh
           }
         });
       }
@@ -221,19 +306,49 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: [if (isRemote) _buildTag('Remote')],
+                children: [
+                  if (isRemote) _buildTag('Remote'),
+                  if (jenisPekerjaan.isNotEmpty) _buildTag(jenisPekerjaan),
+                  if (tingkatPengalaman.isNotEmpty) _buildTag(tingkatPengalaman),
+                ],
               ),
             ],
           ),
         ),
 
-        // Bookmark Icon
-        IconButton(
-          icon: const Icon(Icons.bookmark_border),
-          iconSize: 24,
-          onPressed: () {
-            // Handle bookmark
-          },
+        // Bookmark Icon dengan animation
+        ScaleTransition(
+          scale: _bookmarkScale,
+          child: IconButton(
+            icon: _checkingSavedStatus
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Colors.grey.shade400,
+                      ),
+                    ),
+                  )
+                : AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: _isSaved
+                        ? Icon(
+                            Icons.bookmark,
+                            key: const ValueKey('saved'),
+                            color: const Color(0xFF0E37EB),
+                            size: 24,
+                          )
+                        : Icon(
+                            Icons.bookmark_border,
+                            key: const ValueKey('unsaved'),
+                            color: Colors.black.withOpacity(0.3),
+                            size: 24,
+                          ),
+                  ),
+            onPressed: _checkingSavedStatus ? null : _toggleSaveJob,
+          ),
         ),
       ],
     );
