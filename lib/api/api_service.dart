@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:jobfair/api/api_client.dart';
 import 'package:jobfair/models/lamar_loker.dart';
+import 'package:jobfair/models/saved_job_model.dart';
 import 'package:jobfair/models/talent_award_model.dart';
 import 'package:jobfair/models/talent_certification_model.dart';
 import 'package:jobfair/models/talent_education_model.dart';
@@ -1789,7 +1790,6 @@ class ApiService {
     }
 
 
-
   // ================== GET LAMARAN SAYA ==================
     Future<List<LamaranSaya>> getLamaranSaya() async {
       final prefs = await SharedPreferences.getInstance();
@@ -1938,6 +1938,227 @@ class ApiService {
 
 
 
+   // ================== SAVE JOB ==================
+  Future<SaveJobResponse> saveJob(String lowonganId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final talentId = prefs.getString('talentId');
+
+    if (token == null || talentId == null) {
+      print("❌ Token atau TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      // Set headers dengan token
+      _dio.options.headers = {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      };
+
+      final response = await _dio.post(
+        ApiConfig.saveJob(lowonganId),
+      );
+
+      print("POST Save Job - STATUS: ${response.statusCode}");
+      print("POST Save Job - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return SaveJobResponse.fromJson(response.data);
+      } else {
+        print("⚠️ Gagal menyimpan job: ${response.data}");
+        throw Exception(response.data['message'] ?? 'Failed to save job');
+      }
+    } on DioException catch (e) {
+      print("❌ Error menyimpan job: ${e.message}");
+      
+      // Handle specific error responses
+      if (e.response != null) {
+        final errorData = e.response!.data;
+        final errorMessage = errorData['message'] ?? 'Terjadi kesalahan saat menyimpan lowongan';
+        throw Exception(errorMessage);
+      }
+      
+      throw Exception('Terjadi kesalahan jaringan');
+    }
+  }
+
+  // ================== UNSAVE JOB ==================
+  Future<SaveJobResponse> unsaveJob(String savedJobId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final talentId = prefs.getString('talentId');
+
+    if (token == null || talentId == null) {
+      print("❌ Token atau TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      // Set headers dengan token
+      _dio.options.headers = {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      };
+
+      final response = await _dio.delete(
+        ApiConfig.unsaveJob(savedJobId),
+      );
+
+      print("DELETE Unsave Job - STATUS: ${response.statusCode}");
+      print("DELETE Unsave Job - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return SaveJobResponse.fromJson(response.data);
+      } else {
+        print("⚠️ Gagal menghapus saved job: ${response.data}");
+        throw Exception(response.data['message'] ?? 'Failed to unsave job');
+      }
+    } on DioException catch (e) {
+      print("❌ Error menghapus saved job: ${e.message}");
+      
+      if (e.response != null) {
+        final errorData = e.response!.data;
+        final errorMessage = errorData['message'] ?? 'Terjadi kesalahan saat menghapus lowongan tersimpan';
+        throw Exception(errorMessage);
+      }
+      
+      throw Exception('Terjadi kesalahan jaringan');
+    }
+  }
+
+  // ================== UNSAVE JOB BY LOWONGAN ID ==================
+  Future<SaveJobResponse> unsaveJobByLowonganId(String lowonganId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final talentId = prefs.getString('talentId');
+
+    if (token == null || talentId == null) {
+      print("❌ Token atau TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      // Set headers dengan token
+      _dio.options.headers = {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      };
+
+      final response = await _dio.delete(
+        ApiConfig.unsaveJobByLowonganId(lowonganId),
+      );
+
+      print("DELETE Unsave Job by Lowongan ID - STATUS: ${response.statusCode}");
+      print("DELETE Unsave Job by Lowongan ID - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return SaveJobResponse.fromJson(response.data);
+      } else {
+        print("⚠️ Gagal menghapus saved job: ${response.data}");
+        throw Exception(response.data['message'] ?? 'Failed to unsave job');
+      }
+    } on DioException catch (e) {
+      print("❌ Error menghapus saved job: ${e.message}");
+      
+      if (e.response != null) {
+        final errorData = e.response!.data;
+        final errorMessage = errorData['message'] ?? 'Terjadi kesalahan saat menghapus lowongan tersimpan';
+        throw Exception(errorMessage);
+      }
+      
+      throw Exception('Terjadi kesalahan jaringan');
+    }
+  }
+
+  // ================== GET SAVED JOBS ==================
+  Future<List<SavedJob>> getSavedJobs() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final talentId = prefs.getString('talentId');
+
+    if (token == null || talentId == null) {
+      print("❌ Token atau TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      // Set headers dengan token
+      _dio.options.headers = {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      };
+
+      final response = await _dio.get(
+        ApiConfig.getSaveJob(),
+      );
+
+      print("GET Saved Jobs - STATUS: ${response.statusCode}");
+      print("GET Saved Jobs - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        return data.map((json) => SavedJob.fromJson(json)).toList();
+      } else {
+        print("⚠️ Gagal ambil data saved jobs: ${response.data}");
+        throw Exception('Failed to load saved jobs');
+      }
+    } on DioException catch (e) {
+      print("❌ Error ambil saved jobs: ${e.message}");
+      
+      if (e.response != null) {
+        final errorData = e.response!.data;
+        final errorMessage = errorData['message'] ?? 'Terjadi kesalahan saat mengambil data lowongan tersimpan';
+        throw Exception(errorMessage);
+      }
+      
+      throw Exception('Terjadi kesalahan jaringan');
+    }
+  }
+
+  // ================== CHECK IF JOB IS SAVED ==================
+  Future<bool> checkIfJobIsSaved(String lowonganId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final talentId = prefs.getString('talentId');
+
+    if (token == null || talentId == null) {
+      print("❌ Token atau TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      // Set headers dengan token
+      _dio.options.headers = {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      };
+
+      final response = await _dio.get(
+        ApiConfig.checkSavedJob(lowonganId),
+      );
+
+      print("CHECK Saved Job - STATUS: ${response.statusCode}");
+      print("CHECK Saved Job - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return CheckSavedResponse.fromJson(response.data).isSaved;
+      } else {
+        print("⚠️ Gagal cek status saved job: ${response.data}");
+        throw Exception('Failed to check saved job status');
+      }
+    } on DioException catch (e) {
+      print("❌ Error cek saved job: ${e.message}");
+      
+      if (e.response != null) {
+        final errorData = e.response!.data;
+        final errorMessage = errorData['message'] ?? 'Terjadi kesalahan saat mengecek status lowongan';
+        throw Exception(errorMessage);
+      }
+      
+      throw Exception('Terjadi kesalahan jaringan');
+    }
+  }
 
 
 

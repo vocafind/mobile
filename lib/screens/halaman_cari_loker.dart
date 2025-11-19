@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jobfair/models/saved_job_model.dart';
 import 'package:jobfair/widget/bottom_navbar.dart';
 import 'package:jobfair/widget/header.dart';
 import 'detail_job_sheet.dart';
@@ -26,6 +27,7 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
   bool _hasError = false;
   bool _isLoadingMore = false;
   List<String> _appliedJobIds = [];
+  List<String> _savedJobIds = []; // Tambah state untuk saved jobs
 
   // Lazy loading state
   int _currentPage = 1;
@@ -73,25 +75,28 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
     });
 
     try {
-      // Load lowongan dan data lamaran secara bersamaan dengan type annotation
+      // Load semua data secara bersamaan
       final results = await Future.wait<dynamic>([
         _apiService.getAllLokerUmum(),
         _apiService.getLowonganSudahDilamar(),
+        _apiService.getSavedJobs(), // Tambah loading saved jobs
       ]);
 
       // Cast ke tipe yang benar
       final lowongan = results[0] as List<LokerUmum>;
       final appliedIds = results[1] as List<String>;
+      final savedJobs = results[2] as List<SavedJob>;
 
       setState(() {
         _allLowongan = lowongan;
         _filteredLowongan = _getPaginatedData(lowongan, 1);
         _appliedJobIds = appliedIds;
+        _savedJobIds = savedJobs.map((job) => job.lowonganId).toList(); // Extract lowonganId dari saved jobs
         _isLoading = false;
       });
 
       print(
-        "✅ Data loaded: ${lowongan.length} lowongan, ${appliedIds.length} sudah dilamar",
+        "✅ Data loaded: ${lowongan.length} lowongan, ${appliedIds.length} sudah dilamar, ${savedJobs.length} disimpan",
       );
     } catch (e) {
       setState(() {
@@ -163,6 +168,30 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
       setState(() {
         _filteredLowongan = _getPaginatedData(_allLowongan, 1);
       });
+    }
+  }
+
+  // ✅ Fungsi untuk toggle save job
+  Future<void> _toggleSaveJob(String lowonganId, bool currentlySaved) async {
+    try {
+      if (currentlySaved) {
+        // Unsave job
+        await _apiService.unsaveJobByLowonganId(lowonganId);
+        setState(() {
+          _savedJobIds.remove(lowonganId);
+        });
+        print("✅ Job unsaved: $lowonganId");
+      } else {
+        // Save job
+        await _apiService.saveJob(lowonganId);
+        setState(() {
+          _savedJobIds.add(lowonganId);
+        });
+        print("✅ Job saved: $lowonganId");
+      }
+    } catch (e) {
+      print("❌ Error toggling save job: $e");
+      // Tidak perlu show snackbar sesuai permintaan
     }
   }
 
@@ -379,6 +408,7 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
                                       final daysLeft = _calculateDaysLeft(lowongan.batasLamaran);
                                       final isUrgent = daysLeft <= 10 && daysLeft >= 0;
                                       final isApplied = _appliedJobIds.contains(lowongan.lowonganId);
+                                      final isSaved = _savedJobIds.contains(lowongan.lowonganId);
 
                                       return Padding(
                                         padding: EdgeInsets.fromLTRB(
@@ -392,7 +422,10 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
                                           isUrgent: isUrgent,
                                           daysLeft: daysLeft,
                                           isApplied: isApplied,
+                                          isSaved: isSaved,
                                           onTap: () => _showJobDetail(lowongan),
+                                          onBookmarkToggle: (lowonganId, currentlySaved) => 
+                                              _toggleSaveJob(lowonganId, currentlySaved),
                                         ),
                                       );
                                     }
@@ -929,20 +962,24 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   }
 }
 
-// ✅ Job Card (tetap sama seperti sebelumnya)
+// ✅ Job Card dengan fitur save job
 class _JobCard extends StatefulWidget {
   final LokerUmum lowongan;
   final bool isUrgent;
   final int daysLeft;
   final bool isApplied;
+  final bool isSaved;
   final VoidCallback onTap;
+  final Function(String, bool) onBookmarkToggle;
 
   const _JobCard({
     required this.lowongan,
     required this.isUrgent,
     required this.daysLeft,
     required this.isApplied,
+    required this.isSaved,
     required this.onTap,
+    required this.onBookmarkToggle,
   });
 
   @override
@@ -951,13 +988,14 @@ class _JobCard extends StatefulWidget {
 
 class __JobCardState extends State<_JobCard>
     with SingleTickerProviderStateMixin {
-  bool isSaved = false;
+  late bool isSaved;
   late AnimationController _bookmarkController;
   late Animation<double> _bookmarkScale;
 
   @override
   void initState() {
     super.initState();
+    isSaved = widget.isSaved;
     _bookmarkController = AnimationController(
       duration: const Duration(milliseconds: 200),
       vsync: this,
@@ -974,12 +1012,18 @@ class __JobCardState extends State<_JobCard>
   }
 
   void _toggleBookmark() {
+    // Update UI immediately for better UX
     setState(() {
       isSaved = !isSaved;
     });
+    
+    // Play animation
     _bookmarkController.forward().then((_) {
       _bookmarkController.reverse();
     });
+    
+    // Call parent function to handle API call
+    widget.onBookmarkToggle(widget.lowongan.lowonganId, !isSaved);
   }
 
   @override

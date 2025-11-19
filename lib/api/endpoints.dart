@@ -1,7 +1,7 @@
 class ApiConfig {
   // Ganti IP dengan IP komputer server kamu
-  static const String baseUrl = "http://10.136.132.105:5035/api";
-  static const String baseUrlFoto = "http://10.136.132.105:5035/";
+  static const String baseUrl = "http://10.136.139.185:5035/api";
+  static const String baseUrlFoto = "http://10.136.139.185:5035/";
 
   // ------------------------------------------------------------- TALENTS AUTH
 
@@ -128,7 +128,7 @@ class ApiConfig {
 
 
   // ------------------------------------------------------------- LOKER UMUM
-  static String allLokerUmum = "$baseUrl/LokerUmum";                          // Get All Loker Um// Get all Loker Umum
+  static String allLokerUmum = "$baseUrl/LokerUmum";                                // Get All Loker Um// Get all Loker Umum
   static String lokerById(String id) => "$baseUrl/LokerUmum/$id";                   // Get Loker Umum by ID
 
 
@@ -138,4 +138,24 @@ class ApiConfig {
   static String Lamarloker(String lowonganId) => "$baseUrl/Lamar/lokerUmum/$lowonganId";                   // Lamar Loker UUmum
   static String getLamaranSaya() => "$baseUrl/Lamar/lamaran-saya";                                         // Get Lamaran Saya
   static String batalkanLamaran(String lamaranId) => "$baseUrl/Lamar/batal/$lamaranId";                    // Batalkan Lamaran
+
+
+
+
+  // ------------------------------------------------------------- Simpan Loker
+  static String saveJob(String lowonganId) => "$baseUrl/SavedJobs/simpan/$lowonganId";                   // Lamar Loker UUmum
+  static String getSaveJob() => "$baseUrl/SavedJobs/saya";                                         // Get Lamaran Saya
+  static String unsaveJob(String savedJobId) => "$baseUrl/SavedJobs/hapus/$savedJobId";     
+
+  static String checkSavedJob(String lowonganId) => "$baseUrl/SavedJobs/cek/$lowonganId";
+  static String getSavedJobsCount() => "$baseUrl/SavedJobs/jumlah";
+  static String unsaveJobByLowonganId(String lowonganId) => "$baseUrl/SavedJobs/hapus-by-lowongan/$lowonganId";
+
+
+
+
+
+
+
+
 }
