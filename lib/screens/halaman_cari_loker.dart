@@ -35,12 +35,13 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
   final int _itemsPerPage = 10;
 
   // Filter state
-  final ValueNotifier<Map<String, dynamic>> _filterState = ValueNotifier<Map<String, dynamic>>({
-    'jenisPekerjaan': '',
-    'lokasi': '',
-    'gaji': '',
-    'pengalaman': '',
-  });
+  final ValueNotifier<Map<String, dynamic>> _filterState =
+      ValueNotifier<Map<String, dynamic>>({
+        'jenisPekerjaan': '',
+        'lokasi': '',
+        'gaji': '',
+        'pengalaman': '',
+      });
 
   @override
   void initState() {
@@ -91,7 +92,9 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
         _allLowongan = lowongan;
         _filteredLowongan = _getPaginatedData(lowongan, 1);
         _appliedJobIds = appliedIds;
-        _savedJobIds = savedJobs.map((job) => job.lowonganId).toList(); // Extract lowonganId dari saved jobs
+        _savedJobIds = savedJobs
+            .map((job) => job.lowonganId)
+            .toList(); // Extract lowonganId dari saved jobs
         _isLoading = false;
       });
 
@@ -200,28 +203,41 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
     _filterState.value = filters;
     _currentPage = 1;
     _hasMoreData = true;
-    
+
     List<LokerUmum> filtered = _allLowongan;
 
     // Filter berdasarkan jenis pekerjaan
-    if (filters['jenisPekerjaan'] != null && filters['jenisPekerjaan'].isNotEmpty) {
-      filtered = filtered.where((loker) => 
-        loker.jenisPekerjaan.toLowerCase().contains(filters['jenisPekerjaan'].toLowerCase())
-      ).toList();
+    if (filters['jenisPekerjaan'] != null &&
+        filters['jenisPekerjaan'].isNotEmpty) {
+      filtered = filtered
+          .where(
+            (loker) => loker.jenisPekerjaan.toLowerCase().contains(
+              filters['jenisPekerjaan'].toLowerCase(),
+            ),
+          )
+          .toList();
     }
 
     // Filter berdasarkan lokasi
     if (filters['lokasi'] != null && filters['lokasi'].isNotEmpty) {
-      filtered = filtered.where((loker) => 
-        loker.lokasi.toLowerCase().contains(filters['lokasi'].toLowerCase())
-      ).toList();
+      filtered = filtered
+          .where(
+            (loker) => loker.lokasi.toLowerCase().contains(
+              filters['lokasi'].toLowerCase(),
+            ),
+          )
+          .toList();
     }
 
     // Filter berdasarkan pengalaman
     if (filters['pengalaman'] != null && filters['pengalaman'].isNotEmpty) {
-      filtered = filtered.where((loker) => 
-        loker.tingkatPengalaman.toLowerCase().contains(filters['pengalaman'].toLowerCase())
-      ).toList();
+      filtered = filtered
+          .where(
+            (loker) => loker.tingkatPengalaman.toLowerCase().contains(
+              filters['pengalaman'].toLowerCase(),
+            ),
+          )
+          .toList();
     }
 
     // Filter berdasarkan gaji
@@ -393,46 +409,59 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
                                   else if (_hasError)
                                     _buildErrorState()
                                   else if (_filteredLowongan.isEmpty)
-                                    _buildEmptyState()
+                                    _buildEmptyState(),
                                 ],
                               ),
                             ),
 
                             // List lowongan
-                            if (!_isLoading && !_hasError && _filteredLowongan.isNotEmpty)
+                            if (!_isLoading &&
+                                !_hasError &&
+                                _filteredLowongan.isNotEmpty)
                               SliverList(
-                                delegate: SliverChildBuilderDelegate(
-                                  (context, index) {
-                                    if (index < _filteredLowongan.length) {
-                                      final lowongan = _filteredLowongan[index];
-                                      final daysLeft = _calculateDaysLeft(lowongan.batasLamaran);
-                                      final isUrgent = daysLeft <= 10 && daysLeft >= 0;
-                                      final isApplied = _appliedJobIds.contains(lowongan.lowonganId);
-                                      final isSaved = _savedJobIds.contains(lowongan.lowonganId);
+                                delegate: SliverChildBuilderDelegate((
+                                  context,
+                                  index,
+                                ) {
+                                  if (index < _filteredLowongan.length) {
+                                    final lowongan = _filteredLowongan[index];
+                                    final daysLeft = _calculateDaysLeft(
+                                      lowongan.batasLamaran,
+                                    );
+                                    final isUrgent =
+                                        daysLeft <= 10 && daysLeft >= 0;
+                                    final isApplied = _appliedJobIds.contains(
+                                      lowongan.lowonganId,
+                                    );
+                                    final isSaved = _savedJobIds.contains(
+                                      lowongan.lowonganId,
+                                    );
 
-                                      return Padding(
-                                        padding: EdgeInsets.fromLTRB(
-                                          16, 
-                                          index == 0 ? 0 : 0, 
-                                          16, 
-                                          16
-                                        ),
-                                        child: _JobCard(
-                                          lowongan: lowongan,
-                                          isUrgent: isUrgent,
-                                          daysLeft: daysLeft,
-                                          isApplied: isApplied,
-                                          isSaved: isSaved,
-                                          onTap: () => _showJobDetail(lowongan),
-                                          onBookmarkToggle: (lowonganId, currentlySaved) => 
-                                              _toggleSaveJob(lowonganId, currentlySaved),
-                                        ),
-                                      );
-                                    }
-                                    return null;
-                                  },
-                                  childCount: _filteredLowongan.length,
-                                ),
+                                    return Padding(
+                                      padding: EdgeInsets.fromLTRB(
+                                        16,
+                                        index == 0 ? 0 : 0,
+                                        16,
+                                        16,
+                                      ),
+                                      child: _JobCard(
+                                        lowongan: lowongan,
+                                        isUrgent: isUrgent,
+                                        daysLeft: daysLeft,
+                                        isApplied: isApplied,
+                                        isSaved: isSaved,
+                                        onTap: () => _showJobDetail(lowongan),
+                                        onBookmarkToggle:
+                                            (lowonganId, currentlySaved) =>
+                                                _toggleSaveJob(
+                                                  lowonganId,
+                                                  currentlySaved,
+                                                ),
+                                      ),
+                                    );
+                                  }
+                                  return null;
+                                }, childCount: _filteredLowongan.length),
                               ),
 
                             // Loading more indicator
@@ -591,7 +620,7 @@ class _FilterTabs extends StatelessWidget {
   final VoidCallback onFilterTap;
 
   const _FilterTabs({
-    required this.selectedTab, 
+    required this.selectedTab,
     required this.onTabChanged,
     required this.onFilterTap,
   });
@@ -724,9 +753,9 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   final FocusNode _searchFocusNode = FocusNode();
   bool _showDropdown = false;
   List<String> _filteredLocations = [];
-  
+
   final ScrollController _scrollController = ScrollController();
-  
+
   // Daftar lokasi untuk dropdown
   final List<String> _lokasiOptions = [
     'Jakarta',
@@ -745,7 +774,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     'Bekasi',
     'Depok',
     'Remote',
-    'Luar Negeri'
+    'Luar Negeri',
   ];
 
   @override
@@ -754,7 +783,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     _selectedFilters = Map<String, dynamic>.from(widget.currentFilters);
     _filteredLocations = _lokasiOptions;
     _searchController.text = _selectedFilters['lokasi'] ?? '';
-    
+
     _searchFocusNode.addListener(_onFocusChange);
   }
 
@@ -800,9 +829,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         _filteredLocations = _lokasiOptions;
       } else {
         _filteredLocations = _lokasiOptions
-            .where((location) => location
-                .toLowerCase()
-                .contains(value.toLowerCase()))
+            .where(
+              (location) =>
+                  location.toLowerCase().contains(value.toLowerCase()),
+            )
             .toList();
       }
     });
@@ -851,9 +881,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(color: Colors.grey.shade200),
-              ),
+              border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -906,7 +934,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
 
           Expanded(
             child: SingleChildScrollView(
-              controller: _scrollController, // ✅ Tambahkan controller untuk scroll
+              controller:
+                  _scrollController, // ✅ Tambahkan controller untuk scroll
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -914,7 +943,13 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                   // Jenis Pekerjaan
                   _buildFilterSection(
                     title: 'Jenis Pekerjaan',
-                    options: ['Full-time', 'Part-time', 'Contract', 'Internship', 'Remote'],
+                    options: [
+                      'Full-time',
+                      'Part-time',
+                      'Contract',
+                      'Internship',
+                      'Remote',
+                    ],
                     selectedValue: _selectedFilters['jenisPekerjaan'],
                     onChanged: (value) {
                       setState(() {
@@ -938,7 +973,12 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                   // Tingkat Pengalaman
                   _buildFilterSection(
                     title: 'Pengalaman',
-                    options: ['Fresh Graduate', '1-3 tahun', '3-5 tahun', '5+ tahun'],
+                    options: [
+                      'Fresh Graduate',
+                      '1-3 tahun',
+                      '3-5 tahun',
+                      '5+ tahun',
+                    ],
                     selectedValue: _selectedFilters['pengalaman'],
                     onChanged: (value) {
                       setState(() {
@@ -969,7 +1009,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           ),
         ),
         const SizedBox(height: 12),
-        
+
         // Input Field dengan Dropdown di bawahnya
         Column(
           children: [
@@ -980,7 +1020,9 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: _showDropdown ? const Color(0xFF1E40AF) : Colors.grey.shade300,
+                    color: _showDropdown
+                        ? const Color(0xFF1E40AF)
+                        : Colors.grey.shade300,
                     width: _showDropdown ? 2 : 1,
                   ),
                 ),
@@ -994,21 +1036,23 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       fontFamily: 'Poppins',
                     ),
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     suffixIcon: _selectedFilters['lokasi']?.isNotEmpty ?? false
                         ? IconButton(
                             icon: const Icon(Icons.close, size: 18),
                             onPressed: _clearLocation,
                           )
                         : Icon(
-                            _showDropdown ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                            _showDropdown
+                                ? Icons.arrow_drop_up
+                                : Icons.arrow_drop_down,
                             color: Colors.grey.shade600,
                           ),
                   ),
-                  style: const TextStyle(
-                    fontFamily: 'Poppins',
-                    fontSize: 14,
-                  ),
+                  style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
                   onTap: _openDropdown, // ✅ Juga di sini untuk memastikan
                   onChanged: _onSearchChanged,
                 ),
@@ -1047,7 +1091,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                         ),
                       ),
                       onTap: () => _selectLocation(location),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       visualDensity: const VisualDensity(vertical: -4),
                     );
                   },
@@ -1068,7 +1115,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   }
 
   // ✅ Widget untuk menampilkan chip filter yang dipilih
-  Widget _buildSelectedFilterChip(String label, {required VoidCallback onRemove}) {
+  Widget _buildSelectedFilterChip(
+    String label, {
+    required VoidCallback onRemove,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -1090,11 +1140,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           const SizedBox(width: 6),
           GestureDetector(
             onTap: onRemove,
-            child: const Icon(
-              Icons.close,
-              color: Colors.white,
-              size: 14,
-            ),
+            child: const Icon(Icons.close, color: Colors.white, size: 14),
           ),
         ],
       ),
@@ -1127,12 +1173,17 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             return GestureDetector(
               onTap: () => onChanged(isSelected ? '' : option),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected ? const Color(0xFF1E40AF) : Colors.white,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: isSelected ? const Color(0xFF1E40AF) : Colors.grey.shade300,
+                    color: isSelected
+                        ? const Color(0xFF1E40AF)
+                        : Colors.grey.shade300,
                   ),
                 ),
                 child: Text(
@@ -1182,12 +1233,17 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 });
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected ? const Color(0xFF1E40AF) : Colors.white,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: isSelected ? const Color(0xFF1E40AF) : Colors.grey.shade300,
+                    color: isSelected
+                        ? const Color(0xFF1E40AF)
+                        : Colors.grey.shade300,
                   ),
                 ),
                 child: Text(
@@ -1261,12 +1317,12 @@ class __JobCardState extends State<_JobCard>
     setState(() {
       isSaved = !isSaved;
     });
-    
+
     // Play animation
     _bookmarkController.forward().then((_) {
       _bookmarkController.reverse();
     });
-    
+
     // Call parent function to handle API call
     widget.onBookmarkToggle(widget.lowongan.lowonganId, !isSaved);
   }
@@ -1341,7 +1397,11 @@ class __JobCardState extends State<_JobCard>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.bolt, color: Color(0xFFFFCC00), size: 14),
+                      const Icon(
+                        Icons.bolt,
+                        color: Color(0xFFFFCC00),
+                        size: 14,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         widget.daysLeft == 0
@@ -1394,43 +1454,41 @@ class __JobCardState extends State<_JobCard>
                               ),
                       ),
                       const SizedBox(width: 12),
-                      
+
                       Expanded(
                         child: ConstrainedBox(
-                          constraints: const BoxConstraints(
-                            maxWidth: 200,
+                          constraints: const BoxConstraints(maxWidth: 200),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.lowongan.posisi,
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 16,
+                                  fontFamily: 'Poppins',
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                widget.lowongan.namaPerusahaan,
+                                style: const TextStyle(
+                                  color: Color(0xFF666666),
+                                  fontSize: 14,
+                                  fontFamily: 'Poppins',
+                                  fontWeight: FontWeight.w400,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.lowongan.posisi,
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontSize: 16,
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w600,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              widget.lowongan.namaPerusahaan,
-                              style: const TextStyle(
-                                color: Color(0xFF666666),
-                                fontSize: 14,
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w400,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
                         ),
                       ),
-                      
+
                       GestureDetector(
                         onTap: _toggleBookmark,
                         child: ScaleTransition(
@@ -1465,7 +1523,7 @@ class __JobCardState extends State<_JobCard>
                   Text(
                     _formatSalary(widget.lowongan.gaji),
                     style: const TextStyle(
-                      color: Color(0xFF1B56FD),
+                      // color: Color(0xFF1B56FD),
                       fontSize: 18,
                       fontFamily: 'Poppins',
                       fontWeight: FontWeight.w700,
@@ -1478,36 +1536,12 @@ class __JobCardState extends State<_JobCard>
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      _buildTag(
-                        icon: Icons.location_on,
-                        text: widget.lowongan.lokasi,
-                      ),
-                      
-                      _buildTag(
-                        icon: Icons.work_outline,
-                        text: widget.lowongan.jenisPekerjaan,
-                      ),
-                      
+                      _buildTag(widget.lowongan.lokasi),
+
+                      _buildTag(widget.lowongan.jenisPekerjaan),
+
                       if (widget.lowongan.opsiKerjaRemote)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE8F5E8),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Text(
-                            'Remote',
-                            style: TextStyle(
-                              color: Color(0xFF2E7D32),
-                              fontSize: 14,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
+                        _buildTag('Remote'),
                     ],
                   ),
 
@@ -1525,7 +1559,7 @@ class __JobCardState extends State<_JobCard>
                           fontWeight: FontWeight.w400,
                         ),
                       ),
-                      
+
                       Text(
                         '${widget.lowongan.jumlahPelamar} pelamar',
                         style: const TextStyle(
@@ -1546,29 +1580,26 @@ class __JobCardState extends State<_JobCard>
     );
   }
 
-  Widget _buildTag({required IconData icon, required String text}) {
+  Widget _buildTag(String text, {Color? backgroundColor, Color? textColor}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: backgroundColor ?? Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(
+          color: backgroundColor != null
+              ? Colors.transparent
+              : Colors.grey.shade200,
+        ),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: Colors.grey.shade600),
-          const SizedBox(width: 4),
-          Text(
-            text.length > 12 ? '${text.substring(0, 12)}...' : text,
-            style: TextStyle(
-              color: Colors.grey.shade600,
-              fontSize: 12,
-              fontFamily: 'Poppins',
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-        ],
+      child: Text(
+        text.length > 15 ? '${text.substring(0, 15)}...' : text,
+        style: TextStyle(
+          color: textColor ?? Colors.grey.shade700,
+          fontSize: 12,
+          fontFamily: 'Poppins',
+          fontWeight: FontWeight.w400,
+        ),
       ),
     );
   }

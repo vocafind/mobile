@@ -12,7 +12,7 @@ class HalamanBeranda extends StatefulWidget {
 
 class _HalamanBerandaState extends State<HalamanBeranda> {
   final ScrollController _scrollController = ScrollController();
-  
+
   // ✅ ValueNotifier untuk scroll offset (tidak rebuild seluruh widget)
   final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
 
@@ -76,7 +76,7 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
             valueListenable: _scrollOffset,
             builder: (context, offset, child) {
               final bool showSearchOnly = offset > 100;
-              final double headerHeight = showSearchOnly 
+              final double headerHeight = showSearchOnly
                   ? topPadding + 25 + 50 + 16
                   : topPadding + 12 + 120 + 44 + 30;
 
@@ -130,7 +130,7 @@ class _AnimatedHeader extends StatelessWidget {
                   color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
-                )
+                ),
               ]
             : null,
       ),
@@ -194,7 +194,7 @@ class _AnimatedHeader extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  
+
                   // ✅ TAMBAHKAN ICON BOOKMARK DI SAMPING NOTIFICATION
                   Row(
                     children: [
@@ -223,7 +223,7 @@ class _AnimatedHeader extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      
+
                       // Notification Icon
                       GestureDetector(
                         onTap: () {
@@ -265,74 +265,74 @@ class _CocokUntukKamuSection extends StatelessWidget {
   const _CocokUntukKamuSection();
 
   @override
-Widget build(BuildContext context) {
-  return SizedBox(
-    height: 610,
-    child: Stack(
-      children: [
-        // ✅ Positioned.fill di luar, RepaintBoundary di dalam
-        Positioned.fill(
-          child: RepaintBoundary(
-            child: ShaderMask(
-              shaderCallback: (bounds) {
-                return LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.white,
-                    Colors.white,
-                    Colors.white,
-                    Colors.white.withValues(alpha:0.5),
-                    Colors.white.withValues(alpha:0.0),
-                  ],
-                  stops: const [0.0, 0.0, 0.7, 0.85, 1.0],
-                ).createShader(bounds);
-              },
-              blendMode: BlendMode.dstIn,
-              child: Image.asset(
-                'assets/images/iphone14bg.jpg',
-                fit: BoxFit.cover,
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 610,
+      child: Stack(
+        children: [
+          // ✅ Positioned.fill di luar, RepaintBoundary di dalam
+          Positioned.fill(
+            child: RepaintBoundary(
+              child: ShaderMask(
+                shaderCallback: (bounds) {
+                  return LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white,
+                      Colors.white,
+                      Colors.white,
+                      Colors.white.withValues(alpha: 0.5),
+                      Colors.white.withValues(alpha: 0.0),
+                    ],
+                    stops: const [0.0, 0.0, 0.7, 0.85, 1.0],
+                  ).createShader(bounds);
+                },
+                blendMode: BlendMode.dstIn,
+                child: Image.asset(
+                  'assets/images/iphone14bg.jpg',
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
           ),
-        ),
 
           Padding(
-          padding: const EdgeInsets.symmetric(vertical: 60),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  'Cocok untuk kamu',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 26,
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w600,
+            padding: const EdgeInsets.symmetric(vertical: 60),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    'Cocok untuk kamu',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 26,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.only(left: 20, bottom: 5),
-                  itemCount: 3,
-                  itemExtent: 354,
-                  itemBuilder: (context, index) {
-                    return const _CocokUntukKamuCard();
-                  },
+                const SizedBox(height: 16),
+                Expanded(
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.only(left: 20, bottom: 5),
+                    itemCount: 3,
+                    itemExtent: 354,
+                    itemBuilder: (context, index) {
+                      return const _CocokUntukKamuCard();
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 }
 
 // Widget untuk bagian "Ayo Temui Mereka" dengan auto-scroll looping
@@ -426,7 +426,10 @@ class _AyoTemuiMerekaSectionState extends State<AyoTemuiMerekaSection> {
               child: ListView.builder(
                 controller: _scrollController,
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 28),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 28,
+                ),
                 itemCount: 15,
                 // ✅ Tambahkan itemExtent
                 itemExtent: 97, // 62 width + 35 padding
@@ -819,12 +822,16 @@ class _JobFairCard extends StatelessWidget {
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 4),
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(45),
                           border: Border.all(
-                            color: const Color(0xFFF3F6F9).withValues(alpha: 0.4),
+                            color: const Color(
+                              0xFFF3F6F9,
+                            ).withValues(alpha: 0.4),
                           ),
                         ),
                         child: const Text(
@@ -840,12 +847,16 @@ class _JobFairCard extends StatelessWidget {
                       const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 4),
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(45),
                           border: Border.all(
-                            color: const Color(0xFFF3F6F9).withValues(alpha: 0.4),
+                            color: const Color(
+                              0xFFF3F6F9,
+                            ).withValues(alpha: 0.4),
                           ),
                         ),
                         child: const Text(
@@ -869,7 +880,11 @@ class _JobFairCard extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.location_on, color: Colors.white, size: 14),
+                          Icon(
+                            Icons.location_on,
+                            color: Colors.white,
+                            size: 14,
+                          ),
                           SizedBox(width: 4),
                           Text(
                             'Batam Kota',
@@ -885,7 +900,11 @@ class _JobFairCard extends StatelessWidget {
                       SizedBox(height: 4),
                       Row(
                         children: [
-                          Icon(Icons.calendar_today, color: Colors.white, size: 12),
+                          Icon(
+                            Icons.calendar_today,
+                            color: Colors.white,
+                            size: 12,
+                          ),
                           SizedBox(width: 6),
                           Text(
                             '19 Sep 2025 - 20 Sep 2025',
@@ -962,6 +981,7 @@ class _UrgentJobCardState extends State<_UrgentJobCard>
   @override
   void initState() {
     super.initState();
+    isSaved = false; // Default tidak disimpan
     _bookmarkController = AnimationController(
       duration: const Duration(milliseconds: 200),
       vsync: this,
@@ -986,20 +1006,44 @@ class _UrgentJobCardState extends State<_UrgentJobCard>
     });
   }
 
+  // ✅ TAG TANPA ICON - SAMA DENGAN HALAMAN CARI LOKER
+  Widget _buildTag(String text, {Color? backgroundColor, Color? textColor}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: backgroundColor ?? Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: backgroundColor != null
+              ? Colors.transparent
+              : Colors.grey.shade200,
+        ),
+      ),
+      child: Text(
+        text.length > 15 ? '${text.substring(0, 15)}...' : text,
+        style: TextStyle(
+          color: textColor ?? Colors.grey.shade700,
+          fontSize: 12,
+          fontFamily: 'Poppins',
+          fontWeight: FontWeight.w400,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
         width: double.infinity,
-        height: 306,
+        height: 220, // ✅ SAMA DENGAN HALAMAN CARI LOKER
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(34),
-          // ✅ Ganti BoxShadow dengan elevation-like effect
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
+              color: Colors.black.withOpacity(0.05),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -1007,30 +1051,30 @@ class _UrgentJobCardState extends State<_UrgentJobCard>
         ),
         child: Stack(
           children: [
-            // Urgent badge
+            // ✅ URGENT BADGE - SAMA DENGAN HALAMAN CARI LOKER
             Positioned(
               left: 0,
               top: 0,
               child: Container(
-                width: 220,
-                height: 29,
+                width: 130,
+                height: 28,
                 decoration: const BoxDecoration(
                   color: Color(0xFF0E37EB),
                   borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(34),
-                    bottomRight: Radius.circular(90),
+                    topLeft: Radius.circular(20),
+                    bottomRight: Radius.circular(20),
                   ),
                 ),
-                child: const Row(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SizedBox(width: 16),
-                    Icon(Icons.bolt, color: Color(0xFFFFCC00), size: 18),
-                    SizedBox(width: 4),
+                    const Icon(Icons.bolt, color: Color(0xFFFFCC00), size: 14),
+                    const SizedBox(width: 4),
                     Text(
-                      'Dibutuhkan segera',
-                      style: TextStyle(
+                      '5 hari lagi', // Contoh hari tersisa
+                      style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 14,
+                        fontSize: 11,
                         fontFamily: 'Poppins',
                         fontWeight: FontWeight.w600,
                       ),
@@ -1039,220 +1083,176 @@ class _UrgentJobCardState extends State<_UrgentJobCard>
                 ),
               ),
             ),
-            // Company logo
-            Positioned(
-              left: 16,
-              top: 47,
-              child: Container(
-                width: 40,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Image.asset(
-                  'assets/icons/poltek.png',
-                  fit: BoxFit.contain,
-                  cacheWidth: 80,
-                  cacheHeight: 72,
-                ),
-              ),
-            ),
-            // Job title and company
-            const Positioned(
-              left: 66,
-              top: 47,
-              right: 66,
+
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 40, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Fulltime Backend Developer',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Inforsys Indonesia',
-                    style: TextStyle(
-                      color: Color(0x993C3C43),
-                      fontSize: 14,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Bookmark icon with animation
-            Positioned(
-              right: 16,
-              top: 47,
-              child: GestureDetector(
-                onTap: _toggleBookmark,
-                child: ScaleTransition(
-                  scale: _bookmarkScale,
-                  child: SizedBox(
-                    width: 32,
-                    height: 32,
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 200),
-                      transitionBuilder: (child, animation) {
-                        return ScaleTransition(
-                          scale: animation,
-                          child: child,
-                        );
-                      },
-                      child: isSaved
-                          ? const Icon(
-                              Icons.bookmark,
-                              key: ValueKey('saved'),
-                              color: Color(0xFF0E37EB),
-                              size: 28,
-                            )
-                          : Icon(
-                              Icons.bookmark_border,
-                              key: const ValueKey('unsaved'),
-                              color: Colors.black.withValues(alpha: 0.5),
-                              size: 28,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Company Logo
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Image.asset(
+                          'assets/icons/poltek.png',
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+
+                      // Job Info
+                      Expanded(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 200),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Fulltime Backend Developer', // Contoh data
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 16,
+                                  fontFamily: 'Poppins',
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Inforsys Indonesia', // Contoh data
+                                style: const TextStyle(
+                                  color: Color(0xFF666666),
+                                  fontSize: 14,
+                                  fontFamily: 'Poppins',
+                                  fontWeight: FontWeight.w400,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      // Bookmark Button
+                      GestureDetector(
+                        onTap: _toggleBookmark,
+                        child: ScaleTransition(
+                          scale: _bookmarkScale,
+                          child: SizedBox(
+                            width: 32,
+                            height: 32,
+                            child: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 200),
+                              child: isSaved
+                                  ? const Icon(
+                                      Icons.bookmark,
+                                      key: ValueKey('saved'),
+                                      color: Color(0xFF0E37EB),
+                                      size: 24,
+                                    )
+                                  : Icon(
+                                      Icons.bookmark_border,
+                                      key: const ValueKey('unsaved'),
+                                      color: Colors.black.withOpacity(0.3),
+                                      size: 24,
+                                    ),
                             ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Salary
+                  Text(
+                    'Rp 9.000.000', // Contoh data
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                ),
-              ),
-            ),
-            // Description
-            const Positioned(
-              left: 16,
-              top: 125,
-              right: 16,
-              child: Text(
-                'Bertanggung jawab dalam  mengelola, dan mengoptimal siste . . .',
-                style: TextStyle(
-                  color: Color(0xFF404040),
-                  fontSize: 14,
-                  fontFamily: 'Poppins',
-                  fontWeight: FontWeight.w300,
-                  height: 1.5,
-                ),
-              ),
-            ),
-            // Salary
-            const Positioned(
-              left: 16,
-              top: 172,
-              child: Text.rich(
-                TextSpan(
-                  children: [
-                    TextSpan(
-                      text: 'Rp',
-                      style: TextStyle(
-                        color: Color(0xFF40403F),
-                        fontSize: 14,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    TextSpan(
-                      text: ' 9.000.000 - ',
-                      style: TextStyle(
-                        color: Color(0xFF40403F),
-                        fontSize: 18,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    TextSpan(
-                      text: 'Rp',
-                      style: TextStyle(
-                        color: Color(0xFF40403F),
-                        fontSize: 14,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    TextSpan(
-                      text: ' 12.000.000',
-                      style: TextStyle(
-                        color: Color(0xFF40403F),
-                        fontSize: 18,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            // Tags
-            Positioned(
-              left: 16,
-              top: 210,
-              child: Row(
-                children: [
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
-                          color: Colors.black.withValues(alpha: 0.06)),
-                    ),
-                    child: const Text(
-                      'Batam Kota, Kepulauan Riau',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 14,
-                        fontFamily: 'SF Pro',
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
+
+                  const SizedBox(height: 12),
+
+                  // ✅ TAGS - SAMA DENGAN HALAMAN CARI LOKER
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _buildTag('Batam Kota'), // Contoh data
+
+                      _buildTag('Full-time'), // Contoh data
+
+                      _buildTag('Remote'),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
-                          color: Colors.black.withValues(alpha: 0.06)),
-                    ),
-                    child: const Text(
-                      'Remote',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 14,
-                        fontFamily: 'SF Pro',
-                        fontWeight: FontWeight.w400,
+
+                  const Spacer(),
+
+                  // Footer info
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _formatTimeAgo(
+                          DateTime.now().subtract(const Duration(days: 1)),
+                        ), // Contoh data
+                        style: const TextStyle(
+                          color: Color(0xFF999999),
+                          fontSize: 12,
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
-                    ),
+
+                      Text(
+                        '50 pelamar', // Contoh data
+                        style: const TextStyle(
+                          color: Color(0xFF999999),
+                          fontSize: 12,
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
-              ),
-            ),
-            // Time ago
-            const Positioned(
-              right: 16,
-              bottom: 18,
-              child: Text(
-                '1 hari lalu',
-                style: TextStyle(
-                  color: Color(0xFF464E5E),
-                  fontSize: 12,
-                  fontFamily: 'SF Pro',
-                  fontWeight: FontWeight.w400,
-                ),
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  String _formatTimeAgo(DateTime tanggal) {
+    final now = DateTime.now();
+    final difference = now.difference(tanggal);
+
+    if (difference.inDays == 0) {
+      return 'Hari ini';
+    } else if (difference.inDays == 1) {
+      return '1 hari lalu';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} hari lalu';
+    } else if (difference.inDays < 30) {
+      final weeks = (difference.inDays / 7).floor();
+      return '$weeks minggu lalu';
+    } else {
+      final months = (difference.inDays / 30).floor();
+      return '$months bulan lalu';
+    }
   }
 }
