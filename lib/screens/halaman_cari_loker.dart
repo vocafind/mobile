@@ -701,7 +701,7 @@ class _TabButton extends StatelessWidget {
   }
 }
 
-// ✅ Filter Bottom Sheet (tetap sama seperti sebelumnya)
+// ✅ Filter Bottom Sheet dengan Searchable Dropdown untuk Lokasi (Fixed Focus)
 class FilterBottomSheet extends StatefulWidget {
   final Map<String, dynamic> currentFilters;
   final Function(Map<String, dynamic>) onApplyFilters;
@@ -720,11 +720,118 @@ class FilterBottomSheet extends StatefulWidget {
 
 class _FilterBottomSheetState extends State<FilterBottomSheet> {
   late Map<String, dynamic> _selectedFilters;
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+  bool _showDropdown = false;
+  List<String> _filteredLocations = [];
+  
+  final ScrollController _scrollController = ScrollController();
+  
+  // Daftar lokasi untuk dropdown
+  final List<String> _lokasiOptions = [
+    'Jakarta',
+    'Bandung',
+    'Surabaya',
+    'Yogyakarta',
+    'Semarang',
+    'Bali',
+    'Medan',
+    'Makassar',
+    'Palembang',
+    'Malang',
+    'Solo',
+    'Bogor',
+    'Tangerang',
+    'Bekasi',
+    'Depok',
+    'Remote',
+    'Luar Negeri'
+  ];
 
   @override
   void initState() {
     super.initState();
     _selectedFilters = Map<String, dynamic>.from(widget.currentFilters);
+    _filteredLocations = _lokasiOptions;
+    _searchController.text = _selectedFilters['lokasi'] ?? '';
+    
+    _searchFocusNode.addListener(_onFocusChange);
+  }
+
+  void _onFocusChange() {
+    if (_searchFocusNode.hasFocus) {
+      // Auto scroll ke input field ketika focus
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToInputField();
+      });
+    } else {
+      // Tunggu sedikit sebelum hide dropdown untuk memberi waktu tap item
+      Future.delayed(const Duration(milliseconds: 200), () {
+        if (mounted) {
+          setState(() {
+            _showDropdown = false;
+          });
+        }
+      });
+    }
+  }
+
+  void _scrollToInputField() {
+    // Scroll ke posisi input field
+    _scrollController.animateTo(
+      200, // Estimated position of location field
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchFocusNode.removeListener(_onFocusChange);
+    _searchFocusNode.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() {
+      if (value.isEmpty) {
+        _filteredLocations = _lokasiOptions;
+      } else {
+        _filteredLocations = _lokasiOptions
+            .where((location) => location
+                .toLowerCase()
+                .contains(value.toLowerCase()))
+            .toList();
+      }
+    });
+  }
+
+  void _selectLocation(String location) {
+    setState(() {
+      _selectedFilters['lokasi'] = location;
+      _searchController.text = location;
+      _showDropdown = false;
+      _searchFocusNode.unfocus();
+    });
+  }
+
+  void _clearLocation() {
+    setState(() {
+      _selectedFilters['lokasi'] = '';
+      _searchController.clear();
+      _showDropdown = true;
+      _searchFocusNode.requestFocus();
+    });
+  }
+
+  void _openDropdown() {
+    setState(() {
+      _showDropdown = true;
+    });
+    // Focus dan scroll ke input field
+    _searchFocusNode.requestFocus();
   }
 
   @override
@@ -799,6 +906,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
 
           Expanded(
             child: SingleChildScrollView(
+              controller: _scrollController, // ✅ Tambahkan controller untuk scroll
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -817,17 +925,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
 
                   const SizedBox(height: 25),
 
-                  // Lokasi
-                  _buildFilterSection(
-                    title: 'Lokasi',
-                    options: ['Jakarta', 'Bandung', 'Surabaya', 'Yogyakarta', 'Semarang', 'Bali'],
-                    selectedValue: _selectedFilters['lokasi'],
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedFilters['lokasi'] = value;
-                      });
-                    },
-                  ),
+                  // Lokasi - FIXED FOCUS SEARCHABLE DROPDOWN
+                  _buildLocationDropdown(),
 
                   const SizedBox(height: 25),
 
@@ -852,7 +951,153 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             ),
           ),
         ],
-      )
+      ),
+    );
+  }
+
+  // ✅ Fixed Focus Searchable Dropdown Widget
+  Widget _buildLocationDropdown() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Lokasi',
+          style: TextStyle(
+            fontSize: 16,
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 12),
+        
+        // Input Field dengan Dropdown di bawahnya
+        Column(
+          children: [
+            // Input Field
+            GestureDetector(
+              onTap: _openDropdown, // ✅ Gunakan custom function
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: _showDropdown ? const Color(0xFF1E40AF) : Colors.grey.shade300,
+                    width: _showDropdown ? 2 : 1,
+                  ),
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  focusNode: _searchFocusNode,
+                  decoration: InputDecoration(
+                    hintText: 'Pilih atau ketik lokasi...',
+                    hintStyle: const TextStyle(
+                      color: Colors.grey,
+                      fontFamily: 'Poppins',
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    suffixIcon: _selectedFilters['lokasi']?.isNotEmpty ?? false
+                        ? IconButton(
+                            icon: const Icon(Icons.close, size: 18),
+                            onPressed: _clearLocation,
+                          )
+                        : Icon(
+                            _showDropdown ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                            color: Colors.grey.shade600,
+                          ),
+                  ),
+                  style: const TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 14,
+                  ),
+                  onTap: _openDropdown, // ✅ Juga di sini untuk memastikan
+                  onChanged: _onSearchChanged,
+                ),
+              ),
+            ),
+
+            // Dropdown List - TAMPIL LANGSUNG DI BAWAH INPUT
+            if (_showDropdown && _filteredLocations.isNotEmpty)
+              Container(
+                margin: const EdgeInsets.only(top: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                constraints: const BoxConstraints(maxHeight: 200),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  itemCount: _filteredLocations.length,
+                  itemBuilder: (context, index) {
+                    final location = _filteredLocations[index];
+                    return ListTile(
+                      title: Text(
+                        location,
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 14,
+                        ),
+                      ),
+                      onTap: () => _selectLocation(location),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      visualDensity: const VisualDensity(vertical: -4),
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
+
+        // Selected Location Chip
+        const SizedBox(height: 8),
+        if (_selectedFilters['lokasi']?.isNotEmpty ?? false)
+          _buildSelectedFilterChip(
+            'Lokasi: ${_selectedFilters['lokasi']}',
+            onRemove: _clearLocation,
+          ),
+      ],
+    );
+  }
+
+  // ✅ Widget untuk menampilkan chip filter yang dipilih
+  Widget _buildSelectedFilterChip(String label, {required VoidCallback onRemove}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E40AF),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(width: 6),
+          GestureDetector(
+            onTap: onRemove,
+            child: const Icon(
+              Icons.close,
+              color: Colors.white,
+              size: 14,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
