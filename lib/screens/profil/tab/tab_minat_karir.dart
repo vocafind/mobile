@@ -40,6 +40,8 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
   }
 
   Future<void> _loadCareerInterests() async {
+    if (!mounted) return; // TAMBAHKAN INI
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -47,16 +49,20 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
 
     try {
       final careerInterests = await _apiService.getCareerInterest();
-      setState(() {
-        _careerInterests = careerInterests;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'Gagal memuat data: ${e.toString()}';
-      });
       if (mounted) {
+        // TAMBAHKAN INI
+        setState(() {
+          _careerInterests = careerInterests;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        // TAMBAHKAN INI
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Gagal memuat data: ${e.toString()}';
+        });
         _showSnackBar('Gagal memuat data minat karir', isError: true);
       }
     }
@@ -65,13 +71,14 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
   Future<void> _addCareerInterest(CareerInterestModel careerInterest) async {
     try {
       await _apiService.createCareerInterest(careerInterest);
-      await _loadCareerInterests();
-
       if (mounted) {
+        // TAMBAHKAN INI
+        await _loadCareerInterests();
         _showSnackBar('Minat karir berhasil ditambahkan');
       }
     } catch (e) {
       if (mounted) {
+        // TAMBAHKAN INI
         _showSnackBar('Gagal menambahkan minat karir', isError: true);
       }
     }
@@ -79,7 +86,10 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
 
   Future<void> _updateCareerInterest(CareerInterestModel careerInterest) async {
     if (careerInterest.careerinterestId == null) {
-      _showSnackBar('ID minat karir tidak valid', isError: true);
+      if (mounted) {
+        // TAMBAHKAN INI
+        _showSnackBar('ID minat karir tidak valid', isError: true);
+      }
       return;
     }
 
@@ -88,13 +98,14 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
         careerInterest.careerinterestId!,
         careerInterest,
       );
-      await _loadCareerInterests();
-
       if (mounted) {
+        // TAMBAHKAN INI
+        await _loadCareerInterests();
         _showSnackBar('Minat karir berhasil diperbarui');
       }
     } catch (e) {
       if (mounted) {
+        // TAMBAHKAN INI
         _showSnackBar('Gagal memperbarui minat karir', isError: true);
       }
     }
@@ -103,19 +114,22 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
   Future<void> _deleteCareerInterest(String careerInterestId) async {
     try {
       await _apiService.deleteCareerInterest(careerInterestId);
-      await _loadCareerInterests();
-
       if (mounted) {
+        // TAMBAHKAN INI
+        await _loadCareerInterests();
         _showSnackBar('Minat karir berhasil dihapus');
       }
     } catch (e) {
       if (mounted) {
+        // TAMBAHKAN INI
         _showSnackBar('Gagal menghapus minat karir', isError: true);
       }
     }
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
+    if (!mounted) return; // TAMBAHKAN INI - INI YANG PALING PENTING
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -130,275 +144,297 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
         behavior: SnackBarBehavior.floating,
         elevation: 2,
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         duration: const Duration(seconds: 2),
       ),
     );
   }
 
   void _showAddEditModal({CareerInterestModel? careerInterest}) {
-  final isEdit = careerInterest != null;
-  
-  if (careerInterest != null) {
-    _bidangController.text = careerInterest.bidangKetertarikan;
-    _alasanController.text = careerInterest.alasan;
-    _selectedLevel = careerInterest.tingkatKetertarikan;
-  } else {
-    _clearControllers();
-  }
+    final isEdit = careerInterest != null;
 
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) => Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          height: MediaQuery.of(context).size.height * 0.8,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: Colors.grey.shade200),
+    // Buat controller lokal untuk modal
+    final TextEditingController _bidangControllerLocal =
+        TextEditingController();
+    final TextEditingController _alasanControllerLocal =
+        TextEditingController();
+    String _selectedLevelLocal = 'Tinggi';
+
+    // Inisialisasi nilai jika edit
+    if (careerInterest != null) {
+      _bidangControllerLocal.text = careerInterest.bidangKetertarikan;
+      _alasanControllerLocal.text = careerInterest.alasan;
+      _selectedLevelLocal = careerInterest.tingkatKetertarikan;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: StatefulBuilder(
+          builder: (context, setModalState) => Container(
+            height: MediaQuery.of(context).size.height * 0.8,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              children: [
+                // Header
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: Colors.grey.shade200),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      Expanded(
+                        child: Text(
+                          isEdit ? 'Edit Minat Karir' : 'Tambah Minat Karir',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          if (_bidangControllerLocal.text.isEmpty ||
+                              _alasanControllerLocal.text.isEmpty) {
+                            if (mounted) {
+                              // TAMBAHKAN INI
+                              _showSnackBar(
+                                'Semua field harus diisi',
+                                isError: true,
+                              );
+                            }
+                            return;
+                          }
+
+                          final newCareerInterest = CareerInterestModel(
+                            careerinterestId: careerInterest?.careerinterestId,
+                            tingkatKetertarikan: _selectedLevelLocal,
+                            alasan: _alasanControllerLocal.text,
+                            bidangKetertarikan: _bidangControllerLocal.text,
+                          );
+
+                          Navigator.pop(context);
+
+                          if (isEdit) {
+                            _updateCareerInterest(newCareerInterest);
+                          } else {
+                            _addCareerInterest(newCareerInterest);
+                          }
+                        },
+                        child: const Text(
+                          'Simpan',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    Expanded(
-                      child: Text(
-                        isEdit ? 'Edit Minat Karir' : 'Tambah Minat Karir',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Poppins',
+
+                // Form
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Keterangan
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF3E0),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFFFB74D)),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(
+                                Icons.info_outline,
+                                color: Color(0xFFE65100),
+                                size: 20,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Tambahkan bidang karir yang Anda minati. Informasi ini membantu perusahaan menemukan kandidat yang sesuai.',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.orange.shade900,
+                                    fontFamily: 'Poppins',
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        if (_bidangController.text.isEmpty ||
-                            _alasanController.text.isEmpty) {
-                          _showSnackBar('Semua field harus diisi', isError: true);
-                          return;
-                        }
+                        const SizedBox(height: 24),
 
-                        final newCareerInterest = CareerInterestModel(
-                          careerinterestId: careerInterest?.careerinterestId,
-                          tingkatKetertarikan: _selectedLevel,
-                          alasan: _alasanController.text,
-                          bidangKetertarikan: _bidangController.text,
-                        );
-
-                        Navigator.pop(context);
-
-                        if (isEdit) {
-                          _updateCareerInterest(newCareerInterest);
-                        } else {
-                          _addCareerInterest(newCareerInterest);
-                        }
-                      },
-                      child: const Text(
-                        'Simpan',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Poppins',
+                        _buildTextField(
+                          controller: _bidangControllerLocal,
+                          label: 'Bidang Minat',
+                          hint: 'Contoh: Teknologi Informasi, Marketing',
+                          icon: Icons.work_outline,
+                          required: true,
                         ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+                        const SizedBox(height: 16),
 
-              // Form
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Keterangan
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF3E0),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFFFB74D)),
-                        ),
-                        child: Row(
+                        // Tingkat Minat Dropdown
+                        Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(
-                              Icons.info_outline,
-                              color: Color(0xFFE65100),
-                              size: 20,
+                            Row(
+                              children: const [
+                                Text(
+                                  'Tingkat Ketertarikan',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    fontFamily: 'Poppins',
+                                    color: Color(0xFF515151),
+                                  ),
+                                ),
+                                Text(
+                                  ' *',
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                'Tambahkan bidang karir yang Anda minati. Informasi ini membantu perusahaan menemukan kandidat yang sesuai.',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.orange.shade900,
-                                  fontFamily: 'Poppins',
-                                  height: 1.4,
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade50,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: Colors.grey.shade300),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: _selectedLevelLocal,
+                                  isExpanded: true,
+                                  icon: Icon(
+                                    Icons.arrow_drop_down,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontFamily: 'Poppins',
+                                    color: Color(0xFF515151),
+                                  ),
+                                  items: ['Tinggi', 'Sedang', 'Rendah'].map((
+                                    String value,
+                                  ) {
+                                    return DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            _getInterestIcon(value),
+                                            size: 18,
+                                            color: _getInterestColor(value),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(value),
+                                        ],
+                                      ),
+                                    );
+                                  }).toList(),
+                                  onChanged: (String? newValue) {
+                                    if (newValue != null) {
+                                      setModalState(() {
+                                        _selectedLevelLocal = newValue;
+                                      });
+                                    }
+                                  },
                                 ),
                               ),
                             ),
                           ],
                         ),
-                      ),
-                      const SizedBox(height: 24),
+                        const SizedBox(height: 16),
 
-                      _buildTextField(
-                        controller: _bidangController,
-                        label: 'Bidang Minat',
-                        hint: 'Contoh: Teknologi Informasi, Marketing',
-                        icon: Icons.work_outline,
-                        required: true,
-                      ),
-                      const SizedBox(height: 16),
+                        _buildTextField(
+                          controller: _alasanControllerLocal,
+                          label: 'Alasan Minat',
+                          hint:
+                              'Jelaskan mengapa Anda tertarik dengan bidang ini...',
+                          icon: Icons.description_outlined,
+                          maxLines: 5,
+                          required: true,
+                          helperText:
+                              'Minimal 50 karakter untuk penjelasan yang baik',
+                        ),
 
-                      // Tingkat Minat Dropdown
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: const [
-                              Text(
-                                'Tingkat Ketertarikan',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  fontFamily: 'Poppins',
-                                  color: Color(0xFF515151),
-                                ),
+                        // Tombol Hapus (hanya untuk edit)
+                        if (isEdit) ...[
+                          const SizedBox(height: 32),
+                          Center(
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _showDeleteConfirmation(careerInterest!);
+                              },
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.red,
                               ),
-                              Text(
-                                ' *',
+                              label: const Text(
+                                'Hapus Minat Karir',
                                 style: TextStyle(
                                   color: Colors.red,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
+                                  fontFamily: 'Poppins',
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade50,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: Colors.grey.shade300),
-                            ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                value: _selectedLevel,
-                                isExpanded: true,
-                                icon: Icon(Icons.arrow_drop_down, color: Colors.grey.shade600),
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontFamily: 'Poppins',
-                                  color: Color(0xFF515151),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Colors.red),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 12,
                                 ),
-                                items: ['Tinggi', 'Sedang', 'Rendah'].map((String value) {
-                                  return DropdownMenuItem<String>(
-                                    value: value,
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          _getInterestIcon(value),
-                                          size: 18,
-                                          color: _getInterestColor(value),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(value),
-                                      ],
-                                    ),
-                                  );
-                                }).toList(),
-                                onChanged: (String? newValue) {
-                                  if (newValue != null) {
-                                    setModalState(() {
-                                      _selectedLevel = newValue;
-                                    });
-                                  }
-                                },
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
                               ),
                             ),
                           ),
                         ],
-                      ),
-                      const SizedBox(height: 16),
-
-                      _buildTextField(
-                        controller: _alasanController,
-                        label: 'Alasan Minat',
-                        hint: 'Jelaskan mengapa Anda tertarik dengan bidang ini...',
-                        icon: Icons.description_outlined,
-                        maxLines: 5,
-                        required: true,
-                        helperText: 'Minimal 50 karakter untuk penjelasan yang baik',
-                      ),
-
-                      // Tombol Hapus (hanya untuk edit)
-                      if (isEdit) ...[
-                        const SizedBox(height: 32),
-                        Center(
-                          child: OutlinedButton.icon(
-                            onPressed: () {
-                              Navigator.pop(context);
-                              _showDeleteConfirmation(careerInterest);
-                            },
-                            icon: const Icon(Icons.delete_outline, color: Colors.red),
-                            label: const Text(
-                              'Hapus Minat Karir',
-                              style: TextStyle(
-                                color: Colors.red,
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: Colors.red),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 12,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        ),
                       ],
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
+    );
   }
 
   IconData _getInterestIcon(String level) {
@@ -489,7 +525,10 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
             ),
             filled: true,
             fillColor: Colors.grey.shade50,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
             helperText: helperText,
             helperStyle: TextStyle(
               fontSize: 11,
@@ -563,9 +602,7 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Center(
-        child: CircularProgressIndicator(
-          color: Color(0xFF1B56FD),
-        ),
+        child: CircularProgressIndicator(color: Color(0xFF1B56FD)),
       );
     }
 
@@ -574,11 +611,7 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.error_outline,
-              size: 60,
-              color: Color(0xFFB8B8B8),
-            ),
+            const Icon(Icons.error_outline, size: 60, color: Color(0xFFB8B8B8)),
             const SizedBox(height: 16),
             const Text(
               'Terjadi Kesalahan',
@@ -742,11 +775,11 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
                   topRight: Radius.circular(20),
                 )
               : isLast
-                  ? const BorderRadius.only(
-                      bottomLeft: Radius.circular(20),
-                      bottomRight: Radius.circular(20),
-                    )
-                  : BorderRadius.zero,
+              ? const BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
+                )
+              : BorderRadius.zero,
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,

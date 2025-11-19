@@ -39,21 +39,28 @@ class _TabSoftSkillState extends State<TabSoftSkill> {
   }
 
   Future<void> _loadSoftskills() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
     try {
       final softskills = await _apiService.getSoftskill();
-      setState(() {
-        _softskills = softskills;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _softskills = softskills;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() => _isLoading = false);
-      _showSnackBar('Gagal memuat data soft skill', isError: true);
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _showSnackBar('Gagal memuat data soft skill', isError: true);
+      }
       print("Error load softskills: $e");
     }
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
+    if (!mounted) return; // TAMBAHKAN INI
+    
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -138,13 +145,14 @@ class _TabSoftSkillState extends State<TabSoftSkill> {
                                 final deskripsi = _deskripsiController.text.trim();
 
                                 if (nama.isEmpty || deskripsi.isEmpty) {
-                                  _showSnackBar(
-                                    "Lengkapi semua data wajib",
-                                    isError: true,
-                                  );
+                                  if (mounted) { // TAMBAHKAN INI
+                                    _showSnackBar(
+                                      "Lengkapi semua data wajib",
+                                      isError: true,
+                                    );
+                                  }
                                   return;
                                 }
-
 
                                 setModalState(() => isSaving = true);
 
@@ -158,29 +166,28 @@ class _TabSoftSkillState extends State<TabSoftSkill> {
                                 try {
                                   if (isEdit) {
                                     await _apiService.updateSoftskill(
-                                      softskill.softskillsId!,
+                                      softskill!.softskillsId!,
                                       newSoftskill,
                                     );
-                                    _showSnackBar(
-                                      'Berhasil memperbarui soft skill',
-                                    );
+                                    if (mounted) { // TAMBAHKAN INI
+                                      _showSnackBar('Berhasil memperbarui soft skill');
+                                    }
                                   } else {
-                                    await _apiService.createSoftskill(
-                                      newSoftskill,
-                                    );
-                                    _showSnackBar(
-                                      'Berhasil menambah soft skill',
-                                    );
+                                    await _apiService.createSoftskill(newSoftskill);
+                                    if (mounted) { // TAMBAHKAN INI
+                                      _showSnackBar('Berhasil menambah soft skill');
+                                    }
                                   }
 
-                                  await _loadSoftskills();
-                                  Navigator.pop(context);
+                                  if (mounted) { // TAMBAHKAN INI
+                                    await _loadSoftskills();
+                                    Navigator.pop(context);
+                                  }
                                 } catch (e) {
                                   setModalState(() => isSaving = false);
-                                  _showSnackBar(
-                                    'Gagal menyimpan data',
-                                    isError: true,
-                                  );
+                                  if (mounted) { // TAMBAHKAN INI
+                                    _showSnackBar('Gagal menyimpan data', isError: true);
+                                  }
                                   print("❌ Error submit softskill: $e");
                                 }
                               },
@@ -351,7 +358,7 @@ class _TabSoftSkillState extends State<TabSoftSkill> {
                                   ? null
                                   : () {
                                       Navigator.pop(context);
-                                      _showDeleteConfirmation(softskill);
+                                      _showDeleteConfirmation(softskill!);
                                     },
                               icon: const Icon(
                                 Icons.delete_outline,
@@ -515,15 +522,16 @@ class _TabSoftSkillState extends State<TabSoftSkill> {
                         await _apiService.deleteSoftskill(
                           softskill.softskillsId!,
                         );
-                        await _loadSoftskills();
-                        Navigator.pop(context);
-                        _showSnackBar('Soft skill berhasil dihapus');
+                        if (mounted) { // TAMBAHKAN INI
+                          await _loadSoftskills();
+                          Navigator.pop(context);
+                          _showSnackBar('Soft skill berhasil dihapus');
+                        }
                       } catch (e) {
                         setDialogState(() => isDeleting = false);
-                        _showSnackBar(
-                          'Gagal menghapus soft skill',
-                          isError: true,
-                        );
+                        if (mounted) { // TAMBAHKAN INI
+                          _showSnackBar('Gagal menghapus soft skill', isError: true);
+                        }
                         print("Error delete softskill: $e");
                       }
                     },

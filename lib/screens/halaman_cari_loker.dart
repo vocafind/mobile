@@ -1406,7 +1406,7 @@ class __JobCardState extends State<_JobCard>
                       Text(
                         widget.daysLeft == 0
                             ? 'Hari terakhir!'
-                            : '${widget.daysLeft}h',
+                            : '${widget.daysLeft} hari lagi',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 11,

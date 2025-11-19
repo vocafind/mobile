@@ -14,13 +14,12 @@ class _TabPendidikanState extends State<TabPendidikan> {
   List<EducationModel> _education = [];
   bool _isLoading = true;
 
-  // Controllers
-  final _jenjangController = TextEditingController();
-  final _jurusanController = TextEditingController();
-  final _institusiController = TextEditingController();
-  final _tahunMulaiController = TextEditingController();
-  final _tahunSelesaiController = TextEditingController();
-  final _nilaiAkhirController = TextEditingController();
+  // Daftar pilihan jenjang yang valid
+  final List<String> _jenjangOptions = [
+    'SD', 'SMP', 'SMA', 'SMK', 
+    'D1', 'D2', 'D3', 'D4', 
+    'S1', 'S2', 'S3'
+  ];
 
   @override
   void initState() {
@@ -28,42 +27,29 @@ class _TabPendidikanState extends State<TabPendidikan> {
     _loadEducation();
   }
 
-  @override
-  void dispose() {
-    _jenjangController.dispose();
-    _jurusanController.dispose();
-    _institusiController.dispose();
-    _tahunMulaiController.dispose();
-    _tahunSelesaiController.dispose();
-    _nilaiAkhirController.dispose();
-    super.dispose();
-  }
-
-  void _clearControllers() {
-    _jenjangController.clear();
-    _jurusanController.clear();
-    _institusiController.clear();
-    _tahunMulaiController.clear();
-    _tahunSelesaiController.clear();
-    _nilaiAkhirController.clear();
-  }
-
   Future<void> _loadEducation() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
     try {
       final education = await _apiService.getEducation();
-      setState(() {
-        _education = education;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _education = education;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() => _isLoading = false);
-      _showSnackBar('Gagal memuat data referensi', isError: true);
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _showSnackBar('Gagal memuat data pendidikan', isError: true);
+      }
       print("Error load education: $e");
     }
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
+    if (!mounted) return;
+    
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -89,9 +75,6 @@ class _TabPendidikanState extends State<TabPendidikan> {
     bool isSaving = false;
 
     // Controller form
-    final TextEditingController _jenjangController = TextEditingController(
-      text: education?.jenjang ?? '',
-    );
     final TextEditingController _jurusanController = TextEditingController(
       text: education?.jurusan ?? '',
     );
@@ -107,6 +90,9 @@ class _TabPendidikanState extends State<TabPendidikan> {
     final TextEditingController _nilaiAkhirController = TextEditingController(
       text: education?.nilaiAkhir?.toString() ?? '',
     );
+
+    // Variabel untuk dropdown jenjang
+    String? _selectedJenjang = education?.jenjang;
 
     showModalBottomSheet(
       context: context,
@@ -155,10 +141,8 @@ class _TabPendidikanState extends State<TabPendidikan> {
                         onPressed: isSaving
                             ? null
                             : () async {
-                                final jenjang = _jenjangController.text.trim();
                                 final jurusan = _jurusanController.text.trim();
-                                final institusi = _institusiController.text
-                                    .trim();
+                                final institusi = _institusiController.text.trim();
                                 final tahunMasuk = int.tryParse(
                                   _tahunMulaiController.text.trim(),
                                 );
@@ -169,15 +153,17 @@ class _TabPendidikanState extends State<TabPendidikan> {
                                   _nilaiAkhirController.text.trim(),
                                 );
 
-                                if (jenjang.isEmpty ||
+                                if (_selectedJenjang == null ||
                                     jurusan.isEmpty ||
                                     institusi.isEmpty ||
                                     tahunMasuk == null ||
                                     tahunLulus == null) {
-                                  _showSnackBar(
-                                    "Lengkapi semua data",
-                                    isError: true,
-                                  );
+                                  if (mounted) {
+                                    _showSnackBar(
+                                      "Lengkapi semua data yang wajib",
+                                      isError: true,
+                                    );
+                                  }
                                   return;
                                 }
 
@@ -185,7 +171,7 @@ class _TabPendidikanState extends State<TabPendidikan> {
 
                                 final edu = EducationModel(
                                   educationId: education?.educationId,
-                                  jenjang: jenjang,
+                                  jenjang: _selectedJenjang!,
                                   jurusan: jurusan,
                                   institusi: institusi,
                                   tahunMasuk: tahunMasuk,
@@ -197,27 +183,31 @@ class _TabPendidikanState extends State<TabPendidikan> {
                                 try {
                                   if (isEdit) {
                                     await _apiService.updateEducation(
-                                      education.educationId!,
+                                      education!.educationId!,
                                       edu,
                                     );
-                                    _showSnackBar(
-                                      'Berhasil memperbarui pendidikan',
-                                    );
+                                    if (mounted) {
+                                      _showSnackBar('Berhasil memperbarui pendidikan');
+                                    }
                                   } else {
                                     await _apiService.createEducation(edu);
-                                    _showSnackBar(
-                                      'Berhasil menambah pendidikan',
-                                    );
+                                    if (mounted) {
+                                      _showSnackBar('Berhasil menambah pendidikan');
+                                    }
                                   }
 
-                                  await _loadEducation();
-                                  Navigator.pop(context);
+                                  if (mounted) {
+                                    await _loadEducation();
+                                    Navigator.pop(context);
+                                  }
                                 } catch (e) {
                                   setModalState(() => isSaving = false);
-                                  _showSnackBar(
-                                    'Gagal menyimpan data',
-                                    isError: true,
-                                  );
+                                  if (mounted) {
+                                    _showSnackBar(
+                                      'Gagal menyimpan data',
+                                      isError: true,
+                                    );
+                                  }
                                   print("❌ Error submit education: $e");
                                 }
                               },
@@ -249,11 +239,15 @@ class _TabPendidikanState extends State<TabPendidikan> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildTextField(
-                          controller: _jenjangController,
+                        // Dropdown Jenjang (Menggantikan TextField)
+                        _buildJenjangDropdown(
+                          selectedValue: _selectedJenjang,
+                          onChanged: (String? newValue) {
+                            setModalState(() {
+                              _selectedJenjang = newValue;
+                            });
+                          },
                           label: 'Jenjang Pendidikan',
-                          hint: 'Contoh: D4, S1, S2, S3',
-                          icon: Icons.school_outlined,
                           required: true,
                         ),
                         const SizedBox(height: 16),
@@ -319,7 +313,7 @@ class _TabPendidikanState extends State<TabPendidikan> {
                                   ? null
                                   : () {
                                       Navigator.pop(context);
-                                      _showDeleteConfirmation(education);
+                                      _showDeleteConfirmation(education!);
                                     },
                               icon: const Icon(
                                 Icons.delete_outline,
@@ -358,89 +352,90 @@ class _TabPendidikanState extends State<TabPendidikan> {
     );
   }
 
-  void _showDeleteConfirmation(EducationModel education) {
-    bool isDeleting = false;
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          backgroundColor: Colors.white,
-          title: const Text(
-            'Hapus Pendidikan',
-            style: TextStyle(
-              fontSize: 18,
-              fontFamily: 'Poppins',
-              fontWeight: FontWeight.w600,
+  Widget _buildJenjangDropdown({
+    required String? selectedValue,
+    required ValueChanged<String?> onChanged,
+    required String label,
+    bool required = false,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                fontFamily: 'Poppins',
+                color: Color(0xFF515151),
+              ),
             ),
-          ),
-          content: Text(
-            'Apakah Anda yakin ingin menghapus pendidikan di ${education.institusi}?',
-            style: const TextStyle(
-              fontSize: 14,
-              fontFamily: 'Poppins',
-              color: Color(0xFF515151),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: isDeleting ? null : () => Navigator.pop(context),
-              child: const Text(
-                'Batal',
+            if (required)
+              const Text(
+                ' *',
                 style: TextStyle(
-                  color: Color(0xFF515151),
+                  color: Colors.red,
                   fontSize: 14,
-                  fontFamily: 'Poppins',
                   fontWeight: FontWeight.w500,
                 ),
               ),
-            ),
-            TextButton(
-              onPressed: isDeleting
-                  ? null
-                  : () async {
-                      setDialogState(() => isDeleting = true);
-                      try {
-                        await _apiService.deleteEducation(
-                          education.educationId!,
-                        );
-                        await _loadEducation();
-                        Navigator.pop(context);
-                        _showSnackBar('Pendidikan berhasil dihapus');
-                      } catch (e) {
-                        setDialogState(() => isDeleting = false);
-                        _showSnackBar(
-                          'Gagal menghapus pendidikan',
-                          isError: true,
-                        );
-                        print("Error delete education: $e");
-                      }
-                    },
-              child: isDeleting
-                  ? const SizedBox(
-                      height: 14,
-                      width: 14,
-                      child: CircularProgressIndicator(
-                        color: Colors.red,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : const Text(
-                      'Hapus',
-                      style: TextStyle(
-                        color: Colors.red,
-                        fontSize: 14,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-            ),
           ],
         ),
-      ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.grey.shade300),
+            color: Colors.grey.shade50,
+          ),
+          child: DropdownButtonFormField<String>(
+            value: selectedValue,
+            decoration: InputDecoration(
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+              prefixIcon: Icon(
+                Icons.school_outlined,
+                color: Colors.grey.shade600,
+                size: 20,
+              ),
+            ),
+            items: _jenjangOptions.map((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+              );
+            }).toList(),
+            onChanged: onChanged,
+            hint: Text(
+              'Pilih Jenjang',
+              style: TextStyle(
+                color: Colors.grey.shade400,
+                fontSize: 14,
+                fontFamily: 'Poppins',
+              ),
+            ),
+            validator: required
+                ? (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Jenjang harus dipilih';
+                    }
+                    return null;
+                  }
+                : null,
+          ),
+        ),
+      ],
     );
   }
 
@@ -522,14 +517,103 @@ class _TabPendidikanState extends State<TabPendidikan> {
     );
   }
 
+  void _showDeleteConfirmation(EducationModel education) {
+    bool isDeleting = false;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          backgroundColor: Colors.white,
+          title: const Text(
+            'Hapus Pendidikan',
+            style: TextStyle(
+              fontSize: 18,
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          content: Text(
+            'Apakah Anda yakin ingin menghapus pendidikan di ${education.institusi}?',
+            style: const TextStyle(
+              fontSize: 14,
+              fontFamily: 'Poppins',
+              color: Color(0xFF515151),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: isDeleting ? null : () => Navigator.pop(context),
+              child: const Text(
+                'Batal',
+                style: TextStyle(
+                  color: Color(0xFF515151),
+                  fontSize: 14,
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: isDeleting
+                  ? null
+                  : () async {
+                      setDialogState(() => isDeleting = true);
+                      try {
+                        await _apiService.deleteEducation(
+                          education.educationId!,
+                        );
+                        if (mounted) {
+                          await _loadEducation();
+                          Navigator.pop(context);
+                          _showSnackBar('Pendidikan berhasil dihapus');
+                        }
+                      } catch (e) {
+                        setDialogState(() => isDeleting = false);
+                        if (mounted) {
+                          _showSnackBar(
+                            'Gagal menghapus pendidikan',
+                            isError: true,
+                          );
+                        }
+                        print("Error delete education: $e");
+                      }
+                    },
+              child: isDeleting
+                  ? const SizedBox(
+                      height: 14,
+                      width: 14,
+                      child: CircularProgressIndicator(
+                        color: Colors.red,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text(
+                      'Hapus',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontSize: 14,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
-      onRefresh: _loadEducation, // fungsi reload data
+      onRefresh: _loadEducation,
       color: const Color(0xFF113CEE),
       child: SingleChildScrollView(
-        physics:
-            const AlwaysScrollableScrollPhysics(), // penting biar bisa tarik walau data sedikit
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 21, vertical: 20),
         child: Column(
           children: [
@@ -628,11 +712,11 @@ class _TabPendidikanState extends State<TabPendidikan> {
                 topRight: Radius.circular(20),
               )
             : isLast
-            ? const BorderRadius.only(
-                bottomLeft: Radius.circular(20),
-                bottomRight: Radius.circular(20),
-              )
-            : BorderRadius.zero,
+                ? const BorderRadius.only(
+                    bottomLeft: Radius.circular(20),
+                    bottomRight: Radius.circular(20),
+                  )
+                : BorderRadius.zero,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

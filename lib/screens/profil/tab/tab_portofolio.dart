@@ -21,21 +21,31 @@ class _TabPortofolioState extends State<TabPortofolio> {
   }
 
   Future<void> _loadPortofolio() async {
+    if (!mounted) return; // TAMBAHKAN INI
+
     setState(() => _isLoading = true);
     try {
       final portofolio = await _apiService.getPortofolio();
-      setState(() {
-        _portofolio = portofolio;
-        _isLoading = false;
-      });
+      if (mounted) {
+        // TAMBAHKAN INI
+        setState(() {
+          _portofolio = portofolio;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() => _isLoading = false);
-      _showSnackBar('Gagal memuat data portofolio', isError: true);
+      if (mounted) {
+        // TAMBAHKAN INI
+        setState(() => _isLoading = false);
+        _showSnackBar('Gagal memuat data portofolio', isError: true);
+      }
       print("Error load portofolio: $e");
     }
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
+    if (!mounted) return; // TAMBAHKAN INI
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -122,15 +132,22 @@ class _TabPortofolioState extends State<TabPortofolio> {
                             ? null
                             : () async {
                                 final judul = _judulController.text.trim();
-                                final deskripsi = _deskripsiController.text.trim();
-                                final linkPortofolio = _linkPortofolioController.text.trim();
-                                final galeriPortofolio = _galeriPortofolioController.text.trim();
+                                final deskripsi = _deskripsiController.text
+                                    .trim();
+                                final linkPortofolio = _linkPortofolioController
+                                    .text
+                                    .trim();
+                                final galeriPortofolio =
+                                    _galeriPortofolioController.text.trim();
 
                                 if (judul.isEmpty || deskripsi.isEmpty) {
-                                  _showSnackBar(
-                                    "Judul dan deskripsi wajib diisi",
-                                    isError: true,
-                                  );
+                                  if (mounted) {
+                                    // TAMBAHKAN INI
+                                    _showSnackBar(
+                                      "Judul dan deskripsi wajib diisi",
+                                      isError: true,
+                                    );
+                                  }
                                   return;
                                 }
 
@@ -151,20 +168,38 @@ class _TabPortofolioState extends State<TabPortofolio> {
                                       portofolio!.portfolioId!,
                                       portfolio,
                                     );
-                                    _showSnackBar('Berhasil memperbarui portofolio');
+                                    if (mounted) {
+                                      // TAMBAHKAN INI
+                                      _showSnackBar(
+                                        'Berhasil memperbarui portofolio',
+                                      );
+                                    }
                                   } else {
-                                    await _apiService.createPortofolio(portfolio);
-                                    _showSnackBar('Berhasil menambah portofolio');
+                                    await _apiService.createPortofolio(
+                                      portfolio,
+                                    );
+                                    if (mounted) {
+                                      // TAMBAHKAN INI
+                                      _showSnackBar(
+                                        'Berhasil menambah portofolio',
+                                      );
+                                    }
                                   }
 
-                                  await _loadPortofolio();
-                                  Navigator.pop(context);
+                                  if (mounted) {
+                                    // TAMBAHKAN INI
+                                    await _loadPortofolio();
+                                    Navigator.pop(context);
+                                  }
                                 } catch (e) {
                                   setModalState(() => isSaving = false);
-                                  _showSnackBar(
-                                    'Gagal menyimpan data',
-                                    isError: true,
-                                  );
+                                  if (mounted) {
+                                    // TAMBAHKAN INI
+                                    _showSnackBar(
+                                      'Gagal menyimpan data',
+                                      isError: true,
+                                    );
+                                  }
                                   print("❌ Error submit portofolio: $e");
                                 }
                               },
@@ -362,15 +397,21 @@ class _TabPortofolioState extends State<TabPortofolio> {
                         await _apiService.deletePortofolio(
                           portofolio.portfolioId!,
                         );
-                        await _loadPortofolio();
-                        Navigator.pop(context);
-                        _showSnackBar('Portofolio berhasil dihapus');
+                        if (mounted) {
+                          // TAMBAHKAN INI
+                          await _loadPortofolio();
+                          Navigator.pop(context);
+                          _showSnackBar('Portofolio berhasil dihapus');
+                        }
                       } catch (e) {
                         setDialogState(() => isDeleting = false);
-                        _showSnackBar(
-                          'Gagal menghapus portofolio',
-                          isError: true,
-                        );
+                        if (mounted) {
+                          // TAMBAHKAN INI
+                          _showSnackBar(
+                            'Gagal menghapus portofolio',
+                            isError: true,
+                          );
+                        }
                         print("Error delete portofolio: $e");
                       }
                     },
@@ -579,11 +620,11 @@ class _TabPortofolioState extends State<TabPortofolio> {
                 topRight: Radius.circular(20),
               )
             : isLast
-                ? const BorderRadius.only(
-                    bottomLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(20),
-                  )
-                : BorderRadius.zero,
+            ? const BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              )
+            : BorderRadius.zero,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

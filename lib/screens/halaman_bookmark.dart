@@ -32,7 +32,7 @@ class _HalamanBookmarkState extends State<HalamanBookmark> {
       // Simulasi data lowongan tersimpan
       // Di production, ini akan mengambil dari API/bookmark service
       final allJobs = await _apiService.getAllLokerUmum();
-      
+
       // Untuk demo, kita ambil 5 job pertama sebagai saved jobs
       setState(() {
         _savedJobs = allJobs.take(5).toList();
@@ -132,8 +132,11 @@ class _HalamanBookmarkState extends State<HalamanBookmark> {
                           shape: BoxShape.circle,
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.arrow_back_ios_new,
-                              color: Colors.white, size: 20),
+                          icon: const Icon(
+                            Icons.arrow_back_ios_new,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                           onPressed: () => Navigator.pop(context),
                         ),
                       ),
@@ -298,7 +301,7 @@ class _HalamanBookmarkState extends State<HalamanBookmark> {
         children: _savedJobs.map((lowongan) {
           final daysLeft = _calculateDaysLeft(lowongan.batasLamaran);
           final isUrgent = daysLeft <= 10 && daysLeft >= 0;
-          
+
           return Column(
             children: [
               _JobCard(
@@ -307,7 +310,8 @@ class _HalamanBookmarkState extends State<HalamanBookmark> {
                 daysLeft: daysLeft,
                 isApplied: false, // Untuk saved jobs, biasanya belum diapply
                 onTap: () => _showJobDetail(lowongan),
-                showBookmark: true, // Tampilkan bookmark karena ini halaman saved
+                showBookmark:
+                    true, // Tampilkan bookmark karena ini halaman saved
                 isBookmarked: true, // Selalu true karena ini halaman saved jobs
                 onBookmarkTap: () {
                   // Logic untuk remove dari saved
@@ -383,7 +387,7 @@ class __JobCardState extends State<_JobCard>
     _bookmarkController.forward().then((_) {
       _bookmarkController.reverse();
     });
-    
+
     // Panggil callback jika ada
     widget.onBookmarkTap?.call();
   }
@@ -458,12 +462,16 @@ class __JobCardState extends State<_JobCard>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.bolt, color: Color(0xFFFFCC00), size: 14),
+                      const Icon(
+                        Icons.bolt,
+                        color: Color(0xFFFFCC00),
+                        size: 14,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         widget.daysLeft == 0
                             ? 'Hari terakhir!'
-                            : '${widget.daysLeft}h',
+                            : '${widget.daysLeft} hari lagi',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 11,
@@ -511,43 +519,41 @@ class __JobCardState extends State<_JobCard>
                               ),
                       ),
                       const SizedBox(width: 12),
-                      
+
                       Expanded(
                         child: ConstrainedBox(
-                          constraints: const BoxConstraints(
-                            maxWidth: 200,
+                          constraints: const BoxConstraints(maxWidth: 200),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.lowongan.posisi,
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 16,
+                                  fontFamily: 'Poppins',
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                widget.lowongan.namaPerusahaan,
+                                style: const TextStyle(
+                                  color: Color(0xFF666666),
+                                  fontSize: 14,
+                                  fontFamily: 'Poppins',
+                                  fontWeight: FontWeight.w400,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.lowongan.posisi,
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontSize: 16,
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w600,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              widget.lowongan.namaPerusahaan,
-                              style: const TextStyle(
-                                color: Color(0xFF666666),
-                                fontSize: 14,
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w400,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
                         ),
                       ),
-                      
+
                       if (widget.showBookmark)
                         GestureDetector(
                           onTap: _toggleBookmark,
@@ -583,7 +589,7 @@ class __JobCardState extends State<_JobCard>
                   Text(
                     _formatSalary(widget.lowongan.gaji),
                     style: const TextStyle(
-                      color: Color(0xFF1B56FD),
+                      //color: Color(0xFF1B56FD),
                       fontSize: 18,
                       fontFamily: 'Poppins',
                       fontWeight: FontWeight.w700,
@@ -596,36 +602,11 @@ class __JobCardState extends State<_JobCard>
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      _buildTag(
-                        icon: Icons.location_on,
-                        text: widget.lowongan.lokasi,
-                      ),
-                      
-                      _buildTag(
-                        icon: Icons.work_outline,
-                        text: widget.lowongan.jenisPekerjaan,
-                      ),
-                      
-                      if (widget.lowongan.opsiKerjaRemote)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE8F5E8),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Text(
-                            'Remote',
-                            style: TextStyle(
-                              color: Color(0xFF2E7D32),
-                              fontSize: 14,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
+                      _buildTag(widget.lowongan.lokasi),
+
+                      _buildTag(widget.lowongan.jenisPekerjaan),
+
+                      if (widget.lowongan.opsiKerjaRemote) _buildTag('Remote'),
                     ],
                   ),
 
@@ -643,7 +624,7 @@ class __JobCardState extends State<_JobCard>
                           fontWeight: FontWeight.w400,
                         ),
                       ),
-                      
+
                       Text(
                         '${widget.lowongan.jumlahPelamar} pelamar',
                         style: const TextStyle(
@@ -664,29 +645,26 @@ class __JobCardState extends State<_JobCard>
     );
   }
 
-  Widget _buildTag({required IconData icon, required String text}) {
+  Widget _buildTag(String text, {Color? backgroundColor, Color? textColor}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: backgroundColor ?? Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(
+          color: backgroundColor != null
+              ? Colors.transparent
+              : Colors.grey.shade200,
+        ),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: Colors.grey.shade600),
-          const SizedBox(width: 4),
-          Text(
-            text.length > 12 ? '${text.substring(0, 12)}...' : text,
-            style: TextStyle(
-              color: Colors.grey.shade600,
-              fontSize: 12,
-              fontFamily: 'Poppins',
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-        ],
+      child: Text(
+        text.length > 15 ? '${text.substring(0, 15)}...' : text,
+        style: TextStyle(
+          color: textColor ?? Colors.grey.shade700,
+          fontSize: 12,
+          fontFamily: 'Poppins',
+          fontWeight: FontWeight.w400,
+        ),
       ),
     );
   }
