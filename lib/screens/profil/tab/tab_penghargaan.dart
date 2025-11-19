@@ -48,21 +48,31 @@ class _TabPenghargaanState extends State<TabPenghargaan> {
   }
 
   Future<void> _loadAwards() async {
+    if (!mounted) return; // ✅ TAMBAHKAN INI
+
     setState(() => _isLoading = true);
     try {
       final awards = await _apiService.getAward();
-      setState(() {
-        _awards = awards;
-        _isLoading = false;
-      });
+      if (mounted) {
+        // ✅ TAMBAHKAN INI
+        setState(() {
+          _awards = awards;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() => _isLoading = false);
-      _showSnackBar('Gagal memuat data penghargaan', isError: true);
+      if (mounted) {
+        // ✅ TAMBAHKAN INI
+        setState(() => _isLoading = false);
+        _showSnackBar('Gagal memuat data penghargaan', isError: true);
+      }
       print("Error load awards: $e");
     }
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
+    if (!mounted) return; // ✅ TAMBAHKAN INI
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -100,9 +110,8 @@ class _TabPenghargaanState extends State<TabPenghargaan> {
     final TextEditingController _deskripsiController = TextEditingController(
       text: award?.deskripsi ?? '',
     );
-    final TextEditingController _urlSertifikatController = TextEditingController(
-      text: award?.sertifikat ?? '',
-    );
+    final TextEditingController _urlSertifikatController =
+        TextEditingController(text: award?.sertifikat ?? '');
     String _selectedBadge = award?.tingkatPenghargaan ?? 'International';
 
     showModalBottomSheet(
@@ -153,20 +162,26 @@ class _TabPenghargaanState extends State<TabPenghargaan> {
                             ? null
                             : () async {
                                 final nama = _judulController.text.trim();
-                                final institusi = _institusiController.text.trim();
+                                final institusi = _institusiController.text
+                                    .trim();
                                 final tahun = int.tryParse(
                                   _tahunController.text.trim(),
                                 );
-                                final deskripsi = _deskripsiController.text.trim();
-                                final sertifikat = _urlSertifikatController.text.trim();
+                                final deskripsi = _deskripsiController.text
+                                    .trim();
+                                final sertifikat = _urlSertifikatController.text
+                                    .trim();
 
                                 if (nama.isEmpty ||
                                     institusi.isEmpty ||
                                     tahun == null) {
-                                  _showSnackBar(
-                                    "Lengkapi semua data wajib",
-                                    isError: true,
-                                  );
+                                  if (mounted) {
+                                    // ✅ TAMBAHKAN INI
+                                    _showSnackBar(
+                                      "Lengkapi semua data wajib",
+                                      isError: true,
+                                    );
+                                  }
                                   return;
                                 }
 
@@ -188,24 +203,36 @@ class _TabPenghargaanState extends State<TabPenghargaan> {
                                       award.awardId!,
                                       newAward,
                                     );
-                                    _showSnackBar(
-                                      'Berhasil memperbarui penghargaan',
-                                    );
+                                    if (mounted) {
+                                      // ✅ TAMBAHKAN INI
+                                      _showSnackBar(
+                                        'Berhasil memperbarui penghargaan',
+                                      );
+                                    }
                                   } else {
                                     await _apiService.createAward(newAward);
-                                    _showSnackBar(
-                                      'Berhasil menambah penghargaan',
-                                    );
+                                    if (mounted) {
+                                      // ✅ TAMBAHKAN INI
+                                      _showSnackBar(
+                                        'Berhasil menambah penghargaan',
+                                      );
+                                    }
                                   }
 
-                                  await _loadAwards();
-                                  Navigator.pop(context);
+                                  if (mounted) {
+                                    // ✅ TAMBAHKAN INI
+                                    await _loadAwards();
+                                    Navigator.pop(context);
+                                  }
                                 } catch (e) {
                                   setModalState(() => isSaving = false);
-                                  _showSnackBar(
-                                    'Gagal menyimpan data',
-                                    isError: true,
-                                  );
+                                  if (mounted) {
+                                    // ✅ TAMBAHKAN INI
+                                    _showSnackBar(
+                                      'Gagal menyimpan data',
+                                      isError: true,
+                                    );
+                                  }
                                   print("❌ Error submit award: $e");
                                 }
                               },
@@ -308,48 +335,51 @@ class _TabPenghargaanState extends State<TabPenghargaan> {
                             Wrap(
                               spacing: 8,
                               runSpacing: 8,
-                              children: [
-                                'Regional',
-                                'National',
-                                'International',
-                              ].map((badge) {
-                                final isSelected = _selectedBadge == badge;
-                                return GestureDetector(
-                                  onTap: () {
-                                    setModalState(() {
-                                      _selectedBadge = badge;
-                                    });
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 10,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? const Color(0xFF113CEE)
-                                          : Colors.grey.shade50,
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(
-                                        color: isSelected
-                                            ? const Color(0xFF113CEE)
-                                            : Colors.grey.shade300,
+                              children:
+                                  [
+                                    'Regional',
+                                    'National',
+                                    'International',
+                                  ].map((badge) {
+                                    final isSelected = _selectedBadge == badge;
+                                    return GestureDetector(
+                                      onTap: () {
+                                        setModalState(() {
+                                          _selectedBadge = badge;
+                                        });
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 10,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: isSelected
+                                              ? const Color(0xFF113CEE)
+                                              : Colors.grey.shade50,
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                          border: Border.all(
+                                            color: isSelected
+                                                ? const Color(0xFF113CEE)
+                                                : Colors.grey.shade300,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          badge,
+                                          style: TextStyle(
+                                            color: isSelected
+                                                ? Colors.white
+                                                : const Color(0xFF515151),
+                                            fontSize: 14,
+                                            fontFamily: 'Poppins',
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                    child: Text(
-                                      badge,
-                                      style: TextStyle(
-                                        color: isSelected
-                                            ? Colors.white
-                                            : const Color(0xFF515151),
-                                        fontSize: 14,
-                                        fontFamily: 'Poppins',
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
+                                    );
+                                  }).toList(),
                             ),
                           ],
                         ),
@@ -568,15 +598,21 @@ class _TabPenghargaanState extends State<TabPenghargaan> {
                       setDialogState(() => isDeleting = true);
                       try {
                         await _apiService.deleteAward(award.awardId!);
-                        await _loadAwards();
-                        Navigator.pop(context);
-                        _showSnackBar('Penghargaan berhasil dihapus');
+                        if (mounted) {
+                          // ✅ TAMBAHKAN INI
+                          await _loadAwards();
+                          Navigator.pop(context);
+                          _showSnackBar('Penghargaan berhasil dihapus');
+                        }
                       } catch (e) {
                         setDialogState(() => isDeleting = false);
-                        _showSnackBar(
-                          'Gagal menghapus penghargaan',
-                          isError: true,
-                        );
+                        if (mounted) {
+                          // ✅ TAMBAHKAN INI
+                          _showSnackBar(
+                            'Gagal menghapus penghargaan',
+                            isError: true,
+                          );
+                        }
                         print("Error delete award: $e");
                       }
                     },

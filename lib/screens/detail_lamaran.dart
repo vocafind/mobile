@@ -173,7 +173,7 @@ class _DetailLamaranState extends State<DetailLamaran> {
           {
             'icon': Icons.schedule_rounded,
             'title': 'Waktu Direview',
-            'value': widget.lamaran.createdAt != null 
+            'value': widget.lamaran.createdAt != null
                 ? '${_formatDate(widget.lamaran.createdAt)}'
                 : 'Belum direview',
           },
@@ -188,10 +188,10 @@ class _DetailLamaranState extends State<DetailLamaran> {
         'title': 'Interview',
         'icon': Icons.people_rounded,
         'isCompleted': currentStatus == 'interview' || isFinalStatus,
-        'description': hasInterviewData 
+        'description': hasInterviewData
             ? 'Anda dijadwalkan untuk wawancara'
             : 'Menunggu jadwal interview dari HR',
-        'details': hasInterviewData 
+        'details': hasInterviewData
             ? [
                 {
                   'icon': Icons.calendar_today_rounded,
@@ -201,7 +201,8 @@ class _DetailLamaranState extends State<DetailLamaran> {
                 {
                   'icon': Icons.location_on_rounded,
                   'title': 'Tempat Interview',
-                  'value': widget.lamaran.locationInterview ?? 'Belum ditentukan',
+                  'value':
+                      widget.lamaran.locationInterview ?? 'Belum ditentukan',
                 },
               ]
             : [
@@ -218,10 +219,10 @@ class _DetailLamaranState extends State<DetailLamaran> {
         'isCompleted': isFinalStatus,
         'isSuccess': isAccepted,
         'isRejected': isRejected,
-        'description': isAccepted 
-            ? 'Selamat! Lamaran Anda diterima' 
+        'description': isAccepted
+            ? 'Selamat! Lamaran Anda diterima'
             : 'Maaf, lamaran Anda belum berhasil',
-        'details': isAccepted 
+        'details': isAccepted
             ? [
                 {
                   'icon': Icons.celebration_rounded,
@@ -273,7 +274,8 @@ class _DetailLamaranState extends State<DetailLamaran> {
                 {
                   'icon': Icons.lightbulb_rounded,
                   'title': 'Saran',
-                  'value': 'Terus kembangkan skill dan coba lagi di kesempatan berikutnya',
+                  'value':
+                      'Terus kembangkan skill dan coba lagi di kesempatan berikutnya',
                 },
               ],
       },
@@ -294,7 +296,8 @@ class _DetailLamaranState extends State<DetailLamaran> {
   @override
   Widget build(BuildContext context) {
     final isAccepted = widget.lamaran.status.toLowerCase() == 'accepted';
-    final isRejected = widget.lamaran.status.toLowerCase() == 'reject_interview';
+    final isRejected =
+        widget.lamaran.status.toLowerCase() == 'reject_interview';
     final hasInterviewData = widget.lamaran.hasInterviewData;
     final isFinalStatus = isAccepted || isRejected;
 
@@ -333,7 +336,10 @@ class _DetailLamaranState extends State<DetailLamaran> {
                         border: Border.all(color: const Color(0xFFF1F5F9)),
                       ),
                       padding: const EdgeInsets.all(8),
-                      child: widget.lamaran.lowongan.company.logo.startsWith('http')
+                      child:
+                          widget.lamaran.lowongan.company.logo.startsWith(
+                            'http',
+                          )
                           ? Image.network(
                               widget.lamaran.lowongan.company.logo,
                               fit: BoxFit.contain,
@@ -492,7 +498,8 @@ class _DetailLamaranState extends State<DetailLamaran> {
                   ),
                 ],
                 // Tampilkan info interview jika ada
-                if (hasInterviewData && widget.lamaran.status.toLowerCase() == 'interview') ...[
+                if (hasInterviewData &&
+                    widget.lamaran.status.toLowerCase() == 'interview') ...[
                   const SizedBox(height: 16),
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -718,7 +725,14 @@ class _DetailLamaranState extends State<DetailLamaran> {
   Widget _buildActiveContent() {
     final activeData = _timelineData[_activeTimeline]!;
     final isAccepted = widget.lamaran.status.toLowerCase() == 'accepted';
-    final isRejected = widget.lamaran.status.toLowerCase() == 'reject_interview';
+    final isRejected =
+        widget.lamaran.status.toLowerCase() == 'reject_interview';
+
+    // ✅ TAMBAHKAN: Cek status untuk menentukan teks yang tepat
+    final currentStatus = widget.lamaran.status.toLowerCase();
+    final isPending = currentStatus == 'pending';
+    final isReviewed = currentStatus == 'reviewed';
+    final isInterview = currentStatus == 'interview';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(18, 16, 18, 30),
@@ -763,34 +777,54 @@ class _DetailLamaranState extends State<DetailLamaran> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: (activeData['isSuccess'] ?? false) 
+                          color: (activeData['isSuccess'] ?? false)
                               ? const Color(0xFF34C759).withOpacity(0.1)
                               : (activeData['isRejected'] ?? false)
-                                  ? const Color(0xFFFF383C).withOpacity(0.1)
-                                  : const Color(0xFF34C759).withOpacity(0.1),
+                              ? const Color(0xFFFF383C).withOpacity(0.1)
+                              : const Color(0xFF0088FF).withOpacity(
+                                  0.1,
+                                ), // ✅ WARNA BIRU UNTUK DIPROSES
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              Icons.check_circle_rounded,
-                              color: (activeData['isSuccess'] ?? false) 
+                              // ✅ ICON BERBEDA BERDASARKAN STATUS
+                              (activeData['isSuccess'] ?? false)
+                                  ? Icons.check_circle_rounded
+                                  : (activeData['isRejected'] ?? false)
+                                  ? Icons.cancel_rounded
+                                  : Icons
+                                        .access_time_rounded, // ✅ ICON JAM UNTUK DIPROSES
+                              color: (activeData['isSuccess'] ?? false)
                                   ? const Color(0xFF34C759)
                                   : (activeData['isRejected'] ?? false)
-                                      ? const Color(0xFFFF383C)
-                                      : const Color(0xFF34C759),
+                                  ? const Color(0xFFFF383C)
+                                  : const Color(
+                                      0xFF0088FF,
+                                    ), // ✅ WARNA BIRU UNTUK DIPROSES
                               size: 14,
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              'Selesai',
+                              // ✅ TEKS BERBEDA BERDASARKAN STATUS
+                              (activeData['isSuccess'] ?? false)
+                                  ? 'Diterima'
+                                  : (activeData['isRejected'] ?? false)
+                                  ? 'Ditolak'
+                                  : _getStatusText(
+                                      currentStatus,
+                                      activeData['title'],
+                                    ), // ✅ FUNGSI BARU UNTUK TEKS STATUS
                               style: TextStyle(
-                                color: (activeData['isSuccess'] ?? false) 
+                                color: (activeData['isSuccess'] ?? false)
                                     ? const Color(0xFF34C759)
                                     : (activeData['isRejected'] ?? false)
-                                        ? const Color(0xFFFF383C)
-                                        : const Color(0xFF34C759),
+                                    ? const Color(0xFFFF383C)
+                                    : const Color(
+                                        0xFF0088FF,
+                                      ), // ✅ WARNA BIRU UNTUK DIPROSES
                                 fontSize: 11,
                                 fontFamily: 'SF Pro',
                                 fontWeight: FontWeight.w600,
@@ -805,7 +839,7 @@ class _DetailLamaranState extends State<DetailLamaran> {
                 Text(
                   activeData['description'],
                   style: TextStyle(
-                    color: (activeData['isRejected'] ?? false) 
+                    color: (activeData['isRejected'] ?? false)
                         ? const Color(0xFFFF383C)
                         : const Color(0xFF515151),
                     fontSize: 14,
@@ -823,13 +857,31 @@ class _DetailLamaranState extends State<DetailLamaran> {
           if (activeData['details'] != null)
             ..._buildDetailItems(activeData['details']),
 
-          if (_activeTimeline == 'interview' && widget.lamaran.hasInterviewData) 
+          if (_activeTimeline == 'interview' && widget.lamaran.hasInterviewData)
             _buildInterviewQRCode(),
 
-          if (_activeTimeline == 'hasil') _buildFinalStatusInfo(isAccepted, isRejected),
+          if (_activeTimeline == 'hasil')
+            _buildFinalStatusInfo(isAccepted, isRejected),
         ],
       ),
     );
+  }
+
+  String _getStatusText(String currentStatus, String phaseTitle) {
+    switch (currentStatus) {
+      case 'pending':
+        return 'Diproses'; // ✅ TEKS BARU UNTUK PENDING
+      case 'reviewed':
+        return 'Ditinjau';
+      case 'interview':
+        return 'Interview';
+      case 'accepted':
+        return 'Diterima';
+      case 'reject_interview':
+        return 'Ditolak';
+      default:
+        return 'Diproses'; // Default fallback
+    } 
   }
 
   List<Widget> _buildDetailItems(List<dynamic> details) {
@@ -1062,12 +1114,12 @@ class _DetailLamaranState extends State<DetailLamaran> {
       margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isAccepted 
+        color: isAccepted
             ? const Color(0xFF34C759).withOpacity(0.1)
             : const Color(0xFFFF383C).withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isAccepted 
+          color: isAccepted
               ? const Color(0xFF34C759).withOpacity(0.3)
               : const Color(0xFFFF383C).withOpacity(0.3),
         ),
@@ -1079,7 +1131,9 @@ class _DetailLamaranState extends State<DetailLamaran> {
             children: [
               Icon(
                 isAccepted ? Icons.email_rounded : Icons.info_rounded,
-                color: isAccepted ? const Color(0xFF34C759) : const Color(0xFFFF383C),
+                color: isAccepted
+                    ? const Color(0xFF34C759)
+                    : const Color(0xFFFF383C),
                 size: 18,
               ),
               const SizedBox(width: 8),

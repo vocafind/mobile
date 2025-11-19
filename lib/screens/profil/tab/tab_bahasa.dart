@@ -21,21 +21,31 @@ class _TabBahasaState extends State<TabBahasa> {
   }
 
   Future<void> _loadLanguages() async {
+    if (!mounted) return; // ✅ TAMBAHKAN INI
+
     setState(() => _isLoading = true);
     try {
       final languages = await _apiService.getLanguages();
-      setState(() {
-        _languages = languages;
-        _isLoading = false;
-      });
+      if (mounted) {
+        // ✅ TAMBAHKAN INI
+        setState(() {
+          _languages = languages;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() => _isLoading = false);
-      _showSnackBar('Gagal memuat data bahasa', isError: true);
+      if (mounted) {
+        // ✅ TAMBAHKAN INI
+        setState(() => _isLoading = false);
+        _showSnackBar('Gagal memuat data bahasa', isError: true);
+      }
       print("Error load languages: $e");
     }
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
+    if (!mounted) return; // ✅ TAMBAHKAN INI
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -126,10 +136,13 @@ class _TabBahasaState extends State<TabBahasa> {
                                 final skor = skorController.text.trim();
 
                                 if (namaBahasa.isEmpty) {
-                                  _showSnackBar(
-                                    "Nama bahasa wajib diisi",
-                                    isError: true,
-                                  );
+                                  if (mounted) {
+                                    // ✅ TAMBAHKAN INI
+                                    _showSnackBar(
+                                      "Nama bahasa wajib diisi",
+                                      isError: true,
+                                    );
+                                  }
                                   return;
                                 }
 
@@ -150,22 +163,34 @@ class _TabBahasaState extends State<TabBahasa> {
                                       language.languageId!,
                                       lang,
                                     );
-                                    _showSnackBar(
-                                      'Berhasil memperbarui bahasa',
-                                    );
+                                    if (mounted) {
+                                      // ✅ TAMBAHKAN INI
+                                      _showSnackBar(
+                                        'Berhasil memperbarui bahasa',
+                                      );
+                                    }
                                   } else {
                                     await _apiService.createLanguage(lang);
-                                    _showSnackBar('Berhasil menambah bahasa');
+                                    if (mounted) {
+                                      // ✅ TAMBAHKAN INI
+                                      _showSnackBar('Berhasil menambah bahasa');
+                                    }
                                   }
 
-                                  await _loadLanguages();
-                                  Navigator.pop(context);
+                                  if (mounted) {
+                                    // ✅ TAMBAHKAN INI
+                                    await _loadLanguages();
+                                    Navigator.pop(context);
+                                  }
                                 } catch (e) {
                                   setModalState(() => isSaving = false);
-                                  _showSnackBar(
-                                    'Gagal menyimpan data',
-                                    isError: true,
-                                  );
+                                  if (mounted) {
+                                    // ✅ TAMBAHKAN INI
+                                    _showSnackBar(
+                                      'Gagal menyimpan data',
+                                      isError: true,
+                                    );
+                                  }
                                   print("❌ Error submit language: $e");
                                 }
                               },
@@ -436,12 +461,21 @@ class _TabBahasaState extends State<TabBahasa> {
                       setDialogState(() => isDeleting = true);
                       try {
                         await _apiService.deleteLanguage(language.languageId!);
-                        await _loadLanguages();
-                        Navigator.pop(context);
-                        _showSnackBar('Bahasa berhasil dihapus');
+                        if (mounted) {
+                          // ✅ TAMBAHKAN INI
+                          await _loadLanguages();
+                          Navigator.pop(context);
+                          _showSnackBar('Bahasa berhasil dihapus');
+                        }
                       } catch (e) {
                         setDialogState(() => isDeleting = false);
-                        _showSnackBar('Gagal menghapus bahasa', isError: true);
+                        if (mounted) {
+                          // ✅ TAMBAHKAN INI
+                          _showSnackBar(
+                            'Gagal menghapus bahasa',
+                            isError: true,
+                          );
+                        }
                         print("Error delete language: $e");
                       }
                     },

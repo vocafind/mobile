@@ -46,6 +46,8 @@ class _TabProfilState extends State<TabProfil> {
 
       if (image == null) return;
 
+      if (!mounted) return; // ✅ TAMBAHKAN INI
+
       setState(() {
         _selectedImage = File(image.path);
         _isUploadingImage = true;
@@ -55,10 +57,13 @@ class _TabProfilState extends State<TabProfil> {
       final talentId = prefs.getString('talentId');
 
       if (talentId == null) {
-        _showSnackBar('Error: ID talent tidak ditemukan', isError: true);
-        setState(() {
-          _isUploadingImage = false;
-        });
+        if (mounted) {
+          // ✅ TAMBAHKAN INI
+          _showSnackBar('Error: ID talent tidak ditemukan', isError: true);
+          setState(() {
+            _isUploadingImage = false;
+          });
+        }
         return;
       }
 
@@ -77,24 +82,30 @@ class _TabProfilState extends State<TabProfil> {
         preferensiPerjalananDinas: _profil!.preferensiPerjalananDinas,
       );
 
-      setState(() {
-        _isUploadingImage = false;
-      });
+      if (mounted) {
+        // ✅ TAMBAHKAN INI
+        setState(() {
+          _isUploadingImage = false;
+        });
 
-      if (result['success'] == true) {
-        _showSnackBar('Foto profil berhasil diperbarui');
-        await _loadProfil();
-      } else {
-        _showSnackBar(
-          result['message'] ?? 'Gagal memperbarui foto profil',
-          isError: true,
-        );
+        if (result['success'] == true) {
+          _showSnackBar('Foto profil berhasil diperbarui');
+          await _loadProfil();
+        } else {
+          _showSnackBar(
+            result['message'] ?? 'Gagal memperbarui foto profil',
+            isError: true,
+          );
+        }
       }
     } catch (e) {
-      setState(() {
-        _isUploadingImage = false;
-      });
-      _showSnackBar('Gagal mengupload foto: $e', isError: true);
+      if (mounted) {
+        // ✅ TAMBAHKAN INI
+        setState(() {
+          _isUploadingImage = false;
+        });
+        _showSnackBar('Gagal mengupload foto: $e', isError: true);
+      }
       debugPrint('Error upload foto: $e');
     }
   }
@@ -103,6 +114,7 @@ class _TabProfilState extends State<TabProfil> {
     try {
       final profil = await ApiService().getProfilDataDiri();
       if (mounted) {
+        // ✅ SUDAH BENAR
         setState(() {
           _profil = profil;
           _isLoading = false;
@@ -110,6 +122,7 @@ class _TabProfilState extends State<TabProfil> {
       }
     } catch (e) {
       if (mounted) {
+        // ✅ SUDAH BENAR
         setState(() {
           _isLoading = false;
         });
@@ -121,6 +134,8 @@ class _TabProfilState extends State<TabProfil> {
   Future<void> _saveField() async {
     if (_profil == null || _isSaving) return;
 
+    if (!mounted) return; // ✅ TAMBAHKAN INI
+
     setState(() {
       _isSaving = true;
     });
@@ -129,10 +144,13 @@ class _TabProfilState extends State<TabProfil> {
     final talentId = prefs.getString('talentId');
 
     if (talentId == null) {
-      _showSnackBar('Error: ID talent tidak ditemukan', isError: true);
-      setState(() {
-        _isSaving = false;
-      });
+      if (mounted) {
+        // ✅ TAMBAHKAN INI
+        _showSnackBar('Error: ID talent tidak ditemukan', isError: true);
+        setState(() {
+          _isSaving = false;
+        });
+      }
       return;
     }
 
@@ -149,7 +167,6 @@ class _TabProfilState extends State<TabProfil> {
 
     final result = await ApiService().updateProfilTalent(
       talentId: talentId,
-      //fotoProfil tambahkan
       nama: _profil!.nama,
       alamat: _profil!.alamat,
       nomorTelepon: _profil!.nomorTelepon,
@@ -161,42 +178,41 @@ class _TabProfilState extends State<TabProfil> {
       preferensiPerjalananDinas: _profil!.preferensiPerjalananDinas,
     );
 
-    setState(() {
-      _isSaving = false;
-    });
+    if (mounted) {
+      // ✅ TAMBAHKAN INI
+      setState(() {
+        _isSaving = false;
+      });
 
-    if (result['success'] == true) {
-      _showSnackBar('Profil berhasil diperbarui');
-      await _loadProfil();
-    } else {
-      _showSnackBar(
-        result['message'] ?? 'Gagal memperbarui profil',
-        isError: true,
-      );
+      if (result['success'] == true) {
+        _showSnackBar('Profil berhasil diperbarui');
+        await _loadProfil();
+      } else {
+        _showSnackBar(
+          result['message'] ?? 'Gagal memperbarui profil',
+          isError: true,
+        );
+      }
     }
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
-    if (!mounted) return;
+    if (!mounted) return; // ✅ SUDAH BENAR
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           message,
           style: const TextStyle(
-            color: Colors.black, // teks hitam
+            color: Colors.black,
             fontWeight: FontWeight.w500,
           ),
         ),
-        backgroundColor: isError
-            ? Colors.red.shade100
-            : Colors.white, // bg putih / merah lembut
+        backgroundColor: isError ? Colors.red.shade100 : Colors.white,
         behavior: SnackBarBehavior.floating,
         elevation: 2,
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12), // radius lembut
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         duration: const Duration(seconds: 2),
       ),
     );
