@@ -320,14 +320,14 @@ class _TabReferensiState extends State<TabReferensi> {
                         ),
                         const SizedBox(height: 16),
 
-                        _buildTextField(
+                       _buildTextField(
                           controller: _relasiController,
                           label: 'Hubungan/Relasi',
-                          hint: 'Contoh: Atasan Langsung, Rekan Kerja',
-                          icon: Icons.people_outline,
+                          hint: 'Contoh: Dosen Pembimbing, Supervisor Magang, Atasan di Tempat Magang',
+                          icon: Icons.connect_without_contact_outlined,
                           required: true,
+                          helperText: 'Posisi orang tersebut dalam hubungan akademik atau profesional',
                         ),
-                        const SizedBox(height: 16),
 
                         _buildTextField(
                           controller: _perusahaanController,

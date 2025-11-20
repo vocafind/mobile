@@ -285,12 +285,13 @@ class _TabProyekState extends State<TabProyek> {
                         ),
                         const SizedBox(height: 16),
 
-                        _buildTextField(
+                       _buildTextField(
                           controller: _klienController,
-                          label: 'Klien',
-                          hint: 'Contoh: Negara Uruguay',
+                          label: 'Nama Klien / Perusahaan',
+                          hint: 'Contoh: PT. Telkom Indonesia, Bank Mandiri, Kementerian Kesehatan',
                           icon: Icons.business_outlined,
                           required: true,
+                          helperText: 'Nama perusahaan atau institusi tempat Anda bekerja/bekerjasama',
                         ),
                         const SizedBox(height: 16),
 
