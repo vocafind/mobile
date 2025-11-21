@@ -21,13 +21,12 @@ class _TabBahasaState extends State<TabBahasa> {
   }
 
   Future<void> _loadLanguages() async {
-    if (!mounted) return; // ✅ TAMBAHKAN INI
+    if (!mounted) return;
 
     setState(() => _isLoading = true);
     try {
       final languages = await _apiService.getLanguages();
       if (mounted) {
-        // ✅ TAMBAHKAN INI
         setState(() {
           _languages = languages;
           _isLoading = false;
@@ -35,7 +34,6 @@ class _TabBahasaState extends State<TabBahasa> {
       }
     } catch (e) {
       if (mounted) {
-        // ✅ TAMBAHKAN INI
         setState(() => _isLoading = false);
         _showSnackBar('Gagal memuat data bahasa', isError: true);
       }
@@ -44,7 +42,7 @@ class _TabBahasaState extends State<TabBahasa> {
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
-    if (!mounted) return; // ✅ TAMBAHKAN INI
+    if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -64,6 +62,20 @@ class _TabBahasaState extends State<TabBahasa> {
         duration: const Duration(seconds: 2),
       ),
     );
+  }
+
+  // ✅ FUNGSI VALIDASI URL
+  bool _isValidUrl(String url) {
+    if (url.isEmpty) return true; // Opsional, jadi empty diizinkan
+    try {
+      final uri = Uri.tryParse(url);
+      return uri != null &&
+          uri.hasScheme &&
+          (uri.scheme == 'http' || uri.scheme == 'https') &&
+          uri.host.isNotEmpty;
+    } catch (e) {
+      return false;
+    }
   }
 
   void _showAddEditModal({LanguageModel? language}) {
@@ -136,13 +148,19 @@ class _TabBahasaState extends State<TabBahasa> {
                                 final skor = skorController.text.trim();
 
                                 if (namaBahasa.isEmpty) {
-                                  if (mounted) {
-                                    // ✅ TAMBAHKAN INI
-                                    _showSnackBar(
-                                      "Nama bahasa wajib diisi",
-                                      isError: true,
-                                    );
-                                  }
+                                  _showSnackBar(
+                                    "Nama bahasa wajib diisi",
+                                    isError: true,
+                                  );
+                                  return;
+                                }
+
+                                // ✅ VALIDASI URL JIKA DIISI
+                                if (sertifikat.isNotEmpty && !_isValidUrl(sertifikat)) {
+                                  _showSnackBar(
+                                    "URL sertifikat harus lengkap dengan http:// atau https://",
+                                    isError: true,
+                                  );
                                   return;
                                 }
 
@@ -160,37 +178,25 @@ class _TabBahasaState extends State<TabBahasa> {
                                 try {
                                   if (isEdit) {
                                     await _apiService.updateLanguage(
-                                      language.languageId!,
+                                      language!.languageId!,
                                       lang,
                                     );
-                                    if (mounted) {
-                                      // ✅ TAMBAHKAN INI
-                                      _showSnackBar(
-                                        'Berhasil memperbarui bahasa',
-                                      );
-                                    }
+                                    _showSnackBar('Berhasil memperbarui bahasa');
                                   } else {
                                     await _apiService.createLanguage(lang);
-                                    if (mounted) {
-                                      // ✅ TAMBAHKAN INI
-                                      _showSnackBar('Berhasil menambah bahasa');
-                                    }
+                                    _showSnackBar('Berhasil menambah bahasa');
                                   }
 
                                   if (mounted) {
-                                    // ✅ TAMBAHKAN INI
                                     await _loadLanguages();
                                     Navigator.pop(context);
                                   }
                                 } catch (e) {
                                   setModalState(() => isSaving = false);
-                                  if (mounted) {
-                                    // ✅ TAMBAHKAN INI
-                                    _showSnackBar(
-                                      'Gagal menyimpan data',
-                                      isError: true,
-                                    );
-                                  }
+                                  _showSnackBar(
+                                    'Gagal menyimpan data',
+                                    isError: true,
+                                  );
                                   print("❌ Error submit language: $e");
                                 }
                               },
@@ -347,12 +353,13 @@ class _TabBahasaState extends State<TabBahasa> {
 
                         const SizedBox(height: 16),
 
-                        _buildTextField(
+                        // ✅ FIELD URL SERTIFIKAT DENGAN VALIDASI
+                        _buildUrlTextField(
                           controller: sertifikatController,
-                          label: 'Url Sertifikat',
-                          hint: 'Contoh: TOEFL, IELTS, JLPT N1',
+                          label: 'URL Sertifikat',
+                          hint: 'https://drive.google.com/file/d/contoh-sertifikat',
                           icon: Icons.link,
-                          helperText: 'Opsional - Nama sertifikat bahasa',
+                          helperText: 'Opsional - Link sertifikat online',
                         ),
 
                         const SizedBox(height: 16),
@@ -375,7 +382,7 @@ class _TabBahasaState extends State<TabBahasa> {
                                   ? null
                                   : () {
                                       Navigator.pop(context);
-                                      _showDeleteConfirmation(language);
+                                      _showDeleteConfirmation(language!);
                                     },
                               icon: const Icon(
                                 Icons.delete_outline,
@@ -414,96 +421,118 @@ class _TabBahasaState extends State<TabBahasa> {
     );
   }
 
-  void _showDeleteConfirmation(LanguageModel language) {
-    bool isDeleting = false;
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          backgroundColor: Colors.white,
-          title: const Text(
-            'Hapus Bahasa',
-            style: TextStyle(
-              fontSize: 18,
-              fontFamily: 'Poppins',
-              fontWeight: FontWeight.w600,
+  // ✅ WIDGET KHUSUS UNTUK URL TEXTFIELD
+  Widget _buildUrlTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    bool required = false,
+    String? helperText,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                fontFamily: 'Poppins',
+                color: Color(0xFF515151),
+              ),
             ),
-          ),
-          content: Text(
-            'Apakah Anda yakin ingin menghapus ${language.namaBahasa}?',
-            style: const TextStyle(
-              fontSize: 14,
-              fontFamily: 'Poppins',
-              color: Color(0xFF515151),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: isDeleting ? null : () => Navigator.pop(context),
-              child: const Text(
-                'Batal',
+            if (required)
+              const Text(
+                ' *',
                 style: TextStyle(
-                  color: Color(0xFF515151),
+                  color: Colors.red,
                   fontSize: 14,
-                  fontFamily: 'Poppins',
                   fontWeight: FontWeight.w500,
                 ),
               ),
-            ),
-            TextButton(
-              onPressed: isDeleting
-                  ? null
-                  : () async {
-                      setDialogState(() => isDeleting = true);
-                      try {
-                        await _apiService.deleteLanguage(language.languageId!);
-                        if (mounted) {
-                          // ✅ TAMBAHKAN INI
-                          await _loadLanguages();
-                          Navigator.pop(context);
-                          _showSnackBar('Bahasa berhasil dihapus');
-                        }
-                      } catch (e) {
-                        setDialogState(() => isDeleting = false);
-                        if (mounted) {
-                          // ✅ TAMBAHKAN INI
-                          _showSnackBar(
-                            'Gagal menghapus bahasa',
-                            isError: true,
-                          );
-                        }
-                        print("Error delete language: $e");
-                      }
-                    },
-              child: isDeleting
-                  ? const SizedBox(
-                      height: 14,
-                      width: 14,
-                      child: CircularProgressIndicator(
-                        color: Colors.red,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : const Text(
-                      'Hapus',
-                      style: TextStyle(
-                        color: Colors.red,
-                        fontSize: 14,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-            ),
           ],
         ),
-      ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          keyboardType: TextInputType.url,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+              color: Colors.grey.shade400,
+              fontSize: 14,
+              fontFamily: 'Poppins',
+            ),
+            prefixIcon: Icon(icon, color: Colors.grey.shade600, size: 20),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFF113CEE), width: 2),
+            ),
+            filled: true,
+            fillColor: Colors.grey.shade50,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+            helperText: helperText,
+            helperStyle: TextStyle(
+              fontSize: 11,
+              color: Colors.grey.shade600,
+              fontFamily: 'Poppins',
+            ),
+            // ✅ INDIKATOR VALIDASI URL
+            suffixIcon: ValueListenableBuilder<TextEditingValue>(
+              valueListenable: controller,
+              builder: (context, value, child) {
+                if (value.text.isEmpty) return const SizedBox();
+                final isValid = _isValidUrl(value.text.trim());
+                return Icon(
+                  isValid ? Icons.check_circle : Icons.error_outline,
+                  color: isValid ? Colors.green : Colors.red,
+                  size: 20,
+                );
+              },
+            ),
+          ),
+        ),
+        // ✅ PESAN VALIDASI REAL-TIME
+        ValueListenableBuilder<TextEditingValue>(
+          valueListenable: controller,
+          builder: (context, value, child) {
+            if (value.text.isEmpty) return const SizedBox();
+            final isValid = _isValidUrl(value.text.trim());
+            if (!isValid) {
+              return Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Text(
+                  'URL harus lengkap dengan http:// atau https://',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.red.shade700,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+              );
+            }
+            return const SizedBox();
+          },
+        ),
+      ],
     );
   }
 
+  // WIDGET TEXTFIELD BIASA (tetap dipertahankan)
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
@@ -579,6 +608,92 @@ class _TabBahasaState extends State<TabBahasa> {
           ),
         ),
       ],
+    );
+  }
+
+  void _showDeleteConfirmation(LanguageModel language) {
+    bool isDeleting = false;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          backgroundColor: Colors.white,
+          title: const Text(
+            'Hapus Bahasa',
+            style: TextStyle(
+              fontSize: 18,
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          content: Text(
+            'Apakah Anda yakin ingin menghapus ${language.namaBahasa}?',
+            style: const TextStyle(
+              fontSize: 14,
+              fontFamily: 'Poppins',
+              color: Color(0xFF515151),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: isDeleting ? null : () => Navigator.pop(context),
+              child: const Text(
+                'Batal',
+                style: TextStyle(
+                  color: Color(0xFF515151),
+                  fontSize: 14,
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: isDeleting
+                  ? null
+                  : () async {
+                      setDialogState(() => isDeleting = true);
+                      try {
+                        await _apiService.deleteLanguage(language.languageId!);
+                        if (mounted) {
+                          await _loadLanguages();
+                          Navigator.pop(context);
+                          _showSnackBar('Bahasa berhasil dihapus');
+                        }
+                      } catch (e) {
+                        setDialogState(() => isDeleting = false);
+                        _showSnackBar(
+                          'Gagal menghapus bahasa',
+                          isError: true,
+                        );
+                        print("Error delete language: $e");
+                      }
+                    },
+              child: isDeleting
+                  ? const SizedBox(
+                      height: 14,
+                      width: 14,
+                      child: CircularProgressIndicator(
+                        color: Colors.red,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text(
+                      'Hapus',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontSize: 14,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -736,15 +851,33 @@ class _TabBahasaState extends State<TabBahasa> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  'Lihat sertifikat',
-                  style: TextStyle(
-                    color: Color(0xFF0E38EB),
-                    fontSize: 14,
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w400,
+                // Tampilkan link jika ada sertifikat
+                if (certificate != '-')
+                  GestureDetector(
+                    onTap: () {
+                      // TODO: Implement open URL
+                    },
+                    child: Text(
+                      'Lihat sertifikat',
+                      style: TextStyle(
+                        color: const Color(0xFF0E38EB),
+                        fontSize: 14,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w400,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  )
+                else
+                  Text(
+                    'Tidak ada sertifikat',
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 14,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
-                ),
                 const SizedBox(height: 12),
                 Text(
                   score,
@@ -764,7 +897,7 @@ class _TabBahasaState extends State<TabBahasa> {
             child: Icon(
               Icons.edit_outlined,
               size: 20,
-              color: Colors.black.withValues(alpha: 0.62),
+              color: Colors.black.withOpacity(0.62),
             ),
           ),
         ],
