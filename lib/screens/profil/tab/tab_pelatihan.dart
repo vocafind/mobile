@@ -83,6 +83,20 @@ class _TabPelatihanState extends State<TabPelatihan> {
     );
   }
 
+  // ✅ FUNGSI VALIDASI URL
+  bool _isValidUrl(String url) {
+    if (url.isEmpty) return true; // Opsional, jadi empty diizinkan
+    try {
+      final uri = Uri.tryParse(url);
+      return uri != null &&
+          uri.hasScheme &&
+          (uri.scheme == 'http' || uri.scheme == 'https') &&
+          uri.host.isNotEmpty;
+    } catch (e) {
+      return false;
+    }
+  }
+
   String _formatDateRange(DateTime? start, DateTime? end) {
     if (start == null || end == null) return '-';
     final dateFormat = DateFormat('d MMM yyyy', 'id_ID');
@@ -162,6 +176,15 @@ class _TabPelatihanState extends State<TabPelatihan> {
                                 final url = _urlController.text.trim();
                                 final deskripsi = _deskripsiController.text
                                     .trim();
+
+                                // ✅ VALIDASI URL JIKA DIISI
+                                if (url.isNotEmpty && !_isValidUrl(url)) {
+                                  _showSnackBar(
+                                    "URL sertifikat harus lengkap dengan http:// atau https://",
+                                    isError: true,
+                                  );
+                                  return;
+                                }
 
                                 if (nama.isEmpty ||
                                     penyelenggara.isEmpty ||
@@ -475,14 +498,12 @@ class _TabPelatihanState extends State<TabPelatihan> {
                         ),
                         const SizedBox(height: 16),
 
-                        _buildTextField(
+                        // ✅ FIELD URL SERTIFIKAT DENGAN VALIDASI VISUAL (TANPA HELPER TEXT)
+                        _buildUrlTextField(
                           controller: _urlController,
                           label: 'URL Sertifikat',
                           hint: 'https://example.com/certificate',
                           icon: Icons.link_outlined,
-                          keyboardType: TextInputType.url,
-                          maxLength: 255,
-                          helperText: '0 / 255 karakter',
                         ),
                         const SizedBox(height: 16),
 
@@ -543,6 +564,103 @@ class _TabPelatihanState extends State<TabPelatihan> {
     );
   }
 
+  // ✅ WIDGET KHUSUS UNTUK URL TEXTFIELD DENGAN INDIKATOR VISUAL
+  Widget _buildUrlTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            fontFamily: 'Poppins',
+            color: Color(0xFF515151),
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          keyboardType: TextInputType.url,
+          maxLength: 255,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+              color: Colors.grey.shade400,
+              fontSize: 14,
+              fontFamily: 'Poppins',
+            ),
+            prefixIcon: Icon(icon, color: Colors.grey.shade600, size: 20),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFF113CEE), width: 2),
+            ),
+            filled: true,
+            fillColor: Colors.grey.shade50,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+            counterText: '${controller.text.length} / 255 karakter',
+            counterStyle: const TextStyle(
+              fontSize: 12,
+              color: Color(0xFF515151),
+              fontFamily: 'Poppins',
+            ),
+            // ✅ INDIKATOR VALIDASI URL (SAMA SEPERTI HALAMAN SEBELUMNYA)
+            suffixIcon: ValueListenableBuilder<TextEditingValue>(
+              valueListenable: controller,
+              builder: (context, value, child) {
+                if (value.text.isEmpty) return const SizedBox();
+                final isValid = _isValidUrl(value.text.trim());
+                return Icon(
+                  isValid ? Icons.check_circle : Icons.error_outline,
+                  color: isValid ? Colors.green : Colors.red,
+                  size: 20,
+                );
+              },
+            ),
+          ),
+        ),
+        // ✅ PESAN VALIDASI HANYA UNTUK FORMAT URL (SAMA SEPERTI HALAMAN SEBELUMNYA)
+        ValueListenableBuilder<TextEditingValue>(
+          valueListenable: controller,
+          builder: (context, value, child) {
+            if (value.text.isEmpty) return const SizedBox();
+            final isValid = _isValidUrl(value.text.trim());
+            if (!isValid) {
+              return Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Text(
+                  'URL harus lengkap dengan http:// atau https://',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.red.shade700,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+              );
+            }
+            return const SizedBox();
+          },
+        ),
+      ],
+    );
+  }
+
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
@@ -552,7 +670,6 @@ class _TabPelatihanState extends State<TabPelatihan> {
     int? maxLength,
     TextInputType? keyboardType,
     bool required = false,
-    String? helperText,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -611,10 +728,12 @@ class _TabPelatihanState extends State<TabPelatihan> {
               horizontal: 16,
               vertical: 14,
             ),
-            counterText: helperText,
-            counterStyle: TextStyle(
-              fontSize: 11,
-              color: Colors.grey.shade600,
+            counterText: maxLength != null
+                ? '${controller.text.length} / $maxLength karakter'
+                : null,
+            counterStyle: const TextStyle(
+              fontSize: 12,
+              color: Color(0xFF515151),
               fontFamily: 'Poppins',
             ),
           ),
