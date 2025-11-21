@@ -292,13 +292,13 @@ class _TabPortofolioState extends State<TabPortofolio> {
                         ),
                         const SizedBox(height: 16),
 
-                        _buildTextField(
-                          controller: _galeriPortofolioController,
-                          label: 'Link Galeri Portofolio',
-                          hint: 'https://example.com/gallery',
-                          icon: Icons.image_outlined,
-                          keyboardType: TextInputType.url,
-                        ),
+                        // _buildTextField(
+                        //   controller: _galeriPortofolioController,
+                        //   label: 'Link Galeri Portofolio',
+                        //   hint: 'https://example.com/gallery',
+                        //   icon: Icons.image_outlined,
+                        //   keyboardType: TextInputType.url,
+                        // ),
 
                         // Tombol Hapus (hanya jika edit)
                         if (isEdit) ...[
