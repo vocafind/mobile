@@ -40,7 +40,7 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
         'jenisPekerjaan': '',
         'lokasi': '',
         'gaji': '',
-        'pengalaman': '',
+        'minimalLulusan': '',
       });
 
   @override
@@ -229,12 +229,13 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
           .toList();
     }
 
-    // Filter berdasarkan pengalaman
-    if (filters['pengalaman'] != null && filters['pengalaman'].isNotEmpty) {
+    // Filter berdasarkan minimalLulusan
+    if (filters['minimalLulusan'] != null &&
+        filters['minimalLulusan'].isNotEmpty) {
       filtered = filtered
           .where(
-            (loker) => loker.tingkatPengalaman.toLowerCase().contains(
-              filters['pengalaman'].toLowerCase(),
+            (loker) => loker.minimalLulusan.toLowerCase().contains(
+              filters['minimalLulusan'].toLowerCase(),
             ),
           )
           .toList();
@@ -283,7 +284,7 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
       'jenisPekerjaan': '',
       'lokasi': '',
       'gaji': '',
-      'pengalaman': '',
+      'minimalLulusan': '',
     };
     _currentPage = 1;
     _hasMoreData = true;
@@ -970,22 +971,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
 
                   const SizedBox(height: 25),
 
-                  // Tingkat Pengalaman
-                  _buildFilterSection(
-                    title: 'Pengalaman',
-                    options: [
-                      'Fresh Graduate',
-                      '1-3 tahun',
-                      '3-5 tahun',
-                      '5+ tahun',
-                    ],
-                    selectedValue: _selectedFilters['pengalaman'],
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedFilters['pengalaman'] = value;
-                      });
-                    },
-                  ),
+                  // Tingkat minimalLulusan
+                  _buildMinimalLulusanDropdown(),
+
+                  const SizedBox(height: 25),
                 ],
               ),
             ),
@@ -1191,7 +1180,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                   style: TextStyle(
                     color: isSelected ? Colors.white : Colors.grey.shade700,
                     fontFamily: 'Poppins',
-                    fontSize: 14,
+                    fontSize: 12,
                   ),
                 ),
               ),
@@ -1251,7 +1240,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                   style: TextStyle(
                     color: isSelected ? Colors.white : Colors.grey.shade700,
                     fontFamily: 'Poppins',
-                    fontSize: 14,
+                    fontSize: 12,
                   ),
                 ),
               ),
@@ -1259,6 +1248,193 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           }).toList(),
         ),
       ],
+    );
+  }
+
+  // ✅ Dropdown untuk Minimal Lulusan (seperti lokasi tanpa search)
+  Widget _buildMinimalLulusanDropdown() {
+    final pendidikanOptions = [
+      'SMA',
+      'SMK',
+      'D1',
+      'D2',
+      'D3',
+      'D4',
+      'S1',
+      'S2',
+      'S3',
+    ];
+
+    bool _showPendidikanDropdown = false;
+    final FocusNode _pendidikanFocusNode = FocusNode();
+
+    return StatefulBuilder(
+      builder: (context, setState) {
+        void _togglePendidikanDropdown() {
+          setState(() {
+            _showPendidikanDropdown = !_showPendidikanDropdown;
+          });
+          if (_showPendidikanDropdown) {
+            _pendidikanFocusNode.requestFocus();
+          } else {
+            _pendidikanFocusNode.unfocus();
+          }
+        }
+
+        void _selectPendidikan(String pendidikan) {
+          setState(() {
+            _selectedFilters['minimalLulusan'] = pendidikan;
+            _showPendidikanDropdown = false;
+            _pendidikanFocusNode.unfocus();
+          });
+        }
+
+        void _clearPendidikan() {
+          setState(() {
+            _selectedFilters['minimalLulusan'] = '';
+            _showPendidikanDropdown = true;
+            _pendidikanFocusNode.requestFocus();
+          });
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Minimal Lulusan',
+              style: TextStyle(
+                fontSize: 16,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Input Field dengan Dropdown di bawahnya
+            Column(
+              children: [
+                // Input Field
+                GestureDetector(
+                  onTap: _togglePendidikanDropdown,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: _showPendidikanDropdown
+                            ? const Color(0xFF1E40AF)
+                            : Colors.grey.shade300,
+                        width: _showPendidikanDropdown ? 2 : 1,
+                      ),
+                    ),
+                    child: TextField(
+                      controller: TextEditingController(
+                        text: _selectedFilters['minimalLulusan'] ?? '',
+                      ),
+                      focusNode: _pendidikanFocusNode,
+                      enabled: false, // Nonaktifkan input manual
+                      decoration: InputDecoration(
+                        hintText: 'Pilih minimal lulusan...',
+                        hintStyle: const TextStyle(
+                          color: Colors.grey,
+                          fontFamily: 'Poppins',
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        suffixIcon:
+                            _selectedFilters['minimalLulusan']?.isNotEmpty ??
+                                false
+                            ? IconButton(
+                                icon: const Icon(Icons.close, size: 18),
+                                onPressed: _clearPendidikan,
+                              )
+                            : Icon(
+                                _showPendidikanDropdown
+                                    ? Icons.arrow_drop_up
+                                    : Icons.arrow_drop_down,
+                                color: Colors.grey.shade600,
+                              ),
+                      ),
+                      style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 14,
+                        color: Colors.black, // Pastikan text terlihat
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Dropdown List - TAMPIL LANGSUNG DI BAWAH INPUT
+                if (_showPendidikanDropdown && pendidikanOptions.isNotEmpty)
+                  Container(
+                    margin: const EdgeInsets.only(top: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    constraints: const BoxConstraints(maxHeight: 200),
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      itemCount: pendidikanOptions.length,
+                      itemBuilder: (context, index) {
+                        final pendidikan = pendidikanOptions[index];
+                        final isSelected =
+                            _selectedFilters['minimalLulusan'] == pendidikan;
+                        return ListTile(
+                          title: Text(
+                            pendidikan,
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 14,
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
+                              color: isSelected
+                                  ? const Color(0xFF1E40AF)
+                                  : Colors.black,
+                            ),
+                          ),
+                          onTap: () => _selectPendidikan(pendidikan),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          visualDensity: const VisualDensity(vertical: -4),
+                          trailing: isSelected
+                              ? const Icon(
+                                  Icons.check,
+                                  color: Color(0xFF1E40AF),
+                                  size: 16,
+                                )
+                              : null,
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+
+            // Selected Filter Chip
+            const SizedBox(height: 8),
+            if (_selectedFilters['minimalLulusan']?.isNotEmpty ?? false)
+              _buildSelectedFilterChip(
+                'Minimal Lulusan: ${_selectedFilters['minimalLulusan']}',
+                onRemove: _clearPendidikan,
+              ),
+          ],
+        );
+      },
     );
   }
 }
@@ -1540,8 +1716,7 @@ class __JobCardState extends State<_JobCard>
 
                       _buildTag(widget.lowongan.jenisPekerjaan),
 
-                      if (widget.lowongan.opsiKerjaRemote)
-                        _buildTag('Remote'),
+                      if (widget.lowongan.opsiKerjaRemote) _buildTag('Remote'),
                     ],
                   ),
 
