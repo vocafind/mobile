@@ -41,6 +41,7 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
         'lokasi': '',
         'gaji': '',
         'minimalLulusan': '',
+        'remote': null, // Ubah dari false menjadi null
       });
 
   @override
@@ -198,11 +199,90 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
     }
   }
 
-  // ✅ Fungsi untuk menerapkan filter
-  void _applyFilters(Map<String, dynamic> filters) {
+  // ✅ Fungsi untuk menerapkan filter dengan API
+  // ✅ Fungsi untuk menerapkan filter dengan API
+  Future<void> _applyFilters(Map<String, dynamic> filters) async {
     _filterState.value = filters;
     _currentPage = 1;
     _hasMoreData = true;
+
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+    });
+
+    try {
+      // Konversi filter gaji ke format yang sesuai dengan API
+      String? rangeGaji;
+      if (filters['gaji'] != null && filters['gaji'].isNotEmpty) {
+        switch (filters['gaji']) {
+          case '0-5':
+            rangeGaji = 'below10m';
+            break;
+          case '5-10':
+            rangeGaji = '10m-20m';
+            break;
+          case '10+':
+            rangeGaji = 'above20m';
+            break;
+          default:
+            rangeGaji = filters['gaji'];
+        }
+      }
+
+      // Konversi remote filter - HANYA kirim jika user memilih (bukan null)
+      bool? remote;
+      if (filters.containsKey('remote') && filters['remote'] != null) {
+        remote = filters['remote'];
+      }
+
+      print("🔍 Applying filters: $filters");
+      print("🔍 Range Gaji: $rangeGaji");
+      print("🔍 Remote: $remote");
+
+      // Panggil API filter
+      final filteredLowongan = await _apiService.filterLokerUmum(
+        jenisPekerjaan: filters['jenisPekerjaan']?.isNotEmpty == true
+            ? filters['jenisPekerjaan']
+            : null,
+        lokasi: filters['lokasi']?.isNotEmpty == true
+            ? filters['lokasi']
+            : null,
+        remote: remote, // Sekarang bisa null jika user tidak memilih
+        minimalLulusan: filters['minimalLulusan']?.isNotEmpty == true
+            ? filters['minimalLulusan']
+            : null,
+        rangeGaji: rangeGaji,
+      );
+
+      setState(() {
+        _allLowongan = filteredLowongan;
+        _filteredLowongan = _getPaginatedData(filteredLowongan, 1);
+        _isLoading = false;
+      });
+
+      print("✅ Filter applied: ${filteredLowongan.length} lowongan found");
+
+      // Jika tidak ada hasil, tampilkan pesan
+      if (filteredLowongan.isEmpty) {
+        print("ℹ️ No lowongan found with current filters");
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _hasError = true;
+      });
+      print("❌ Error applying filters: $e");
+
+      // Fallback ke filter lokal jika API error
+      _applyLocalFilters(filters);
+    }
+  }
+
+  // ✅ Fallback filter lokal jika API error
+  // ✅ Fallback filter lokal jika API error
+  void _applyLocalFilters(Map<String, dynamic> filters) {
+    print("🔄 Using local filter fallback");
 
     List<LokerUmum> filtered = _allLowongan;
 
@@ -216,6 +296,7 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
             ),
           )
           .toList();
+      print("📍 Filtered by jenisPekerjaan: ${filtered.length}");
     }
 
     // Filter berdasarkan lokasi
@@ -227,18 +308,28 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
             ),
           )
           .toList();
+      print("📍 Filtered by lokasi: ${filtered.length}");
     }
 
-    // Filter berdasarkan minimalLulusan
+    // Filter berdasarkan minimalLulusan (exact match seperti API)
     if (filters['minimalLulusan'] != null &&
         filters['minimalLulusan'].isNotEmpty) {
       filtered = filtered
           .where(
-            (loker) => loker.minimalLulusan.toLowerCase().contains(
-              filters['minimalLulusan'].toLowerCase(),
-            ),
+            (loker) =>
+                loker.minimalLulusan.toLowerCase() ==
+                filters['minimalLulusan'].toLowerCase(),
           )
           .toList();
+      print("📍 Filtered by minimalLulusan: ${filtered.length}");
+    }
+
+    // Filter berdasarkan remote - HANYA jika user memilih (bukan null)
+    if (filters['remote'] != null) {
+      filtered = filtered
+          .where((loker) => loker.opsiKerjaRemote == filters['remote'])
+          .toList();
+      print("📍 Filtered by remote: ${filtered.length}");
     }
 
     // Filter berdasarkan gaji
@@ -247,24 +338,27 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
       if (gajiFilter == '0-5') {
         filtered = filtered.where((loker) {
           final gaji = _parseGaji(loker.gaji);
-          return gaji <= 5000000;
+          return gaji < 10000000; // below10m
         }).toList();
       } else if (gajiFilter == '5-10') {
         filtered = filtered.where((loker) {
           final gaji = _parseGaji(loker.gaji);
-          return gaji > 5000000 && gaji <= 10000000;
+          return gaji >= 10000000 && gaji <= 20000000; // 10m-20m
         }).toList();
       } else if (gajiFilter == '10+') {
         filtered = filtered.where((loker) {
           final gaji = _parseGaji(loker.gaji);
-          return gaji > 10000000;
+          return gaji > 20000000; // above20m
         }).toList();
       }
+      print("📍 Filtered by gaji: ${filtered.length}");
     }
 
     setState(() {
       _filteredLowongan = _getPaginatedData(filtered, 1);
     });
+
+    print("✅ Local filter applied: ${filtered.length} lowongan found");
   }
 
   // Helper function untuk parse gaji
@@ -279,18 +373,22 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
   }
 
   // ✅ Fungsi untuk reset filter
+  // ✅ Fungsi untuk reset filter
   void _resetFilters() {
     _filterState.value = {
       'jenisPekerjaan': '',
       'lokasi': '',
       'gaji': '',
       'minimalLulusan': '',
+      'remote': null, // Kembali ke null
     };
     _currentPage = 1;
     _hasMoreData = true;
-    setState(() {
-      _filteredLowongan = _getPaginatedData(_allLowongan, 1);
-    });
+
+    // Load ulang semua data tanpa filter
+    _loadData();
+
+    print("🔄 Filters reset");
   }
 
   // ✅ Fungsi untuk membuka filter dialog
@@ -755,37 +853,91 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   bool _showDropdown = false;
   List<String> _filteredLocations = [];
 
-  final ScrollController _scrollController = ScrollController();
+  // GANTI: Hapus daftar lokasi statik dan ganti dengan variabel untuk data API
+  List<String> _lokasiOptions = []; // Data dari API akan disimpan di sini
+  bool _isLoadingLocations = false;
 
-  // Daftar lokasi untuk dropdown
-  final List<String> _lokasiOptions = [
-    'Jakarta',
-    'Bandung',
-    'Surabaya',
-    'Yogyakarta',
-    'Semarang',
-    'Bali',
-    'Medan',
-    'Makassar',
-    'Palembang',
-    'Malang',
-    'Solo',
-    'Bogor',
-    'Tangerang',
-    'Bekasi',
-    'Depok',
-    'Remote',
-    'Luar Negeri',
-  ];
+  final ScrollController _scrollController = ScrollController();
+  final ApiService _apiService = ApiService(); // Tambahkan ApiService
 
   @override
   void initState() {
     super.initState();
     _selectedFilters = Map<String, dynamic>.from(widget.currentFilters);
-    _filteredLocations = _lokasiOptions;
     _searchController.text = _selectedFilters['lokasi'] ?? '';
 
+    // GANTI: Panggil fungsi untuk load data lokasi dari API
+    _loadLocations();
+
     _searchFocusNode.addListener(_onFocusChange);
+  }
+
+  // TAMBAH: Method untuk reset filter di dalam bottom sheet
+  void _resetFilters() {
+    setState(() {
+      _selectedFilters = {
+        'jenisPekerjaan': '',
+        'lokasi': '',
+        'gaji': '',
+        'minimalLulusan': '',
+        'remote': null,
+      };
+      _searchController.text = '';
+      _showDropdown = false;
+    });
+
+    // Juga panggil reset dari parent
+    widget.onResetFilters();
+
+    print("🔄 Filters reset in bottom sheet");
+  }
+
+  // TAMBAH: Method untuk load data lokasi dari API
+  Future<void> _loadLocations() async {
+    setState(() {
+      _isLoadingLocations = true;
+    });
+
+    try {
+      final locations = await _apiService.getLocations();
+      setState(() {
+        _lokasiOptions = locations;
+        _filteredLocations = locations; // Set initial filtered data
+      });
+      print("✅ Locations loaded from API: ${locations.length} items");
+    } catch (e) {
+      print("❌ Error loading locations: $e");
+      // Fallback ke data lokal jika API error
+      _setFallbackLocations();
+    } finally {
+      setState(() {
+        _isLoadingLocations = false;
+      });
+    }
+  }
+
+  // TAMBAH: Fallback data jika API error
+  void _setFallbackLocations() {
+    setState(() {
+      _lokasiOptions = [
+        'Batam',
+        'Jakarta',
+        'Surabaya',
+        'Yogyakarta',
+        'Semarang',
+        'Tanjung Pinang',
+        'Medan',
+        'Makassar',
+        'Palembang',
+        'Malang',
+        'Solo',
+        'Bogor',
+        'Tangerang',
+        'Bekasi',
+        'Depok',
+      ];
+      _filteredLocations = _lokasiOptions;
+    });
   }
 
   void _onFocusChange() {
@@ -827,14 +979,15 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   void _onSearchChanged(String value) {
     setState(() {
       if (value.isEmpty) {
-        _filteredLocations = _lokasiOptions;
+        _filteredLocations = _lokasiOptions; // GANTI: dari _lokasiOptions
       } else {
-        _filteredLocations = _lokasiOptions
-            .where(
-              (location) =>
-                  location.toLowerCase().contains(value.toLowerCase()),
-            )
-            .toList();
+        _filteredLocations =
+            _lokasiOptions // GANTI: dari _lokasiOptions
+                .where(
+                  (location) =>
+                      location.toLowerCase().contains(value.toLowerCase()),
+                )
+                .toList();
       }
     });
   }
@@ -898,7 +1051,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 Row(
                   children: [
                     TextButton(
-                      onPressed: widget.onResetFilters,
+                      onPressed: _resetFilters,
                       child: const Text(
                         'Reset',
                         style: TextStyle(
@@ -945,11 +1098,11 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                   _buildFilterSection(
                     title: 'Jenis Pekerjaan',
                     options: [
-                      'Full-time',
-                      'Part-time',
+                      'Full Time',
+                      'Part Time',
                       'Contract',
-                      'Internship',
-                      'Remote',
+                      'Insternship',
+                      'Freelance',
                     ],
                     selectedValue: _selectedFilters['jenisPekerjaan'],
                     onChanged: (value) {
@@ -968,6 +1121,11 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
 
                   // Rentang Gaji
                   _buildSalaryFilterSection(),
+
+                  const SizedBox(height: 25),
+
+                  // Filter Remote
+                  _buildRemoteFilter(),
 
                   const SizedBox(height: 25),
 
@@ -999,98 +1157,124 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         ),
         const SizedBox(height: 12),
 
-        // Input Field dengan Dropdown di bawahnya
-        Column(
-          children: [
-            // Input Field
-            GestureDetector(
-              onTap: _openDropdown, // ✅ Gunakan custom function
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: _showDropdown
-                        ? const Color(0xFF1E40AF)
-                        : Colors.grey.shade300,
-                    width: _showDropdown ? 2 : 1,
-                  ),
-                ),
-                child: TextField(
-                  controller: _searchController,
-                  focusNode: _searchFocusNode,
-                  decoration: InputDecoration(
-                    hintText: 'Pilih atau ketik lokasi...',
-                    hintStyle: const TextStyle(
-                      color: Colors.grey,
-                      fontFamily: 'Poppins',
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    suffixIcon: _selectedFilters['lokasi']?.isNotEmpty ?? false
-                        ? IconButton(
-                            icon: const Icon(Icons.close, size: 18),
-                            onPressed: _clearLocation,
-                          )
-                        : Icon(
-                            _showDropdown
-                                ? Icons.arrow_drop_up
-                                : Icons.arrow_drop_down,
-                            color: Colors.grey.shade600,
-                          ),
-                  ),
-                  style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
-                  onTap: _openDropdown, // ✅ Juga di sini untuk memastikan
-                  onChanged: _onSearchChanged,
-                ),
+        // TAMBAH: Loading state
+        if (_isLoadingLocations)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: const Center(
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
               ),
             ),
-
-            // Dropdown List - TAMPIL LANGSUNG DI BAWAH INPUT
-            if (_showDropdown && _filteredLocations.isNotEmpty)
-              Container(
-                margin: const EdgeInsets.only(top: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                constraints: const BoxConstraints(maxHeight: 200),
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  itemCount: _filteredLocations.length,
-                  itemBuilder: (context, index) {
-                    final location = _filteredLocations[index];
-                    return ListTile(
-                      title: Text(
-                        location,
+          )
+        else
+          Column(
+            children: [
+              // Input Field dengan Dropdown di bawahnya
+              Column(
+                children: [
+                  // Input Field
+                  GestureDetector(
+                    onTap: _openDropdown,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: _showDropdown
+                              ? const Color(0xFF1E40AF)
+                              : Colors.grey.shade300,
+                          width: _showDropdown ? 2 : 1,
+                        ),
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        focusNode: _searchFocusNode,
+                        decoration: InputDecoration(
+                          hintText: 'Pilih atau ketik lokasi...',
+                          hintStyle: const TextStyle(
+                            color: Colors.grey,
+                            fontFamily: 'Poppins',
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          suffixIcon:
+                              _selectedFilters['lokasi']?.isNotEmpty ?? false
+                              ? IconButton(
+                                  icon: const Icon(Icons.close, size: 18),
+                                  onPressed: _clearLocation,
+                                )
+                              : Icon(
+                                  _showDropdown
+                                      ? Icons.arrow_drop_up
+                                      : Icons.arrow_drop_down,
+                                  color: Colors.grey.shade600,
+                                ),
+                        ),
                         style: const TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 14,
                         ),
+                        onTap: _openDropdown,
+                        onChanged: _onSearchChanged,
                       ),
-                      onTap: () => _selectLocation(location),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
+                    ),
+                  ),
+
+                  // Dropdown List - TAMPIL LANGSUNG DI BAWAH INPUT
+                  if (_showDropdown && _filteredLocations.isNotEmpty)
+                    Container(
+                      margin: const EdgeInsets.only(top: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                        border: Border.all(color: Colors.grey.shade300),
                       ),
-                      visualDensity: const VisualDensity(vertical: -4),
-                    );
-                  },
-                ),
+                      constraints: const BoxConstraints(maxHeight: 200),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        itemCount: _filteredLocations.length,
+                        itemBuilder: (context, index) {
+                          final location = _filteredLocations[index];
+                          return ListTile(
+                            title: Text(
+                              location,
+                              style: const TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 14,
+                              ),
+                            ),
+                            onTap: () => _selectLocation(location),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            visualDensity: const VisualDensity(vertical: -4),
+                          );
+                        },
+                      ),
+                    ),
+                ],
               ),
-          ],
-        ),
+            ],
+          ),
 
         // Selected Location Chip
         const SizedBox(height: 8),
@@ -1098,6 +1282,88 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           _buildSelectedFilterChip(
             'Lokasi: ${_selectedFilters['lokasi']}',
             onRemove: _clearLocation,
+          ),
+      ],
+    );
+  }
+
+  // ✅ Filter untuk Opsi Kerja - GAYA BUTTON SEPERTI JENIS PEKERJAAN
+  Widget _buildRemoteFilter() {
+    // Definisikan opsi dengan tipe yang benar
+    final List<Map<String, dynamic>> opsiKerjaOptions = [
+      {'label': 'Dikantor', 'value': false}, // false = Dikantor
+      {'label': 'Remote', 'value': true}, // true = Remote
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Opsi Kerja',
+          style: TextStyle(
+            fontSize: 16,
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: opsiKerjaOptions.map((option) {
+            // Pastikan tipe data sesuai
+            final String label = option['label'] as String;
+            final bool value = option['value'] as bool;
+            final isSelected = _selectedFilters['remote'] == value;
+
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  // Jika opsi yang sama diklik lagi, reset ke null (tidak ada pilihan)
+                  if (isSelected) {
+                    _selectedFilters['remote'] = null;
+                  } else {
+                    _selectedFilters['remote'] = value;
+                  }
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected ? const Color(0xFF1E40AF) : Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected
+                        ? const Color(0xFF1E40AF)
+                        : Colors.grey.shade300,
+                  ),
+                ),
+                child: Text(
+                  label, // Gunakan variabel label yang sudah di-cast
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : Colors.grey.shade700,
+                    fontFamily: 'Poppins',
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+
+        // Selected Filter Chip - HANYA tampil jika user memilih
+        const SizedBox(height: 8),
+        if (_selectedFilters['remote'] != null)
+          _buildSelectedFilterChip(
+            _selectedFilters['remote'] == true ? 'Remote' : 'Dikantor',
+            onRemove: () {
+              setState(() {
+                _selectedFilters['remote'] = null; // Reset ke null
+              });
+            },
           ),
       ],
     );
@@ -1193,9 +1459,9 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
 
   Widget _buildSalaryFilterSection() {
     final salaryOptions = [
-      {'label': 'Rp 0 - 5 juta', 'value': '0-5'},
-      {'label': 'Rp 5 - 10 juta', 'value': '5-10'},
-      {'label': 'Rp 10+ juta', 'value': '10+'},
+      {'label': 'Dibawah Rp 10 juta', 'value': '0-5'}, // below10m
+      {'label': 'Rp 10 - 20 juta', 'value': '5-10'}, // 10m-20m
+      {'label': 'Diatas Rp 20 juta', 'value': '10+'}, // above20m
     ];
 
     return Column(

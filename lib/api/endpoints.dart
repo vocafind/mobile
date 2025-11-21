@@ -132,14 +132,16 @@ class ApiConfig {
   static String lokerById(String id) => "$baseUrl/LokerUmum/$id";                   // Get Loker Umum by ID
 
 
+  // ------------------------------------------------------------- Filter
+  static String filterLokerUmum = '$baseUrl/LokerUmum/filter';
+  static String lokasi = '$baseUrl/LokerUmum/locations';
+
 
 
   // ------------------------------------------------------------- Lamar Loker Umum
   static String Lamarloker(String lowonganId) => "$baseUrl/Lamar/lokerUmum/$lowonganId";                   // Lamar Loker UUmum
   static String getLamaranSaya() => "$baseUrl/Lamar/lamaran-saya";                                         // Get Lamaran Saya
   static String batalkanLamaran(String lamaranId) => "$baseUrl/Lamar/batal/$lamaranId";                    // Batalkan Lamaran
-
-
 
 
   // ------------------------------------------------------------- Simpan Loker
