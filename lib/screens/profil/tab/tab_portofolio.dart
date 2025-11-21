@@ -301,8 +301,22 @@ class _TabPortofolioState extends State<TabPortofolio> {
                           label: 'Link Portofolio',
                           hint: 'https://example.com/portfolio',
                           icon: Icons.link_outlined,
+<<<<<<< HEAD
                           required: true, // ✅ DIUBAH: menjadi wajib
                         ),
+=======
+                          keyboardType: TextInputType.url,
+                        ),
+                        const SizedBox(height: 16),
+
+                        // _buildTextField(
+                        //   controller: _galeriPortofolioController,
+                        //   label: 'Link Galeri Portofolio',
+                        //   hint: 'https://example.com/gallery',
+                        //   icon: Icons.image_outlined,
+                        //   keyboardType: TextInputType.url,
+                        // ),
+>>>>>>> 8a6ab3daefd9f2c041d8dd63c1a5ba3dff629141
 
                         // Tombol Hapus (hanya jika edit)
                         if (isEdit) ...[

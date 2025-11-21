@@ -56,7 +56,7 @@ class _TabPendidikanState extends State<TabPendidikan> {
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
-    if (!mounted) return;
+    if (!mounted) return; // ✅ CEK MOUNTED SEBELUM MENAMPILKAN SNACKBAR
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -112,34 +112,7 @@ class _TabPendidikanState extends State<TabPendidikan> {
         ),
         child: StatefulBuilder(
           builder: (context, setModalState) {
-            // ✅ GUNAKAN ScaffoldMessenger.of(context) LANGSUNG
-            void _showModalSnackBar(String message, {bool isError = false}) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    message,
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: 'Poppins',
-                    ),
-                  ),
-                  backgroundColor: isError ? Colors.red[100] : Colors.white,
-                  behavior: SnackBarBehavior.floating,
-                  elevation: 2,
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  duration: const Duration(seconds: 2),
-                ),
-              );
-            }
-
-            // ✅ FUNCTION UNTUK HANDLE SAVE (TIDAK PERLU mounted)
+            // ✅ FUNCTION UNTUK HANDLE SAVE DENGAN ERROR HANDLING
             Future<void> _handleSave() async {
               final jurusan = _jurusanController.text.trim();
               final institusi = _institusiController.text.trim();
@@ -159,9 +132,29 @@ class _TabPendidikanState extends State<TabPendidikan> {
                   institusi.isEmpty ||
                   tahunMasuk == null ||
                   tahunLulus == null) {
-                _showModalSnackBar(
-                  "Lengkapi semua data yang wajib",
-                  isError: true,
+                // ✅ GUNAKAN ScaffoldMessenger DARI MODAL CONTEXT
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      "Lengkapi semua data yang wajib",
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                    backgroundColor: Colors.red[100],
+                    behavior: SnackBarBehavior.floating,
+                    elevation: 2,
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    duration: const Duration(seconds: 2),
+                  ),
                 );
                 return;
               }
@@ -185,18 +178,51 @@ class _TabPendidikanState extends State<TabPendidikan> {
                     education!.educationId!,
                     edu,
                   );
-                  _showModalSnackBar('Berhasil memperbarui pendidikan');
                 } else {
                   await _apiService.createEducation(edu);
-                  _showModalSnackBar('Berhasil menambah pendidikan');
                 }
 
-                // Tutup modal dan refresh data
-                Navigator.pop(context);
-                _loadEducation(); // Panggil langsung tanpa mounted check
+                // ✅ TUTUP MODAL DULU, BARU TAMPILKAN SNACKBAR DI PARENT
+                if (mounted) {
+                  Navigator.pop(context);
+                  // Tampilkan snackbar di parent context setelah modal tertutup
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) {
+                      _showSnackBar(
+                        isEdit
+                            ? 'Berhasil memperbarui pendidikan'
+                            : 'Berhasil menambah pendidikan',
+                      );
+                      _loadEducation();
+                    }
+                  });
+                }
               } catch (e) {
                 setModalState(() => isSaving = false);
-                _showModalSnackBar('Gagal menyimpan data', isError: true);
+                // ✅ TAMPILKAN ERROR DI DALAM MODAL JIKA GAGAL
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Gagal menyimpan data: ${e.toString()}',
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                    backgroundColor: Colors.red[100],
+                    behavior: SnackBarBehavior.floating,
+                    elevation: 2,
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
                 print("❌ Error submit education: $e");
               }
             }
@@ -236,9 +262,7 @@ class _TabPendidikanState extends State<TabPendidikan> {
                           ),
                         ),
                         TextButton(
-                          onPressed: isSaving
-                              ? null
-                              : _handleSave, // ✅ PANGGIL FUNCTION BARU
+                          onPressed: isSaving ? null : _handleSave,
                           child: isSaving
                               ? const SizedBox(
                                   height: 20,
@@ -392,12 +416,44 @@ class _TabPendidikanState extends State<TabPendidikan> {
             setDialogState(() => isDeleting = true);
             try {
               await _apiService.deleteEducation(education.educationId!);
-              Navigator.pop(context); // Tutup dialog
-              _loadEducation(); // Refresh data
-              _showSnackBar('Pendidikan berhasil dihapus');
+              if (mounted) {
+                Navigator.pop(context); // Tutup dialog
+                // Refresh data dan tampilkan snackbar
+                _loadEducation();
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) {
+                    _showSnackBar('Pendidikan berhasil dihapus');
+                  }
+                });
+              }
             } catch (e) {
-              setDialogState(() => isDeleting = false);
-              _showSnackBar('Gagal menghapus pendidikan', isError: true);
+              if (mounted) {
+                setDialogState(() => isDeleting = false);
+                // Tampilkan error di dalam dialog
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Gagal menghapus pendidikan: ${e.toString()}',
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                    backgroundColor: Colors.red[100],
+                    behavior: SnackBarBehavior.floating,
+                    elevation: 2,
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+              }
               print("Error delete education: $e");
             }
           }
@@ -437,9 +493,7 @@ class _TabPendidikanState extends State<TabPendidikan> {
                 ),
               ),
               TextButton(
-                onPressed: isDeleting
-                    ? null
-                    : _handleDelete, // ✅ PANGGIL FUNCTION BARU
+                onPressed: isDeleting ? null : _handleDelete,
                 child: isDeleting
                     ? const SizedBox(
                         height: 14,
