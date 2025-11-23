@@ -314,7 +314,7 @@ class _DetailLamaranState extends State<DetailLamaran> {
             width: 143,
             height: 5,
             decoration: BoxDecoration(
-              color: const Color(0xFF162781).withOpacity(0.9),
+              color: const Color(0xFF162781).withValues(alpha:0.9),
               borderRadius: BorderRadius.circular(20),
             ),
           ),
@@ -434,10 +434,10 @@ class _DetailLamaranState extends State<DetailLamaran> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFF383C).withOpacity(0.1),
+                      color: const Color(0xFFFF383C).withValues(alpha:0.1),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: const Color(0xFFFF383C).withOpacity(0.3),
+                        color: const Color(0xFFFF383C).withValues(alpha:0.3),
                       ),
                     ),
                     child: Row(
@@ -468,10 +468,10 @@ class _DetailLamaranState extends State<DetailLamaran> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF34C759).withOpacity(0.1),
+                      color: const Color(0xFF34C759).withValues(alpha:0.1),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: const Color(0xFF34C759).withOpacity(0.3),
+                        color: const Color(0xFF34C759).withValues(alpha:0.3),
                       ),
                     ),
                     child: Row(
@@ -504,10 +504,10 @@ class _DetailLamaranState extends State<DetailLamaran> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF0088FF).withOpacity(0.1),
+                      color: const Color(0xFF0088FF).withValues(alpha:0.1),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: const Color(0xFF0088FF).withOpacity(0.3),
+                        color: const Color(0xFF0088FF).withValues(alpha:0.3),
                       ),
                     ),
                     child: Row(
@@ -694,7 +694,7 @@ class _DetailLamaranState extends State<DetailLamaran> {
               boxShadow: (isActive || isCompleted) && isAccessible
                   ? [
                       BoxShadow(
-                        color: backgroundColor.withOpacity(0.3),
+                        color: backgroundColor.withValues(alpha:0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -748,7 +748,7 @@ class _DetailLamaranState extends State<DetailLamaran> {
               border: Border.all(color: const Color(0xFFE5E8EB), width: 1),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha:0.05),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -778,10 +778,10 @@ class _DetailLamaranState extends State<DetailLamaran> {
                         ),
                         decoration: BoxDecoration(
                           color: (activeData['isSuccess'] ?? false)
-                              ? const Color(0xFF34C759).withOpacity(0.1)
+                              ? const Color(0xFF34C759).withValues(alpha:0.1)
                               : (activeData['isRejected'] ?? false)
-                              ? const Color(0xFFFF383C).withOpacity(0.1)
-                              : const Color(0xFF0088FF).withOpacity(
+                              ? const Color(0xFFFF383C).withValues(alpha:0.1)
+                              : const Color(0xFF0088FF).withValues(alpha:
                                   0.1,
                                 ), // ✅ WARNA BIRU UNTUK DIPROSES
                           borderRadius: BorderRadius.circular(12),
@@ -972,7 +972,7 @@ class _DetailLamaranState extends State<DetailLamaran> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFF2643D7).withOpacity(0.2),
+          color: const Color(0xFF2643D7).withValues(alpha:0.2),
           width: 1,
         ),
       ),
@@ -1023,7 +1023,7 @@ class _DetailLamaranState extends State<DetailLamaran> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF162781).withOpacity(0.05),
+                    color: const Color(0xFF162781).withValues(alpha:0.05),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -1075,10 +1075,10 @@ class _DetailLamaranState extends State<DetailLamaran> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFF2643D7).withOpacity(0.1),
+                color: const Color(0xFF2643D7).withValues(alpha:0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(0xFF2643D7).withOpacity(0.3),
+                  color: const Color(0xFF2643D7).withValues(alpha:0.3),
                 ),
               ),
               child: const Row(
@@ -1115,13 +1115,13 @@ class _DetailLamaranState extends State<DetailLamaran> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isAccepted
-            ? const Color(0xFF34C759).withOpacity(0.1)
-            : const Color(0xFFFF383C).withOpacity(0.1),
+            ? const Color(0xFF34C759).withValues(alpha:0.1)
+            : const Color(0xFFFF383C).withValues(alpha:0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isAccepted
-              ? const Color(0xFF34C759).withOpacity(0.3)
-              : const Color(0xFFFF383C).withOpacity(0.3),
+              ? const Color(0xFF34C759).withValues(alpha:0.3)
+              : const Color(0xFFFF383C).withValues(alpha:0.3),
         ),
       ),
       child: Column(

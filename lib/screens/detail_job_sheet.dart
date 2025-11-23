@@ -343,7 +343,7 @@ class _JobDetailSheetState extends State<JobDetailSheet>
                         : Icon(
                             Icons.bookmark_border,
                             key: const ValueKey('unsaved'),
-                            color: Colors.black.withOpacity(0.3),
+                            color: Colors.black.withValues(alpha:0.3),
                             size: 24,
                           ),
                   ),

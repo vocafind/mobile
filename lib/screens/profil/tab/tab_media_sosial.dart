@@ -878,7 +878,7 @@ class _TabMediaSosialState extends State<TabMediaSosial> {
             Icon(
               Icons.edit_outlined,
               size: 20,
-              color: Colors.black.withOpacity(0.62),
+              color: Colors.black.withValues(alpha:0.62),
             ),
           ],
         ),

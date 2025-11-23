@@ -404,7 +404,7 @@ class __JobCardState extends State<_JobCard>
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha:0.05),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -574,7 +574,7 @@ class __JobCardState extends State<_JobCard>
                                     : Icon(
                                         Icons.bookmark_border,
                                         key: const ValueKey('unsaved'),
-                                        color: Colors.black.withOpacity(0.3),
+                                        color: Colors.black.withValues(alpha:0.3),
                                         size: 24,
                                       ),
                               ),
@@ -710,7 +710,7 @@ class _JobCardSkeleton extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha:0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),

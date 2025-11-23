@@ -238,7 +238,7 @@ class _HalamanLoginState extends State<HalamanLogin> {
                     height: 48,
                     decoration: BoxDecoration(
                       color: _isLoading
-                          ? const Color(0xFF1548F5).withOpacity(
+                          ? const Color(0xFF1548F5).withValues(alpha:
                               0.7,
                             ) // Sedikit transparan ketika loading
                           : const Color(0xFF1548F5),
@@ -300,7 +300,7 @@ class _HalamanLoginState extends State<HalamanLogin> {
                       'Daftar disini',
                       style: TextStyle(
                         color: _isLoading
-                            ? const Color(0xFF1548F5).withOpacity(0.5)
+                            ? const Color(0xFF1548F5).withValues(alpha:0.5)
                             : const Color(0xFF1548F5),
                         fontSize: 12,
                         fontFamily: 'Poppins',

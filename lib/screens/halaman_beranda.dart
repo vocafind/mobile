@@ -1043,7 +1043,7 @@ class _UrgentJobCardState extends State<_UrgentJobCard>
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha:0.05),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -1162,7 +1162,7 @@ class _UrgentJobCardState extends State<_UrgentJobCard>
                                   : Icon(
                                       Icons.bookmark_border,
                                       key: const ValueKey('unsaved'),
-                                      color: Colors.black.withOpacity(0.3),
+                                      color: Colors.black.withValues(alpha:0.3),
                                       size: 24,
                                     ),
                             ),
