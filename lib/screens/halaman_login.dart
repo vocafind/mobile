@@ -226,50 +226,59 @@ class _HalamanLoginState extends State<HalamanLogin> {
 
               const SizedBox(height: 38),
 
-              // Button Masuk dengan Loading
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 46),
-                child: GestureDetector(
-                  onTap: _isLoading
-                      ? null
-                      : _handleLogin, // Disable ketika loading
-                  child: Container(
-                    width: double.infinity,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: _isLoading
-                          ? const Color(0xFF1548F5).withValues(alpha:
-                              0.7,
-                            ) // Sedikit transparan ketika loading
-                          : const Color(0xFF1548F5),
-                      borderRadius: BorderRadius.circular(45),
-                    ),
-                    child: Center(
-                      child: _isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
-                              ),
-                            )
-                          : const Text(
-                              'Masuk',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
+           // Button Masuk dengan Loading - Versi Improved
+Padding(
+  padding: const EdgeInsets.symmetric(horizontal: 46),
+  child: Material(
+    color: Colors.transparent,
+    child: InkWell(
+      onTap: _isLoading ? null : _handleLogin,
+      borderRadius: BorderRadius.circular(45),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: double.infinity,
+        height: 48,
+        decoration: BoxDecoration(
+          color: _isLoading
+              ? const Color(0xFF1548F5).withOpacity(0.7)
+              : const Color(0xFF1548F5),
+          borderRadius: BorderRadius.circular(45),
+          boxShadow: _isLoading
+              ? []
+              : [
+                  BoxShadow(
+                    color: const Color(0xFF1548F5).withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+        ),
+        child: Center(
+          child: _isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Colors.white,
                     ),
                   ),
+                )
+              : const Text(
+                  'Masuk',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-
+        ),
+      ),
+    ),
+  ),
+),
               const SizedBox(height: 46),
 
               // Belum punya akun
