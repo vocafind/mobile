@@ -302,7 +302,7 @@ class _TabPortofolioState extends State<TabPortofolio> {
                           hint: 'https://example.com/portfolio',
                           icon: Icons.link_outlined,
                           required: true, // ✅ DIUBAH: menjadi wajib
-                          helperText: 'Wajib diisi - Link menuju portofolio online',
+                          // helperText: 'Wajib diisi - Link menuju portofolio online',
                         ),
 
                         // Tombol Hapus (hanya jika edit)
