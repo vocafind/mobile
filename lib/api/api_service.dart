@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:jobfair/api/api_client.dart';
+import 'package:jobfair/models/jobfair_detail_model.dart';
+import 'package:jobfair/models/jobfair_model.dart';
 import 'package:jobfair/models/lamar_loker.dart';
 import 'package:jobfair/models/saved_job_model.dart';
 import 'package:jobfair/models/talent_award_model.dart';
@@ -1759,6 +1761,7 @@ class ApiService {
     }
   }
 
+
   // --------------------------------------------------------------------------LAMAR LOKER-----------------------------------------------------------
   // ================== LAMAR LOKER UMUM ==================
   Future<LamarLokerResponse> lamarLokerUmum(String lowonganId) async {
@@ -2172,4 +2175,80 @@ class ApiService {
       throw Exception('Terjadi kesalahan jaringan');
     }
   }
+
+
+
+
+
+  // ================== GET ALL JOBFAIR ==================
+  Future<List<Jobfair>> getAllJobfair() async {
+    var url = Uri.parse(ApiConfig.allJobfair);
+    try {
+      print("🔄 Fetching jobfair from: ${url.toString()}"); // Debug
+      
+      final response = await http.get(url);
+
+      print("📡 GET ALL JOBFAIR - Status: ${response.statusCode}");
+      print("📦 GET ALL JOBFAIR - Response body length: ${response.body.length}");
+      print("📦 GET ALL JOBFAIR - First 200 chars: ${response.body.substring(0, response.body.length > 200 ? 200 : response.body.length)}");
+
+      if (response.statusCode == 200) {
+        // Parse JSON
+        List<dynamic> data = jsonDecode(response.body);
+        print("✅ Successfully parsed ${data.length} jobfairs");
+        
+        // Debug each item
+        for (int i = 0; i < data.length; i++) {
+          print("📋 Jobfair $i: ${data[i]}");
+        }
+        
+        // Convert to Jobfair objects
+        List<Jobfair> jobfairs = data.map((json) {
+          try {
+            return Jobfair.fromJson(json);
+          } catch (e) {
+            print("❌ Error parsing jobfair: $e");
+            print("❌ Problematic JSON: $json");
+            rethrow;
+          }
+        }).toList();
+        
+        print("✅ Successfully created ${jobfairs.length} Jobfair objects");
+        return jobfairs;
+      } else {
+        print("❌ HTTP Error: ${response.statusCode} - ${response.body}");
+        return [];
+      }
+    } catch (e) {
+      print("❌ Exception fetching jobfair: $e");
+      print("❌ Stack trace: ${e.toString()}");
+      return [];
+    }
+  }
+
+  
+  // ================== GET JOBFAIR DETAIL BY ID ==================
+  Future<JobfairDetail?> getJobfairDetailById(int id) async {
+    final url = Uri.parse(ApiConfig.jobfairById(id.toString()));
+
+    try {
+      final response = await http.get(url);
+
+      print("GET JOBFAIR DETAIL - Status: ${response.statusCode}");
+      print("GET JOBFAIR DETAIL - Response: ${response.body}");
+
+      if (response.statusCode == 200) {
+        return JobfairDetail.fromJson(jsonDecode(response.body));
+      } else {
+        print("Error: ${response.statusCode} - ${response.body}");
+        return null;
+      }
+    } catch (e) {
+      print("Error fetching jobfair detail: $e");
+      return null;
+    }
+  }
+
+
+
 }

@@ -1,17 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:jobfair/api/api_service.dart';
 import '/widget/header.dart';
 import 'package:jobfair/widget/bottom_navbar.dart';
+import 'package:jobfair/models/jobfair_model.dart';
 import 'halaman_jobfair_detail.dart';
 
-class HalamanJobfair extends StatelessWidget {
+class HalamanJobfair extends StatefulWidget {
   const HalamanJobfair({super.key});
 
+  @override
+  State<HalamanJobfair> createState() => _HalamanJobfairState();
+}
+
+class _HalamanJobfairState extends State<HalamanJobfair> {
+  final ApiService _apiService = ApiService();
+  late Future<List<Jobfair>> _jobfairsFuture;
+  
   // Daftar background colors yang akan digunakan secara berurutan
   final List<String> backgroundImages = const [
     'assets/images/kuning.png',
     'assets/images/biru.png',
     'assets/images/pink.png',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _jobfairsFuture = _apiService.getAllJobfair();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,64 +47,26 @@ class HalamanJobfair extends StatelessWidget {
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
-                  child: Column(
-                    children: [
-                      _buildJobFairCard(
-                        context: context,
-                        imagePath: backgroundImages[0 % backgroundImages.length], // Card 1 - kuning
-                        title: 'Tech Career Expo 2025',
-                        location: 'Politeknik Negeri Batam',
-                        date: '19 Sep 2025 - 20 Sep 2025',
-                        registration: 'Pendaftaran : 7 Sep 2025 - 19 Sep 2025',
-                        capacity: '20 Kapasitas',
-                        jobs: '10 Lowongan',
-                        companies: '3 Perusahaan',
-                      ),
-                      const SizedBox(height: 15),
-                      _buildJobFairCard(
-                        context: context,
-                        imagePath: backgroundImages[1 % backgroundImages.length], // Card 2 - biru
-                        title: 'Tech Career Expo 2025',
-                        location: 'Politeknik Negeri Batam',
-                        date: '19 Sep 2025 - 20 Sep 2025',
-                        registration: 'Pendaftaran : 7 Sep 2025 - 19 Sep 2025',
-                        capacity: '20 Kapasitas',
-                        jobs: '10 Lowongan',
-                        companies: '3 Perusahaan',
-                      ),
-                      const SizedBox(height: 15),
-                      _buildJobFairCard(
-                        context: context,
-                        imagePath: backgroundImages[2 % backgroundImages.length], // Card 3 - pink
-                        title: 'Digital Innovation Fair',
-                        location: 'Politeknik Negeri Batam',
-                        date: '25 Sep 2025 - 26 Sep 2025',
-                        registration: 'Pendaftaran : 10 Sep 2025 - 25 Sep 2025',
-                        capacity: '30 Kapasitas',
-                        jobs: '15 Lowongan',
-                        companies: '5 Perusahaan',
-                      ),
-                      const SizedBox(height: 15),
-                      _buildJobFairCard(
-                        context: context,
-                        imagePath: backgroundImages[3 % backgroundImages.length], // Card 4 - kuning (kembali ke awal)
-                        title: 'Startup Job Fair 2025',
-                        location: 'Politeknik Negeri Batam',
-                        date: '1 Okt 2025 - 2 Okt 2025',
-                        registration: 'Pendaftaran : 15 Sep 2025 - 1 Okt 2025',
-                        capacity: '25 Kapasitas',
-                        jobs: '12 Lowongan',
-                        companies: '4 Perusahaan',
-                      ),
-                      const SizedBox(height: 100), // Extra space untuk bottom navbar
-                    ],
+                  child: FutureBuilder<List<Jobfair>>(
+                    future: _jobfairsFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return _buildLoadingState();
+                      } else if (snapshot.hasError) {
+                        return _buildErrorState(snapshot.error.toString());
+                      } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return _buildEmptyState();
+                      } else {
+                        return _buildJobfairList(snapshot.data!);
+                      }
+                    },
                   ),
                 ),
               ),
             ],
           ),
           // Bottom Navigation Bar positioned at bottom
-          Positioned(
+          const Positioned(
             left: 0,
             right: 0,
             bottom: 0,
@@ -98,26 +77,42 @@ class HalamanJobfair extends StatelessWidget {
     );
   }
 
+  Widget _buildJobfairList(List<Jobfair> jobfairs) {
+    return Column(
+      children: [
+        ...jobfairs.asMap().entries.map((entry) {
+          final index = entry.key;
+          final jobfair = entry.value;
+          return Column(
+            children: [
+              _buildJobFairCard(
+                context: context,
+                jobfair: jobfair,
+                imagePath: backgroundImages[index % backgroundImages.length],
+              ),
+              if (index < jobfairs.length - 1) const SizedBox(height: 15),
+            ],
+          );
+        }),
+        const SizedBox(height: 100), // Extra space untuk bottom navbar
+      ],
+    );
+  }
+
   Widget _buildJobFairCard({
     required BuildContext context,
+    required Jobfair jobfair,
     required String imagePath,
-    required String title,
-    required String location,
-    required String date,
-    required String registration,
-    required String capacity,
-    required String jobs,
-    required String companies,
   }) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const HalamanJobfairDetail(),
-          ),
-        );
-      },
+      // onTap: () {
+      //   Navigator.push(
+      //     context,
+      //     MaterialPageRoute(
+      //       builder: (context) => HalamanJobfairDetail(jobfair: jobfair),
+      //     ),
+      //   );
+      // },
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
@@ -139,7 +134,7 @@ class HalamanJobfair extends StatelessWidget {
             Container(
               height: 240,
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.2),
+                color: Colors.black.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
@@ -155,18 +150,18 @@ class HalamanJobfair extends StatelessWidget {
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        _buildBadge(capacity),
+                        _buildBadge(jobfair.capacityText),
                         const SizedBox(width: 6),
-                        _buildBadge(jobs),
+                        _buildBadge(jobfair.jobsText),
                         const SizedBox(width: 6),
-                        _buildBadge(companies),
+                        _buildBadge(jobfair.companiesText),
                       ],
                     ),
                   ),
                   const SizedBox(height: 18),
                   // Title
                   Text(
-                    title,
+                    jobfair.namaAcara,
                     style: const TextStyle(
                       color: Color(0xFFFFFBFB),
                       fontSize: 18,
@@ -186,7 +181,7 @@ class HalamanJobfair extends StatelessWidget {
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          location,
+                          jobfair.acaraBkk ?? 'Politeknik Negeri Batam',
                           style: const TextStyle(
                             color: Color(0xFFFFFBFB),
                             fontSize: 12,
@@ -207,7 +202,7 @@ class HalamanJobfair extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        date,
+                        jobfair.formattedDateRange,
                         style: const TextStyle(
                           color: Color(0xFFFFFBFB),
                           fontSize: 12,
@@ -219,7 +214,7 @@ class HalamanJobfair extends StatelessWidget {
                   const SizedBox(height: 12),
                   // Registration info
                   Text(
-                    registration,
+                    'Pendaftaran : ${DateFormat('dd MMM yyyy').format(jobfair.tanggalAwalPendaftaranAcara)} - ${DateFormat('dd MMM yyyy').format(jobfair.tanggalAkhirPendaftaranAcara)}',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 11,
@@ -233,10 +228,10 @@ class HalamanJobfair extends StatelessWidget {
                     width: double.infinity,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.1),
+                      color: Colors.white.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(45),
                       border: Border.all(
-                        color: const Color(0xFFF1F5F9).withValues(alpha: 0.4),
+                        color: const Color(0xFFF1F5F9).withOpacity(0.4),
                         width: 1,
                       ),
                     ),
@@ -267,10 +262,10 @@ class HalamanJobfair extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       height: 22,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.1),
+        color: Colors.white.withOpacity(0.1),
         borderRadius: BorderRadius.circular(45),
         border: Border.all(
-          color: const Color(0xFFF1F5F9).withValues(alpha: 0.4),
+          color: const Color(0xFFF1F5F9).withOpacity(0.4),
           width: 1,
         ),
       ),
@@ -284,6 +279,88 @@ class HalamanJobfair extends StatelessWidget {
             fontFamily: 'Poppins',
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Column(
+      children: [
+        for (int i = 0; i < 2; i++)
+          Column(
+            children: [
+              Container(
+                width: double.infinity,
+                height: 240,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+              if (i < 1) const SizedBox(height: 15),
+            ],
+          ),
+      ],
+    );
+  }
+
+  Widget _buildErrorState(String error) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          const Icon(Icons.error_outline, size: 64, color: Colors.red),
+          const SizedBox(height: 16),
+          const Text(
+            'Gagal memuat data job fair',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            error,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.red),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                _jobfairsFuture = _apiService.getAllJobfair();
+              });
+            },
+            child: const Text('Coba Lagi'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      child: const Column(
+        children: [
+          Icon(Icons.event_busy, size: 64, color: Colors.grey),
+          SizedBox(height: 16),
+          Text(
+            'Tidak ada job fair tersedia',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Silakan cek kembali nanti untuk informasi job fair terbaru.',
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }
