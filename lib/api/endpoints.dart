@@ -165,7 +165,25 @@ class ApiConfig {
   static String jobfairById(String id) => "$baseUrl/Jobfair/$id";                   // Get Jobfair Detail
 
 
-
+  // Helper untuk mendapatkan full image URL
+  static String getFullImageUrl(String? relativePath) {
+    if (relativePath == null || relativePath.isEmpty) {
+      return '';
+    }
+    
+    // Jika URL sudah lengkap (http/https), return langsung
+    if (relativePath.startsWith('http://') || relativePath.startsWith('https://')) {
+      return relativePath;
+    }
+    
+    // Jika relative path, gabungkan dengan baseUrlFoto
+    // Hapus slash di depan jika ada
+    final cleanPath = relativePath.startsWith('/') 
+        ? relativePath.substring(1) 
+        : relativePath;
+    
+    return '$baseUrlFoto$cleanPath';
+  }
 
 
 }

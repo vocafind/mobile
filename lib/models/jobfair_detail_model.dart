@@ -17,9 +17,7 @@ class JobfairDetail {
   final String status;
   final int maxCapacity;
   final int currentCapacity;
-  final String adminVokasiId;
-  final String namaAdminVokasi;
-  final String emailAdminVokasi;
+  final DateTime? createdAt;
   final List<CompanyJobfair> perusahaan;
   final List<FlyerAcara> flyerAcara;
   final List<LowonganAcara> lowonganAcara;
@@ -40,9 +38,7 @@ class JobfairDetail {
     required this.status,
     required this.maxCapacity,
     required this.currentCapacity,
-    required this.adminVokasiId,
-    required this.namaAdminVokasi,
-    required this.emailAdminVokasi,
+    this.createdAt,
     required this.perusahaan,
     required this.flyerAcara,
     required this.lowonganAcara,
@@ -65,9 +61,7 @@ class JobfairDetail {
       status: json['status'] ?? '',
       maxCapacity: json['maxCapacity'] ?? 0,
       currentCapacity: json['currentCapacity'] ?? 0,
-      adminVokasiId: json['adminVokasiId'] ?? '',
-      namaAdminVokasi: json['namaAdminVokasi'] ?? '',
-      emailAdminVokasi: json['emailAdminVokasi'] ?? '',
+      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
       perusahaan: (json['perusahaan'] as List? ?? [])
           .map((company) => CompanyJobfair.fromJson(company))
           .toList(),
@@ -98,44 +92,32 @@ class JobfairDetail {
 }
 
 class CompanyJobfair {
-  final String companyId;
   final String namaPerusahaan;
   final String? logo;
-  final String bidangUsaha;
-  final String? deskripsiPerusahaan;
 
   CompanyJobfair({
-    required this.companyId,
     required this.namaPerusahaan,
     this.logo,
-    required this.bidangUsaha,
-    this.deskripsiPerusahaan,
   });
 
   factory CompanyJobfair.fromJson(Map<String, dynamic> json) {
     return CompanyJobfair(
-      companyId: json['companyId'] ?? '',
       namaPerusahaan: json['namaPerusahaan'] ?? '',
       logo: json['logo'],
-      bidangUsaha: json['bidangUsaha'] ?? '',
-      deskripsiPerusahaan: json['deskripsiPerusahaan'],
     );
   }
 }
 
 class FlyerAcara {
   final String flyerUrl;
-  final String? title;
 
   FlyerAcara({
     required this.flyerUrl,
-    this.title,
   });
 
   factory FlyerAcara.fromJson(Map<String, dynamic> json) {
     return FlyerAcara(
       flyerUrl: json['flyerUrl'] ?? '',
-      title: json['title'],
     );
   }
 }
@@ -143,43 +125,70 @@ class FlyerAcara {
 class LowonganAcara {
   final String lowonganId;
   final String posisi;
-  final String namaPerusahaan;
-  final String? logoPerusahaan;
+  final String deskripsiPekerjaan;
+  final String? minimalLulusan;
+  final String status;
   final String lokasi;
   final String gaji;
   final String jenisPekerjaan;
+  final DateTime tanggalPosting;
   final DateTime batasLamaran;
+  final int batasPelamar;
+  final int jumlahPelamar;
   final String tingkatPengalaman;
+  final bool opsiKerjaRemote;
+  final String kontrakDurasi;
+  final String peluangKarir;
+  final String namaPerusahaan;
+  final String? logo;
 
   LowonganAcara({
     required this.lowonganId,
     required this.posisi,
-    required this.namaPerusahaan,
-    this.logoPerusahaan,
+    required this.deskripsiPekerjaan,
+    this.minimalLulusan,
+    required this.status,
     required this.lokasi,
     required this.gaji,
     required this.jenisPekerjaan,
+    required this.tanggalPosting,
     required this.batasLamaran,
+    required this.batasPelamar,
+    required this.jumlahPelamar,
     required this.tingkatPengalaman,
+    required this.opsiKerjaRemote,
+    required this.kontrakDurasi,
+    required this.peluangKarir,
+    required this.namaPerusahaan,
+    this.logo,
   });
 
   factory LowonganAcara.fromJson(Map<String, dynamic> json) {
     return LowonganAcara(
       lowonganId: json['lowonganId'] ?? '',
       posisi: json['posisi'] ?? '',
-      namaPerusahaan: json['namaPerusahaan'] ?? '',
-      logoPerusahaan: json['logoPerusahaan'],
+      deskripsiPekerjaan: json['deskripsiPekerjaan'] ?? '',
+      minimalLulusan: json['minimalLulusan'],
+      status: json['status'] ?? '',
       lokasi: json['lokasi'] ?? '',
       gaji: json['gaji'] ?? '',
       jenisPekerjaan: json['jenisPekerjaan'] ?? '',
+      tanggalPosting: DateTime.parse(json['tanggalPosting']),
       batasLamaran: DateTime.parse(json['batasLamaran']),
+      batasPelamar: json['batasPelamar'] ?? 0,
+      jumlahPelamar: json['jumlahPelamar'] ?? 0,
       tingkatPengalaman: json['tingkatPengalaman'] ?? '',
+      opsiKerjaRemote: json['opsiKerjaRemote'] ?? false,
+      kontrakDurasi: json['kontrakDurasi'] ?? '',
+      peluangKarir: json['peluangKarir'] ?? '',
+      namaPerusahaan: json['namaPerusahaan'] ?? '',
+      logo: json['logo'],
     );
   }
 
   String get timeAgo {
     final now = DateTime.now();
-    final difference = now.difference(batasLamaran);
+    final difference = now.difference(tanggalPosting);
     
     if (difference.inDays == 0) {
       return 'Hari ini';
@@ -194,5 +203,28 @@ class LowonganAcara {
       final months = (difference.inDays / 30).floor();
       return '$months bulan lalu';
     }
+  }
+
+  String get daysUntilDeadline {
+    final now = DateTime.now();
+    final difference = batasLamaran.difference(now);
+    
+    if (difference.inDays == 0) {
+      return 'Berakhir hari ini';
+    } else if (difference.inDays == 1) {
+      return '1 hari lagi';
+    } else if (difference.inDays > 0) {
+      return '${difference.inDays} hari lagi';
+    } else {
+      return 'Telah berakhir';
+    }
+  }
+
+  bool get isExpired {
+    return DateTime.now().isAfter(batasLamaran);
+  }
+
+  bool get isAlmostFull {
+    return jumlahPelamar >= (batasPelamar * 0.8); // 80% terisi
   }
 }

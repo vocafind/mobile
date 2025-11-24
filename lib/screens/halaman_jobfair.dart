@@ -105,14 +105,14 @@ class _HalamanJobfairState extends State<HalamanJobfair> {
     required String imagePath,
   }) {
     return GestureDetector(
-      // onTap: () {
-      //   Navigator.push(
-      //     context,
-      //     MaterialPageRoute(
-      //       builder: (context) => HalamanJobfairDetail(jobfair: jobfair),
-      //     ),
-      //   );
-      // },
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HalamanJobfairDetail(jobfairId: jobfair.id),
+          ),
+        );
+      },
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
@@ -237,7 +237,7 @@ class _HalamanJobfairState extends State<HalamanJobfair> {
                     ),
                     child: const Center(
                       child: Text(
-                        'Daftar Sekarang',
+                        'Lihat Detail',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Color(0xFFFFFBFB),

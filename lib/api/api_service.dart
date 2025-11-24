@@ -2232,19 +2232,32 @@ class ApiService {
     final url = Uri.parse(ApiConfig.jobfairById(id.toString()));
 
     try {
+      print("🔄 Fetching jobfair detail from: ${url.toString()}");
+      
       final response = await http.get(url);
 
-      print("GET JOBFAIR DETAIL - Status: ${response.statusCode}");
-      print("GET JOBFAIR DETAIL - Response: ${response.body}");
+      print("📡 GET JOBFAIR DETAIL - Status: ${response.statusCode}");
+      print("📦 GET JOBFAIR DETAIL - Response body length: ${response.body.length}");
 
       if (response.statusCode == 200) {
-        return JobfairDetail.fromJson(jsonDecode(response.body));
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        print("✅ Successfully parsed jobfair detail");
+        
+        // Debug print untuk memastikan data sesuai
+        print("📋 Jobfair ID: ${responseData['id']}");
+        print("📋 Jobfair Name: ${responseData['namaAcara']}");
+        print("📋 Companies Count: ${(responseData['perusahaan'] as List).length}");
+        print("📋 Lowongan Count: ${(responseData['lowonganAcara'] as List).length}");
+        print("📋 Flyer Count: ${(responseData['flyerAcara'] as List).length}");
+        
+        return JobfairDetail.fromJson(responseData);
       } else {
-        print("Error: ${response.statusCode} - ${response.body}");
+        print("❌ HTTP Error: ${response.statusCode} - ${response.body}");
         return null;
       }
     } catch (e) {
-      print("Error fetching jobfair detail: $e");
+      print("❌ Exception fetching jobfair detail: $e");
+      print("❌ Stack trace: ${e.toString()}");
       return null;
     }
   }
