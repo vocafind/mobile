@@ -12,54 +12,56 @@ class Halaman1 extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // Gunakan Expanded untuk mendorong konten ke tengah
+            // Konten utama di tengah
             Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Logo dari assets SVG
-                  SvgPicture.asset(
-                    'assets/icons/icon.svg',
-                    width: 116.63,
-                    height: 114.35,
-                  ),
-                  
-                  const SizedBox(height: 40),
-                  
-                  // Text "Siap temukan peluang karir terbaik?"
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 36),
-                    child: Text(
-                      'Siap temukan peluang karir terbaik?',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Color.fromRGBO(0, 0, 0, 0.6),
-                        fontSize: 15,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w700,
-                        height: 1.5,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Logo dari assets SVG
+                    SvgPicture.asset(
+                      'assets/icons/icon.svg',
+                      width: 116.63,
+                      height: 114.35,
+                    ),
+                    
+                    const SizedBox(height: 40),
+                    
+                    // Text "Siap temukan peluang karir terbaik?"
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 36),
+                      child: Text(
+                        'Siap temukan peluang karir terbaik?',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Color.fromRGBO(0, 0, 0, 0.6),
+                          fontSize: 15,
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w700,
+                          height: 1.5,
+                        ),
                       ),
                     ),
-                  ),
-                  
-                  const SizedBox(height: 20),
-                  
-                  // Text "Loker Rekomendasi Pintar!" dengan line break
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20),
-                    child: Text(
-                      'Loker Rekomendasi\nPintar!',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Color(0xFF184EF8),
-                        fontSize: 30,
-                        fontFamily: 'SFProDisplay',
-                        fontWeight: FontWeight.w800,
-                        height: 1.0,
+                    
+                    const SizedBox(height: 20),
+                    
+                    // Text "Loker Rekomendasi Pintar!" dengan line break
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      child: Text(
+                        'Loker Rekomendasi\nPintar!',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Color(0xFF184EF8),
+                          fontSize: 30,
+                          fontFamily: 'SFProDisplay',
+                          fontWeight: FontWeight.w800,
+                          height: 1.0,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             
