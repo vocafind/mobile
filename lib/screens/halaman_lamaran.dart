@@ -1,9 +1,9 @@
-// halaman_lamaran.dart
 import 'package:flutter/material.dart';
 import 'package:jobfair/models/lamar_loker.dart';
 import 'package:jobfair/widget/bottom_navbar.dart';
 import 'package:jobfair/widget/header.dart';
 import 'package:jobfair/screens/detail_lamaran.dart';
+import 'package:jobfair/screens/detail_lamaran_jobfair.dart';
 import 'package:jobfair/api/api_service.dart';
 
 class HalamanLamaran extends StatefulWidget {
@@ -37,10 +37,9 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
     });
 
     try {
-      // Load data paralel untuk performa lebih baik
       final results = await Future.wait([
-        _apiService.getLamaranSaya(), // Endpoint umum - SUDAH DIFILTER
-        _apiService.getLamaranJobfairSaya(), // Endpoint jobfair khusus
+        _apiService.getLamaranSaya(),
+        _apiService.getLamaranJobfairSaya(),
       ]);
 
       setState(() {
@@ -50,16 +49,13 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
         _isLoading = false;
       });
 
-      // Debug info
       print("""
       📊 DATA LAMARAN:
       - Umum: ${_allLamaranUmum.length} lamaran
       - Jobfair: ${_allLamaranJobfair.length} lamaran
       - Tab aktif: ${_selectedMainTab == 0 ? 'Umum' : 'Jobfair'}
-      - Filter aktif: ${_selectedFilterTab == 0 ? 'Semua' : 'Status $_selectedFilterTab'}
       - Tampil: ${_filteredLamaran.length} lamaran
       """);
-
     } catch (e) {
       setState(() {
         _isLoading = false;
@@ -94,8 +90,6 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
         });
       }
     }
-
-    print("🔄 Filter diterapkan: ${_filteredLamaran.length} lamaran");
   }
 
   void _onMainTabChanged(int tabIndex) {
@@ -104,8 +98,17 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
       _selectedFilterTab = 0;
       _filteredLamaran = tabIndex == 0 ? _allLamaranUmum : _allLamaranJobfair;
     });
+  }
 
-    print("🔀 Tab diubah ke: ${tabIndex == 0 ? 'Umum' : 'Jobfair'}");
+  // Method untuk handle tap card - BEDAKAN ANTARA UMUM DAN JOBFAIR
+  void _handleCardTap(LamaranSaya lamaran) {
+    if (_selectedMainTab == 1) {
+      // Untuk tab Jobfair, buka DetailLamaranJobfair
+      DetailLamaranJobfair.show(context, lamaran: lamaran);
+    } else {
+      // Untuk tab Umum, buka DetailLamaran biasa
+      DetailLamaran.show(context, lamaran: lamaran);
+    }
   }
 
   @override
@@ -115,7 +118,6 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
       extendBody: true,
       body: Column(
         children: [
-          // Fixed Header
           const HeaderWidget(showNotification: true, showFilter: false),
 
           // Main Tabs (Umum & Job fair)
@@ -123,7 +125,7 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
             height: 45,
             margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
             decoration: BoxDecoration(
-              color: const Color(0xFF162781).withValues(alpha: 0.9),
+              color: const Color(0xFF162781).withOpacity(0.9),
               borderRadius: BorderRadius.circular(50),
             ),
             child: Row(
@@ -138,7 +140,7 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                       height: 35,
                       decoration: BoxDecoration(
                         color: _selectedMainTab == 0
-                            ? const Color(0xFF2345F7).withValues(alpha: 0.7)
+                            ? const Color(0xFF2345F7).withOpacity(0.7)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(100),
                       ),
@@ -166,7 +168,7 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                       height: 35,
                       decoration: BoxDecoration(
                         color: _selectedMainTab == 1
-                            ? const Color(0xFF2345F7).withValues(alpha: 0.7)
+                            ? const Color(0xFF2345F7).withOpacity(0.7)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(100),
                       ),
@@ -366,7 +368,7 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
         decoration: BoxDecoration(
           color: isSelected
               ? Colors.black
-              : const Color(0xFF475664).withValues(alpha: 0.5),
+              : const Color(0xFF475664).withOpacity(0.5),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Center(
@@ -390,9 +392,7 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
     final company = lowongan.company;
 
     return GestureDetector(
-      onTap: () {
-        DetailLamaran.show(context, lamaran: lamaran);
-      },
+      onTap: () => _handleCardTap(lamaran), // GUNAKAN METHOD BARU
       child: Container(
         height: 181,
         margin: const EdgeInsets.only(left: 16, right: 16, bottom: 17),
@@ -466,10 +466,13 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                  // Badge Jobfair untuk tab jobfair
-                                  if (_selectedMainTab == 1) ...[
+                                  // Badge dengan nama acara untuk tab jobfair
+                                  if (_selectedMainTab == 1 && lamaran.acara != null) ...[
                                     const SizedBox(width: 8),
                                     Container(
+                                      constraints: const BoxConstraints(
+                                        maxWidth: 120,
+                                      ),
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 8,
                                         vertical: 2,
@@ -478,14 +481,16 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                                         color: const Color(0xFF1B56FD),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
-                                      child: const Text(
-                                        'Jobfair',
-                                        style: TextStyle(
+                                      child: Text(
+                                        _getShortEventName(lamaran.acara!.namaAcara),
+                                        style: const TextStyle(
                                           color: Colors.white,
                                           fontSize: 10,
                                           fontFamily: 'Poppins',
                                           fontWeight: FontWeight.w500,
                                         ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ],
@@ -495,7 +500,7 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                               Text(
                                 company.namaPerusahaan,
                                 style: TextStyle(
-                                  color: const Color(0xFF3C3C43).withValues(alpha: 0.6),
+                                  color: const Color(0xFF3C3C43).withOpacity(0.6),
                                   fontSize: 14,
                                   fontFamily: 'Poppins',
                                   fontWeight: FontWeight.w400,
@@ -524,7 +529,7 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(24),
                             border: Border.all(
-                              color: Colors.black.withValues(alpha: 0.06),
+                              color: Colors.black.withOpacity(0.06),
                             ),
                           ),
                           child: Text(
@@ -552,7 +557,7 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(24),
                               border: Border.all(
-                                color: Colors.black.withValues(alpha: 0.06),
+                                color: Colors.black.withOpacity(0.06),
                               ),
                             ),
                             child: const Text(
@@ -624,6 +629,19 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
         ),
       ),
     );
+  }
+
+  // Helper method untuk memendekkan nama acara jika terlalu panjang
+  String _getShortEventName(String fullName) {
+    if (fullName.length <= 15) return fullName;
+    
+    final words = fullName.split(' ');
+    if (words.length > 1) {
+      final shortName = words.take(2).join(' ');
+      return shortName.length <= 15 ? shortName : '${shortName.substring(0, 12)}...';
+    }
+    
+    return '${fullName.substring(0, 12)}...';
   }
 
   Widget _buildApplicationCardSkeleton() {

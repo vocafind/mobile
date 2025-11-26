@@ -1,4 +1,3 @@
-// models/lamar_model.dart
 import 'dart:ui';
 
 class LamarLokerResponse {
@@ -24,7 +23,8 @@ class LamaranSaya {
   final DateTime createdAt;
   final DateTime appliedAt;
   final LowonganLamaran lowongan;
-  final bool isJobfair; // TAMBAHKAN INI
+  final bool isJobfair;
+  final AcaraJobfair? acara;
 
   LamaranSaya({
     required this.applyId,
@@ -35,7 +35,8 @@ class LamaranSaya {
     required this.lowongan,
     this.interview,
     this.locationInterview,
-    required this.isJobfair, // TAMBAHKAN INI
+    required this.isJobfair,
+    this.acara,
   });
 
   factory LamaranSaya.fromJson(Map<String, dynamic> json) {
@@ -48,7 +49,8 @@ class LamaranSaya {
       createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toString()),
       appliedAt: DateTime.parse(json['appliedAt'] ?? DateTime.now().toString()),
       lowongan: LowonganLamaran.fromJson(json['lowongan'] ?? {}),
-      isJobfair: json['isJobfair'] ?? false, // DEFAULT false
+      isJobfair: json['isJobfair'] ?? false,
+      acara: json['acara'] != null ? AcaraJobfair.fromJson(json['acara']) : null,
     );
   }
 
@@ -56,17 +58,17 @@ class LamaranSaya {
   Color get statusColor {
     switch (status.toLowerCase()) {
       case 'pending':
-        return const Color(0xFFFF9500); // Orange
+        return const Color(0xFFFF9500);
       case 'reviewed':
-        return const Color(0xFF00C8B3); // Mint
+        return const Color(0xFF00C8B3);
       case 'interview':
-        return const Color(0xFF0088FF); // Blue
+        return const Color(0xFF0088FF);
       case 'accepted':
-        return const Color(0xFF34C759); // Green
+        return const Color(0xFF34C759);
       case 'reject_interview':
-        return const Color(0xFFFF383C); // Red
+        return const Color(0xFFFF383C);
       default:
-        return const Color(0xFFFF9500); // Default Orange
+        return const Color(0xFFFF9500);
     }
   }
 
@@ -94,6 +96,59 @@ class LamaranSaya {
            interview!.isNotEmpty && 
            locationInterview != null && 
            locationInterview!.isNotEmpty;
+  }
+}
+
+class AcaraJobfair {
+  final int id;
+  final String namaAcara;
+  final String? deskripsi;
+  final String? lokasi;
+  final String? alamatAcara;
+  final String? provinsi;
+  final String? kabupaten;
+  final DateTime tanggalMulaiAcara;
+  final DateTime tanggalSelesaiAcara;
+  final DateTime tanggalAwalPendaftaranAcara;
+  final DateTime tanggalAkhirPendaftaranAcara;
+  final String status;
+  final int maxCapacity;
+  final int currentCapacity;
+
+  AcaraJobfair({
+    required this.id,
+    required this.namaAcara,
+    this.deskripsi,
+    this.lokasi,
+    this.alamatAcara,
+    this.provinsi,
+    this.kabupaten,
+    required this.tanggalMulaiAcara,
+    required this.tanggalSelesaiAcara,
+    required this.tanggalAwalPendaftaranAcara,
+    required this.tanggalAkhirPendaftaranAcara,
+    required this.status,
+    required this.maxCapacity,
+    required this.currentCapacity,
+  });
+
+  factory AcaraJobfair.fromJson(Map<String, dynamic> json) {
+    return AcaraJobfair(
+      id: json['id'] ?? 0,
+      namaAcara: json['namaAcara'] ?? '',
+      deskripsi: json['deskripsi'],
+      lokasi: json['lokasi'],
+      alamatAcara: json['alamatAcara'],
+      provinsi: json['provinsi'],
+      kabupaten: json['kabupaten'],
+      tanggalMulaiAcara: DateTime.parse(json['tanggalMulaiAcara']?.toString() ?? DateTime.now().toString()),
+      tanggalSelesaiAcara: DateTime.parse(json['tanggalSelesaiAcara']?.toString() ?? DateTime.now().toString()),
+      tanggalAwalPendaftaranAcara: DateTime.parse(json['tanggalAwalPendaftaranAcara']?.toString() ?? DateTime.now().toString()),
+      tanggalAkhirPendaftaranAcara: DateTime.parse(json['tanggalAkhirPendaftaranAcara']?.toString() ?? DateTime.now().toString()),
+      status: json['status'] ?? '',
+      maxCapacity: json['maxCapacity'] ?? 0,
+      currentCapacity: json['currentCapacity'] ?? 0,
+    );
   }
 }
 
