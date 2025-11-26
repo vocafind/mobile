@@ -2,8 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'halaman_login.dart'; 
 
-class Halaman1 extends StatelessWidget {
+class Halaman1 extends StatefulWidget {
   const Halaman1({super.key});
+
+  @override
+  State<Halaman1> createState() => _Halaman1State();
+}
+
+class _Halaman1State extends State<Halaman1> {
+  bool _isPressed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +76,21 @@ class Halaman1 extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 60),
               child: GestureDetector(
+                onTapDown: (_) {
+                  setState(() {
+                    _isPressed = true;
+                  });
+                },
+                onTapUp: (_) {
+                  setState(() {
+                    _isPressed = false;
+                  });
+                },
+                onTapCancel: () {
+                  setState(() {
+                    _isPressed = false;
+                  });
+                },
                 onTap: () {
                   Navigator.push(
                     context,
@@ -77,22 +99,32 @@ class Halaman1 extends StatelessWidget {
                     ),
                   );
                 },
-                child: Container(
-                  width: 282,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1548F5),
-                    borderRadius: BorderRadius.circular(50),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'Mulai',
-                      style: TextStyle(
-                        color: Color.fromARGB(255, 255, 255, 255),
-                        fontSize: 14,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w500,
-                        height: 1.71,
+                child: Transform.scale(
+                  scale: 1.0,
+                  child: Container(
+                    width: 282,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: _isPressed ? const Color(0xFF0D2BA8) : const Color(0xFF1548F5),
+                      borderRadius: BorderRadius.circular(50),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF1548F5).withValues(alpha: 0.5),
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'Mulai',
+                        style: TextStyle(
+                          color: Color.fromARGB(255, 255, 255, 255),
+                          fontSize: 14,
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w500,
+                          height: 1.71,
+                        ),
                       ),
                     ),
                   ),

@@ -1,7 +1,7 @@
 class ApiConfig {
   // Ganti IP dengan IP komputer server kamu
-  static const String baseUrl = "http://10.136.135.54:5035/api";
-  static const String baseUrlFoto = "http://10.136.135.54:5035/";
+  static const String baseUrl = "http://10.170.14.146:5035/api";
+  static const String baseUrlFoto = "http://10.170.14.146:5035/";
   // static const String baseUrl = "https://trpl306-001-site1.ntempurl.com/api";
   // static const String baseUrlFoto = "https://trpl306-001-site1.ntempurl.com/";
 
