@@ -120,7 +120,7 @@ class _JobDetailSheetState extends State<JobDetailSheet>
             fontFamily: 'Poppins',
           ),
         ),
-        backgroundColor: isError ? Colors.red[700] : Colors.white,
+        backgroundColor: isError ? Colors.red[700] : Colors.green,
         behavior: SnackBarBehavior.floating,
         elevation: 2,
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
