@@ -445,60 +445,71 @@ class _AnimatedTextFieldState extends State<AnimatedTextField> {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
+          // TextField dengan padding yang tepat untuk posisi tengah
           Padding(
-            padding: const EdgeInsets.only(left: 50, right: 20),
-            child: TextFormField(
-              controller: widget.controller,
-              focusNode: widget.focusNode,
-              keyboardType: widget.keyboardType,
-              style: const TextStyle(
-                color: Color(0xFF515151),
-                fontSize: 14,
-                fontFamily: 'Poppins',
-              ),
-              decoration: const InputDecoration(
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.only(top: 0, left: 0),
-                errorStyle: TextStyle(fontSize: 0, height: 0),
+            padding: const EdgeInsets.only(left: 20, right: 20),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: TextFormField(
+                controller: widget.controller,
+                focusNode: widget.focusNode,
+                keyboardType: widget.keyboardType,
+                style: const TextStyle(
+                  color: Color(0xFF515151),
+                  fontSize: 14,
+                  fontFamily: 'Poppins',
+                  height: 1.0, // Atur height untuk kontrol vertikal yang lebih baik
+                ),
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.only(bottom: 2), // Sesuaikan untuk posisi tengah
+                  isDense: true,
+                  errorStyle: TextStyle(fontSize: 0, height: 0),
+                ),
               ),
             ),
           ),
           AnimatedPositioned(
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeInOut,
-            left: 12,
+            left: 20,
             top: _isFocused ? -10 : 14,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              padding: EdgeInsets.symmetric(
-                horizontal: _isFocused ? 6 : 4,
-                vertical: _isFocused ? 2 : 0,
-              ),
-              decoration: BoxDecoration(
-                color: _isFocused ? Colors.white : Colors.transparent,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    widget.icon,
-                    size: _isFocused ? 14 : 16,
-                    color: const Color(0xFF515151),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    widget.label,
-                    style: TextStyle(
+            child: GestureDetector(
+              onTap: () {
+                widget.focusNode.requestFocus();
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                padding: EdgeInsets.symmetric(
+                  horizontal: _isFocused ? 6 : 4,
+                  vertical: _isFocused ? 2 : 0,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(0),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      widget.icon,
+                      size: _isFocused ? 14 : 16,
                       color: const Color(0xFF515151),
-                      fontSize: _isFocused ? 11 : 14,
-                      fontFamily: 'Poppins',
-                      fontWeight: _isFocused
-                          ? FontWeight.w500
-                          : FontWeight.w400,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 6),
+                    Text(
+                      widget.label,
+                      style: TextStyle(
+                        color: const Color(0xFF515151),
+                        fontSize: _isFocused ? 11 : 14,
+                        fontFamily: 'Poppins',
+                        fontWeight: _isFocused
+                            ? FontWeight.w500
+                            : FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -579,74 +590,88 @@ class _AnimatedPasswordFieldState extends State<AnimatedPasswordField> {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
+          // TextField dengan padding yang tepat untuk posisi tengah
           Padding(
-            padding: const EdgeInsets.only(left: 50, right: 50),
-            child: TextFormField(
-              controller: widget.controller,
-              focusNode: widget.focusNode,
-              obscureText: !widget.isPasswordVisible,
-              style: const TextStyle(
-                color: Color(0xFF515151),
-                fontSize: 14,
-                fontFamily: 'Poppins',
-              ),
-              decoration: const InputDecoration(
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.only(top: 0, left: 0),
-                errorStyle: TextStyle(fontSize: 0, height: 0),
+            padding: const EdgeInsets.only(left: 20, right: 50),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: TextFormField(
+                controller: widget.controller,
+                focusNode: widget.focusNode,
+                obscureText: !widget.isPasswordVisible,
+                style: const TextStyle(
+                  color: Color(0xFF515151),
+                  fontSize: 14,
+                  fontFamily: 'Poppins',
+                  height: 1.0, // Atur height untuk kontrol vertikal yang lebih baik
+                ),
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.only(bottom: 2), // Sesuaikan untuk posisi tengah
+                  isDense: true,
+                  errorStyle: TextStyle(fontSize: 0, height: 0),
+                ),
               ),
             ),
           ),
           Positioned(
             right: 16,
-            top: 14,
-            child: GestureDetector(
-              onTap: widget.onToggleVisibility,
-              child: Icon(
-                widget.isPasswordVisible
-                    ? Icons.visibility
-                    : Icons.visibility_off,
-                size: 20,
-                color: const Color(0xFF515151),
+            top: 0,
+            bottom: 0,
+            child: Center(
+              child: GestureDetector(
+                onTap: widget.onToggleVisibility,
+                child: Icon(
+                  widget.isPasswordVisible
+                      ? Icons.visibility
+                      : Icons.visibility_off,
+                  size: 20,
+                  color: const Color(0xFF515151),
+                ),
               ),
             ),
           ),
           AnimatedPositioned(
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeInOut,
-            left: 12,
+            left: 20,
             top: _isFocused ? -10 : 14,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              padding: EdgeInsets.symmetric(
-                horizontal: _isFocused ? 6 : 4,
-                vertical: _isFocused ? 2 : 0,
-              ),
-              decoration: BoxDecoration(
-                color: _isFocused ? Colors.white : Colors.transparent,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.lock,
-                    size: _isFocused ? 14 : 16,
-                    color: const Color(0xFF515151),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    widget.label,
-                    style: TextStyle(
+            child: GestureDetector(
+              onTap: () {
+                widget.focusNode.requestFocus();
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                padding: EdgeInsets.symmetric(
+                  horizontal: _isFocused ? 6 : 4,
+                  vertical: _isFocused ? 2 : 0,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(0),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.lock,
+                      size: _isFocused ? 14 : 16,
                       color: const Color(0xFF515151),
-                      fontSize: _isFocused ? 11 : 14,
-                      fontFamily: 'Poppins',
-                      fontWeight: _isFocused
-                          ? FontWeight.w500
-                          : FontWeight.w400,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 6),
+                    Text(
+                      widget.label,
+                      style: TextStyle(
+                        color: const Color(0xFF515151),
+                        fontSize: _isFocused ? 11 : 14,
+                        fontFamily: 'Poppins',
+                        fontWeight: _isFocused
+                            ? FontWeight.w500
+                            : FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

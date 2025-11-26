@@ -53,7 +53,12 @@ class _HeaderWidgetState extends State<HeaderWidget> {
   }
 
   void _onFocusChange() {
-    if (!_searchFocusNode.hasFocus) {
+    if (_searchFocusNode.hasFocus) {
+      setState(() {
+        _isSearching = true;
+      });
+      _showSearchOverlay();
+    } else {
       Future.delayed(const Duration(milliseconds: 200), () {
         if (mounted) {
           setState(() {
@@ -135,7 +140,7 @@ class _HeaderWidgetState extends State<HeaderWidget> {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha:0.1),
+                  color: Colors.black.withOpacity(0.1),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -271,64 +276,67 @@ class _HeaderWidgetState extends State<HeaderWidget> {
                   children: [
                     // Search bar
                     Expanded(
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _isSearching = true;
-                          });
-                          _showSearchOverlay(); // ✅ Hanya akan tampil jika ada riwayat
-                          Future.delayed(const Duration(milliseconds: 100), () {
-                            _searchFocusNode.requestFocus();
-                          });
-                        },
-                        child: Container(
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(50),
-                          ),
-                          child: Row(
-                            children: [
-                              const SizedBox(width: 20),
-                              const Icon(Icons.search, color: Colors.white, size: 20),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: TextField(
-                                  controller: _searchController,
-                                  focusNode: _searchFocusNode,
-                                  decoration: const InputDecoration(
-                                    border: InputBorder.none,
-                                    hintText: 'Cari lowongan kerja...',
-                                    hintStyle: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontFamily: 'Poppins',
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                      child: Container(
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(50),
+                          border: _searchFocusNode.hasFocus 
+                              ? Border.all(
+                                  color: Colors.white,
+                                  width: 1.0,
+                                )
+                              : null,
+                        ),
+                        child: Row(
+                          children: [
+                            const SizedBox(width: 20),
+                            const Icon(Icons.search, color: Colors.white, size: 20),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextField(
+                                controller: _searchController,
+                                focusNode: _searchFocusNode,
+                                cursorColor: Colors.white,
+                                decoration: const InputDecoration(
+                                  border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  disabledBorder: InputBorder.none,
+                                  errorBorder: InputBorder.none,
+                                  focusedErrorBorder: InputBorder.none,
+                                  contentPadding: EdgeInsets.zero,
+                                  isDense: true,
+                                  hintText: 'Cari lowongan kerja...',
+                                  hintStyle: TextStyle(
+                                    color: Colors.white70,
                                     fontSize: 14,
                                     fontFamily: 'Poppins',
                                     fontWeight: FontWeight.w500,
                                   ),
-                                  onSubmitted: _handleSearch,
-                                  onTap: () {
-                                    setState(() {
-                                      _isSearching = true;
-                                    });
-                                    _showSearchOverlay(); // ✅ Hanya akan tampil jika ada riwayat
-                                  },
                                 ),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontFamily: 'Poppins',
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                onSubmitted: _handleSearch,
+                                onTap: () {
+                                  setState(() {
+                                    _isSearching = true;
+                                  });
+                                  _showSearchOverlay();
+                                },
                               ),
-                              if (_searchController.text.isNotEmpty)
-                                IconButton(
-                                  icon: const Icon(Icons.close, color: Colors.white, size: 18),
-                                  onPressed: _clearSearch,
-                                ),
-                              const SizedBox(width: 12),
-                            ],
-                          ),
+                            ),
+                            if (_searchController.text.isNotEmpty)
+                              IconButton(
+                                icon: const Icon(Icons.close, color: Colors.white, size: 18),
+                                onPressed: _clearSearch,
+                              ),
+                            const SizedBox(width: 12),
+                          ],
                         ),
                       ),
                     ),
@@ -342,7 +350,7 @@ class _HeaderWidgetState extends State<HeaderWidget> {
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.1),
+                            color: Colors.white.withOpacity(0.1),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
@@ -363,7 +371,7 @@ class _HeaderWidgetState extends State<HeaderWidget> {
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.1),
+                            color: Colors.white.withOpacity(0.1),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
@@ -384,7 +392,7 @@ class _HeaderWidgetState extends State<HeaderWidget> {
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.1),
+                            color: Colors.white.withOpacity(0.1),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
