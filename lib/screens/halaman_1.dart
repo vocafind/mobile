@@ -20,7 +20,7 @@ class Halaman1 extends StatelessWidget {
                   children: [
                     // Logo dari assets SVG
                     SvgPicture.asset(
-                      'assets/icons/icon.svg',
+                      'assets/icons/logo2.svg',
                       width: 116.63,
                       height: 114.35,
                     ),
@@ -35,7 +35,7 @@ class Halaman1 extends StatelessWidget {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Color.fromRGBO(0, 0, 0, 0.6),
-                          fontSize: 15,
+                          fontSize: 16,
                           fontFamily: 'Poppins',
                           fontWeight: FontWeight.w700,
                           height: 1.5,

@@ -69,6 +69,8 @@ flutter:
   - assets/images/kuning.png
   - assets/images/biru.png
   - assets/images/pink.png
+  - assets/icons/logo2.svg
+  - assets/icons/logo2.png
 
 
 
@@ -178,7 +180,7 @@ flutter_icons:
 flutter_native_splash:
   # Menggunakan background image untuk hasil yang sama persis
   color: "#FFFFFF"
-  image: assets/icons/icon.png
+  image: assets/icons/logox4.png
   icon_background_color: "#FFFFFF"
   android: true
   ios: true
@@ -188,7 +190,7 @@ flutter_native_splash:
   # Untuk Android 12+ tetap perlu color + image
   android_12:
     color: "#FFFFFF"
-    image: assets/icons/icon.png
+    image: assets/icons/logox4.png
     icon_background_color: "#FFFFFF"
 
   # To add assets to your application, add an assets section, like this:
