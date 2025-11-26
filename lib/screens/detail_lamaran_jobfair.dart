@@ -44,7 +44,7 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
         break;
       case 'accepted':
       case 'reject_interview':
-        _activeTimeline = 'hasil'; // Untuk status akhir, langsung ke tab hasil
+        _activeTimeline = 'hasil';
         break;
       default:
         _activeTimeline = 'pending';
@@ -129,13 +129,15 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
     );
   }
 
-  // Data untuk setiap fase timeline - DIUPDATE
   Map<String, Map<String, dynamic>> get _timelineData {
     final currentStatus = widget.lamaran.status.toLowerCase();
     final isAccepted = currentStatus == 'accepted';
     final isRejected = currentStatus == 'reject_interview';
     final hasInterviewData = widget.lamaran.hasInterviewData;
     final isFinalStatus = isAccepted || isRejected;
+
+    final interviewTime = widget.lamaran.jobfairInterviewTime;
+    final interviewLocation = widget.lamaran.jobfairInterviewLocation;
 
     return {
       'pending': {
@@ -196,13 +198,12 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
                 {
                   'icon': Icons.calendar_today_rounded,
                   'title': 'Waktu Interview',
-                  'value': widget.lamaran.interview ?? 'Belum dijadwalkan',
+                  'value': interviewTime ?? 'Belum dijadwalkan',
                 },
                 {
                   'icon': Icons.location_on_rounded,
                   'title': 'Tempat Interview',
-                  'value':
-                      widget.lamaran.locationInterview ?? 'Belum ditentukan',
+                  'value': interviewLocation ?? 'Belum ditentukan',
                 },
               ]
             : [
@@ -301,6 +302,13 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
     final hasInterviewData = widget.lamaran.hasInterviewData;
     final isFinalStatus = isAccepted || isRejected;
 
+    final interviewTime = widget.lamaran.jobfairInterviewTime;
+    final interviewLocation = widget.lamaran.jobfairInterviewLocation;
+
+    // Gunakan debug method jika acara null
+    final displayLocation =
+        interviewLocation ?? widget.lamaran.debugAcaraLokasi;
+
     return Container(
       height: MediaQuery.of(context).size.height * 0.9,
       decoration: const BoxDecoration(
@@ -314,7 +322,7 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
             width: 143,
             height: 5,
             decoration: BoxDecoration(
-              color: const Color(0xFF162781).withValues(alpha:0.9),
+              color: const Color(0xFF162781).withOpacity(0.9),
               borderRadius: BorderRadius.circular(20),
             ),
           ),
@@ -434,10 +442,10 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFF383C).withValues(alpha:0.1),
+                      color: const Color(0xFFFF383C).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: const Color(0xFFFF383C).withValues(alpha:0.3),
+                        color: const Color(0xFFFF383C).withOpacity(0.3),
                       ),
                     ),
                     child: Row(
@@ -468,10 +476,10 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF34C759).withValues(alpha:0.1),
+                      color: const Color(0xFF34C759).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: const Color(0xFF34C759).withValues(alpha:0.3),
+                        color: const Color(0xFF34C759).withOpacity(0.3),
                       ),
                     ),
                     child: Row(
@@ -497,17 +505,16 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
                     ),
                   ),
                 ],
-                // Tampilkan info interview jika ada
                 if (hasInterviewData &&
                     widget.lamaran.status.toLowerCase() == 'interview') ...[
                   const SizedBox(height: 16),
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF0088FF).withValues(alpha:0.1),
+                      color: const Color(0xFF0088FF).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: const Color(0xFF0088FF).withValues(alpha:0.3),
+                        color: const Color(0xFF0088FF).withOpacity(0.3),
                       ),
                     ),
                     child: Row(
@@ -533,7 +540,7 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                widget.lamaran.interview!,
+                                interviewTime ?? 'Waktu belum ditentukan',
                                 style: TextStyle(
                                   color: const Color(0xFF515151),
                                   fontSize: 13,
@@ -542,7 +549,7 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
                                 ),
                               ),
                               Text(
-                                widget.lamaran.locationInterview!,
+                                displayLocation ?? 'Tempat belum ditentukan',
                                 style: TextStyle(
                                   color: const Color(0xFF515151),
                                   fontSize: 13,
@@ -694,7 +701,7 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
               boxShadow: (isActive || isCompleted) && isAccessible
                   ? [
                       BoxShadow(
-                        color: backgroundColor.withValues(alpha:0.3),
+                        color: backgroundColor.withOpacity(0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -727,12 +734,7 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
     final isAccepted = widget.lamaran.status.toLowerCase() == 'accepted';
     final isRejected =
         widget.lamaran.status.toLowerCase() == 'reject_interview';
-
-    // ✅ TAMBAHKAN: Cek status untuk menentukan teks yang tepat
     final currentStatus = widget.lamaran.status.toLowerCase();
-    final isPending = currentStatus == 'pending';
-    final isReviewed = currentStatus == 'reviewed';
-    final isInterview = currentStatus == 'interview';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(18, 16, 18, 30),
@@ -748,7 +750,7 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
               border: Border.all(color: const Color(0xFFE5E8EB), width: 1),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha:0.05),
+                  color: Colors.black.withOpacity(0.05),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -778,37 +780,30 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
                         ),
                         decoration: BoxDecoration(
                           color: (activeData['isSuccess'] ?? false)
-                              ? const Color(0xFF34C759).withValues(alpha:0.1)
+                              ? const Color(0xFF34C759).withOpacity(0.1)
                               : (activeData['isRejected'] ?? false)
-                              ? const Color(0xFFFF383C).withValues(alpha:0.1)
-                              : const Color(0xFF0088FF).withValues(alpha:
-                                  0.1,
-                                ), // ✅ WARNA BIRU UNTUK DIPROSES
+                              ? const Color(0xFFFF383C).withOpacity(0.1)
+                              : const Color(0xFF0088FF).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              // ✅ ICON BERBEDA BERDASARKAN STATUS
                               (activeData['isSuccess'] ?? false)
                                   ? Icons.check_circle_rounded
                                   : (activeData['isRejected'] ?? false)
                                   ? Icons.cancel_rounded
-                                  : Icons
-                                        .access_time_rounded, // ✅ ICON JAM UNTUK DIPROSES
+                                  : Icons.access_time_rounded,
                               color: (activeData['isSuccess'] ?? false)
                                   ? const Color(0xFF34C759)
                                   : (activeData['isRejected'] ?? false)
                                   ? const Color(0xFFFF383C)
-                                  : const Color(
-                                      0xFF0088FF,
-                                    ), // ✅ WARNA BIRU UNTUK DIPROSES
+                                  : const Color(0xFF0088FF),
                               size: 14,
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              // ✅ TEKS BERBEDA BERDASARKAN STATUS
                               (activeData['isSuccess'] ?? false)
                                   ? 'Diterima'
                                   : (activeData['isRejected'] ?? false)
@@ -816,15 +811,13 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
                                   : _getStatusText(
                                       currentStatus,
                                       activeData['title'],
-                                    ), // ✅ FUNGSI BARU UNTUK TEKS STATUS
+                                    ),
                               style: TextStyle(
                                 color: (activeData['isSuccess'] ?? false)
                                     ? const Color(0xFF34C759)
                                     : (activeData['isRejected'] ?? false)
                                     ? const Color(0xFFFF383C)
-                                    : const Color(
-                                        0xFF0088FF,
-                                      ), // ✅ WARNA BIRU UNTUK DIPROSES
+                                    : const Color(0xFF0088FF),
                                 fontSize: 11,
                                 fontFamily: 'SF Pro',
                                 fontWeight: FontWeight.w600,
@@ -870,7 +863,7 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
   String _getStatusText(String currentStatus, String phaseTitle) {
     switch (currentStatus) {
       case 'pending':
-        return 'Diproses'; // ✅ TEKS BARU UNTUK PENDING
+        return 'Diproses';
       case 'reviewed':
         return 'Ditinjau';
       case 'interview':
@@ -880,8 +873,8 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
       case 'reject_interview':
         return 'Ditolak';
       default:
-        return 'Diproses'; // Default fallback
-    } 
+        return 'Diproses';
+    }
   }
 
   List<Widget> _buildDetailItems(List<dynamic> details) {
@@ -931,9 +924,7 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
                 const SizedBox(height: 4),
                 if (isLink)
                   GestureDetector(
-                    onTap: () {
-                      // Handle link tap
-                    },
+                    onTap: () {},
                     child: Text(
                       value,
                       style: const TextStyle(
@@ -964,6 +955,82 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
   }
 
   Widget _buildInterviewQRCode() {
+    // Cek apakah memiliki QR Code
+    if (!widget.lamaran.hasQrCode || widget.lamaran.qrCodeUrl == null) {
+      return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(top: 8),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE5E8EB), width: 1),
+        ),
+        child: Column(
+          children: [
+            const Row(
+              children: [
+                Icon(
+                  Icons.qr_code_2_rounded,
+                  color: Color(0xFF6B7280),
+                  size: 20,
+                ),
+                SizedBox(width: 8),
+                Text(
+                  'QR Code untuk Check-in',
+                  style: TextStyle(
+                    color: Color(0xFF6B7280),
+                    fontSize: 15,
+                    fontFamily: 'SF Pro',
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5F7FA),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE5E8EB)),
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.qr_code_2_rounded,
+                    size: 60,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'QR Code belum tersedia',
+                    style: TextStyle(
+                      color: Color(0xFF6B7280),
+                      fontSize: 14,
+                      fontFamily: 'SF Pro',
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'QR Code akan tersedia saat jadwal interview mendekati',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Color(0xFF9CA3AF),
+                      fontSize: 12,
+                      fontFamily: 'SF Pro',
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(top: 8),
@@ -972,7 +1039,7 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFF2643D7).withValues(alpha:0.2),
+          color: const Color(0xFF2643D7).withOpacity(0.2),
           width: 1,
         ),
       ),
@@ -1003,18 +1070,70 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
             ),
             child: Column(
               children: [
+                // Tampilkan QR Code dari URL
                 Container(
                   width: 160,
                   height: 160,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFE5E8EB)),
                   ),
-                  child: Icon(
-                    Icons.qr_code_2_rounded,
-                    size: 120,
-                    color: Colors.grey[300],
-                  ),
+                  child: widget.lamaran.qrCodeUrl != null
+                      ? Image.network(
+                          widget.lamaran.qrCodeUrl!,
+                          fit: BoxFit.contain,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Center(
+                              child: CircularProgressIndicator(
+                                value:
+                                    loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                    : null,
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.error_outline,
+                                  color: Colors.red,
+                                  size: 40,
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  'Gagal memuat QR',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.red,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        )
+                      : const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.qr_code_2_rounded,
+                              size: 60,
+                              color: Colors.grey,
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'QR tidak tersedia',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
                 ),
                 const SizedBox(height: 12),
                 Container(
@@ -1023,7 +1142,7 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF162781).withValues(alpha:0.05),
+                    color: const Color(0xFF162781).withOpacity(0.05),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -1034,6 +1153,26 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
                       fontFamily: 'SF Pro',
                       fontWeight: FontWeight.w600,
                       letterSpacing: 1.2,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0088FF).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    'Sumber: ${widget.lamaran.qrCodeSource}',
+                    style: const TextStyle(
+                      color: Color(0xFF0088FF),
+                      fontSize: 10,
+                      fontFamily: 'SF Pro',
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
@@ -1054,31 +1193,16 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
           const SizedBox(height: 16),
           GestureDetector(
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Row(
-                    children: [
-                      Icon(Icons.check_circle, color: Colors.white),
-                      SizedBox(width: 12),
-                      Text('QR Code berhasil diunduh'),
-                    ],
-                  ),
-                  backgroundColor: const Color(0xFF34C759),
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              );
+              _downloadQRCode(context);
             },
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFF2643D7).withValues(alpha:0.1),
+                color: const Color(0xFF2643D7).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(0xFF2643D7).withValues(alpha:0.3),
+                  color: const Color(0xFF2643D7).withOpacity(0.3),
                 ),
               ),
               child: const Row(
@@ -1108,6 +1232,66 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
     );
   }
 
+  void _downloadQRCode(BuildContext context) {
+    if (widget.lamaran.qrCodeUrl == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.white, size: 20),
+              SizedBox(width: 8),
+              Text('QR Code tidak tersedia untuk diunduh'),
+            ],
+          ),
+          backgroundColor: const Color(0xFFFF383C),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+      return;
+    }
+
+    // Simulasikan proses download
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Row(
+          children: [
+            Icon(Icons.download_rounded, color: Colors.white, size: 20),
+            SizedBox(width: 8),
+            Text('Mengunduh QR Code...'),
+          ],
+        ),
+        backgroundColor: const Color(0xFF0088FF),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+
+    // Setelah 2 detik, tampilkan notifikasi berhasil
+    Future.delayed(const Duration(seconds: 2), () {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white, size: 20),
+              SizedBox(width: 8),
+              Text('QR Code berhasil diunduh'),
+            ],
+          ),
+          backgroundColor: const Color(0xFF34C759),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    });
+  }
+
   Widget _buildFinalStatusInfo(bool isAccepted, bool isRejected) {
     return Container(
       width: double.infinity,
@@ -1115,13 +1299,13 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isAccepted
-            ? const Color(0xFF34C759).withValues(alpha:0.1)
-            : const Color(0xFFFF383C).withValues(alpha:0.1),
+            ? const Color(0xFF34C759).withOpacity(0.1)
+            : const Color(0xFFFF383C).withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isAccepted
-              ? const Color(0xFF34C759).withValues(alpha:0.3)
-              : const Color(0xFFFF383C).withValues(alpha:0.3),
+              ? const Color(0xFF34C759).withOpacity(0.3)
+              : const Color(0xFFFF383C).withOpacity(0.3),
         ),
       ),
       child: Column(
