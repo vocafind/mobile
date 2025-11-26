@@ -145,6 +145,7 @@ class ApiConfig {
   // ------------------------------------------------------------- Lamar Loker Umum
   static String Lamarloker(String lowonganId) => "$baseUrl/Lamar/lokerUmum/$lowonganId";                   // Lamar Loker UUmum
   static String getLamaranSaya() => "$baseUrl/Lamar/lamaran-saya";                                         // Get Lamaran Saya
+    static String getLamaranJobfairSaya() => "$baseUrl/Lamar/lamaran-jobfair-saya"; // Hanya jobfair
   static String batalkanLamaran(String lamaranId) => "$baseUrl/Lamar/batal/$lamaranId";                    // Batalkan Lamaran
 
 
@@ -187,5 +188,12 @@ class ApiConfig {
     return '$baseUrlFoto$cleanPath';
   }
 
+
+  // Lamar Jobfair
+  static String lamarJobfair(String lowonganId) => "$baseUrl/LamarJobfair/lokerAcara/$lowonganId";
+  static String getLamaranAcaraSaya(String acaraId) => "$baseUrl/LamarJobfair/lamaran-acara-saya/$acaraId";
+  static String getSemuaLamaranAcara() => "$baseUrl/LamarJobfair/semua-lamaran-acara";
+  static String batalkanLamaranAcara(String applyId) => "$baseUrl/LamarJobfair/batal/$applyId";
+  static String getStatusRegistrasiAcara(int acaraId) => "$baseUrl/LamarJobfair/status-registrasi/$acaraId";
 
 }

@@ -1,6 +1,7 @@
 // halaman_jobfair_detail.dart
 import 'package:flutter/material.dart';
 import 'package:jobfair/api/endpoints.dart';
+import 'package:jobfair/models/lamar_jobfair_model.dart';
 import 'package:jobfair/models/loker_umum_detail_model.dart';
 import 'package:jobfair/screens/detail_job_sheet_jobfair.dart';
 import 'package:jobfair/widget/bottom_navbar.dart';
@@ -19,17 +20,24 @@ class HalamanJobfairDetail extends StatefulWidget {
 class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
   final ApiService _apiService = ApiService();
   late Future<JobfairDetail?> _jobfairDetailFuture;
-  final ScrollController _scrollController =
-      ScrollController(); // TAMBAHKAN INI
-  final GlobalKey _jobsSectionKey = GlobalKey(); // TAMBAHKAN INI
+  late Future<StatusRegistrasiAcara> _statusRegistrasiFuture;
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _jobsSectionKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
     _jobfairDetailFuture = _apiService.getJobfairDetailById(widget.jobfairId);
+    _statusRegistrasiFuture = _apiService.getStatusRegistrasiAcara(widget.jobfairId);
   }
 
-  // TAMBAHKAN METHOD INI
+  void _refreshData() {
+    setState(() {
+      _jobfairDetailFuture = _apiService.getJobfairDetailById(widget.jobfairId);
+      _statusRegistrasiFuture = _apiService.getStatusRegistrasiAcara(widget.jobfairId);
+    });
+  }
+
   void _showRegistrationSnackbar() {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -52,9 +60,7 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
     );
   }
 
-  // TAMBAHKAN METHOD INI
   void _scrollToJobsSection() {
-    // Delay sedikit untuk memastikan snackbar sudah muncul
     Future.delayed(const Duration(milliseconds: 500), () {
       if (_jobsSectionKey.currentContext != null) {
         Scrollable.ensureVisible(
@@ -89,32 +95,29 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
   }
 
   Widget _buildDetailContent(JobfairDetail jobfair) {
-    return SingleChildScrollView(
-      controller: _scrollController, // TAMBAHKAN INI
-      child: Column(
-        children: [
-          // Header dengan gradient dan info job fair
-          _buildHeader(context, jobfair),
-
-          // Carousel images
-          _buildImageCarousel(jobfair),
-
-          // Tentang acara section
-          _buildAboutSection(jobfair),
-
-          // Perusahaan berpartisipasi
-          _buildCompaniesSection(jobfair),
-
-          // Lowongan tersedia - TAMBAHKAN KEY DI SINI
-          _buildJobsSection(jobfair),
-
-          const SizedBox(height: 100),
-        ],
-      ),
+    return FutureBuilder<StatusRegistrasiAcara>(
+      future: _statusRegistrasiFuture,
+      builder: (context, statusSnapshot) {
+        final statusRegistrasi = statusSnapshot.data;
+        
+        return SingleChildScrollView(
+          controller: _scrollController,
+          child: Column(
+            children: [
+              _buildHeader(context, jobfair, statusRegistrasi),
+              _buildImageCarousel(jobfair),
+              _buildAboutSection(jobfair),
+              _buildCompaniesSection(jobfair),
+              _buildJobsSection(jobfair, statusRegistrasi),
+              const SizedBox(height: 100),
+            ],
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildHeader(BuildContext context, JobfairDetail jobfair) {
+  Widget _buildHeader(BuildContext context, JobfairDetail jobfair, StatusRegistrasiAcara? statusRegistrasi) {
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -130,10 +133,8 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 10),
-              // Back button, Search bar dan filter
               Row(
                 children: [
-                  // Back button
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
                     child: Container(
@@ -193,7 +194,6 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
                 ],
               ),
               const SizedBox(height: 24),
-              // Title
               Text(
                 jobfair.namaAcara,
                 style: const TextStyle(
@@ -204,7 +204,6 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
                 ),
               ),
               const SizedBox(height: 12),
-              // Location
               Row(
                 children: [
                   const Icon(Icons.location_on, color: Colors.white, size: 12),
@@ -222,7 +221,6 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
                 ],
               ),
               const SizedBox(height: 8),
-              // Date
               Row(
                 children: [
                   const Icon(
@@ -242,7 +240,6 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
                 ],
               ),
               const SizedBox(height: 12),
-              // Registration info
               Text(
                 'Pendaftaran : ${jobfair.formattedRegistrationDate}',
                 style: const TextStyle(
@@ -253,7 +250,6 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
                 ),
               ),
               const SizedBox(height: 12),
-              // Badges
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
@@ -266,10 +262,13 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
                   ],
                 ),
               ),
-              const SizedBox(height: 20), // Reduced spacing
-              // TOMBOL DAFTAR ACARA - TAMBAHAN BARU
-              _buildRegisterButton(context),
-
+              const SizedBox(height: 20),
+              if (statusRegistrasi != null)
+                statusRegistrasi.isRegistered
+                    ? _buildRegistrationStatus(statusRegistrasi)
+                    : _buildRegisterButton(context)
+              else
+                _buildRegisterButtonLoading(),
               const SizedBox(height: 30),
             ],
           ),
@@ -278,15 +277,101 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
     );
   }
 
+  Widget _buildRegistrationStatus(StatusRegistrasiAcara status) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.check_circle,
+                color: Colors.green[300],
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Anda sudah terdaftar',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (status.registrationCode != null) ...[
+            _buildRegistrationInfoRow(
+              'Kode Registrasi',
+              status.registrationCode!,
+              Icons.confirmation_number,
+            ),
+            const SizedBox(height: 8),
+          ],
+          _buildRegistrationInfoRow(
+            'Jumlah Lamaran Anda',
+            '${status.applicationCount} / 3 lowongan',
+            Icons.work,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRegistrationInfoRow(String label, String value, IconData icon) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          color: Colors.white.withOpacity(0.7),
+          size: 16,
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.7),
+                  fontSize: 12,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildRegisterButton(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // Opsi 1: Langsung tampilkan snackbar dan scroll (tanpa dialog konfirmasi)
         _showRegistrationSnackbar();
         _scrollToJobsSection();
-
-        // Opsi 2: Jika ingin tetap pakai dialog, ganti dengan:
-        // _showRegistrationDialog();
       },
       child: Container(
         width: double.infinity,
@@ -315,10 +400,29 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
     );
   }
 
-  @override
-  void dispose() {
-    _scrollController.dispose(); // JANGAN LUPA DISPOSE
-    super.dispose();
+  Widget _buildRegisterButtonLoading() {
+    return Container(
+      width: double.infinity,
+      height: 40,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(45),
+        border: Border.all(
+          color: const Color(0xFFF1F5F9).withOpacity(0.4),
+          width: 1,
+        ),
+      ),
+      child: const Center(
+        child: SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildBadge(String text) {
@@ -347,23 +451,10 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
     );
   }
 
-  // halaman_jobfair_detail.dart - Update bagian ini saja
-
   Widget _buildImageCarousel(JobfairDetail jobfair) {
-    // Jika ada flyer dari API, gunakan flyer tersebut
-    // Jika tidak, gunakan gambar default
     final images = jobfair.flyerAcara.isNotEmpty
         ? jobfair.flyerAcara
         : [FlyerAcara(flyerUrl: 'assets/images/image10.png')];
-
-    // Debug info untuk memeriksa flyer
-    print('📋 Total flyer: ${images.length}');
-    for (var i = 0; i < images.length; i++) {
-      final flyer = images[i];
-      final fullUrl = ApiConfig.getFullImageUrl(flyer.flyerUrl);
-      print('🖼️ Flyer $i: ${flyer.flyerUrl}');
-      print('🔗 Full URL: $fullUrl');
-    }
 
     return Container(
       height: 240,
@@ -392,12 +483,7 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
   }
 
   Widget _buildCarouselImage(String imageUrl) {
-    // Gunakan helper untuk mendapatkan full URL
     final fullImageUrl = ApiConfig.getFullImageUrl(imageUrl);
-
-    print('🖼️ Loading image from: $fullImageUrl');
-
-    // Cek apakah ini asset local atau network image
     final isNetworkImage = fullImageUrl.startsWith('http');
 
     return ClipRRect(
@@ -425,8 +511,6 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
                 );
               },
               errorBuilder: (context, error, stackTrace) {
-                print('❌ Error loading image: $error');
-                print('❌ StackTrace: $stackTrace');
                 return Container(
                   width: 336,
                   height: 202,
@@ -444,21 +528,13 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
                         'Gagal memuat gambar',
                         style: TextStyle(color: Colors.grey[600], fontSize: 12),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        imageUrl,
-                        style: TextStyle(color: Colors.grey[500], fontSize: 10),
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
                     ],
                   ),
                 );
               },
             )
           : Image.asset(
-              imageUrl, // Untuk asset local
+              imageUrl,
               width: 336,
               height: 202,
               fit: BoxFit.cover,
@@ -536,12 +612,9 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
     if (deskripsi == null || deskripsi.isEmpty) {
       return 'Tidak ada deskripsi tersedia untuk acara ini.';
     }
-
-    // Potong deskripsi jika lebih dari 200 karakter
     if (deskripsi.length > 200) {
       return '${deskripsi.substring(0, 200)}...';
     }
-
     return deskripsi;
   }
 
@@ -551,7 +624,7 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
 
   Widget _buildCompaniesSection(JobfairDetail jobfair) {
     if (jobfair.perusahaan.isEmpty) {
-      return Container(); // Jangan tampilkan section jika tidak ada perusahaan
+      return Container();
     }
 
     return Container(
@@ -575,7 +648,6 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
             ),
           ),
           const SizedBox(height: 20),
-          // Horizontal scrollable company logos
           SizedBox(
             height: 80,
             child: ListView(
@@ -661,9 +733,11 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
     );
   }
 
-  Widget _buildJobsSection(JobfairDetail jobfair) {
+  Widget _buildJobsSection(JobfairDetail jobfair, StatusRegistrasiAcara? statusRegistrasi) {
+    final canApply = statusRegistrasi?.canApplyMore ?? true;
+    
     return Container(
-      key: _jobsSectionKey, // TAMBAHKAN INI
+      key: _jobsSectionKey,
       width: double.infinity,
       color: const Color(0xFFFAFAFA),
       margin: const EdgeInsets.only(top: 15),
@@ -672,14 +746,46 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(19, 25, 19, 16),
-            child: Text(
-              'Lowongan tersedia (${jobfair.lowonganAcara.length})',
-              style: const TextStyle(
-                color: Color(0xFF18181B),
-                fontSize: 20,
-                fontFamily: 'SF Pro',
-                fontWeight: FontWeight.w600,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Lowongan tersedia (${jobfair.lowonganAcara.length})',
+                  style: const TextStyle(
+                    color: Color(0xFF18181B),
+                    fontSize: 20,
+                    fontFamily: 'SF Pro',
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (!canApply) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.orange[50],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.orange[200]!),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.info, color: Colors.orange[800], size: 16),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Anda sudah mencapai batas maksimal lamaran',
+                            style: TextStyle(
+                              color: Colors.orange[800],
+                              fontSize: 12,
+                              fontFamily: 'Poppins',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
           Padding(
@@ -689,7 +795,7 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
                   .map(
                     (lowongan) => Padding(
                       padding: const EdgeInsets.only(bottom: 16),
-                      child: _buildJobCard(lowongan),
+                      child: _buildJobCard(lowongan, canApply),
                     ),
                   )
                   .toList(),
@@ -701,198 +807,193 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
     );
   }
 
-  // Ganti seluruh method _buildJobCard dengan kode berikut:
-  Widget _buildJobCard(LowonganAcara lowongan) {
+  Widget _buildJobCard(LowonganAcara lowongan, bool canApply) {
     return GestureDetector(
-      onTap: () {
-        // Panggil JobDetailSheetJobfair ketika card di tap
-        _showJobDetail(lowongan);
-      },
-      child: Container(
-        width: double.infinity,
-        height: 220,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 40, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Company Logo
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(8),
+      onTap: canApply
+          ? () {
+              _showJobDetail(lowongan);
+            }
+          : null,
+      child: Opacity(
+        opacity: canApply ? 1.0 : 0.6,
+        child: Container(
+          width: double.infinity,
+          height: 220,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 40, 16, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: lowongan.logo != null && lowongan.logo!.isNotEmpty
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    ApiConfig.getFullImageUrl(lowongan.logo),
+                                    fit: BoxFit.contain,
+                                    loadingBuilder: (context, child, loadingProgress) {
+                                      if (loadingProgress == null) return child;
+                                      return Center(
+                                        child: CircularProgressIndicator(
+                                          value: loadingProgress.expectedTotalBytes != null
+                                              ? loadingProgress.cumulativeBytesLoaded /
+                                                    loadingProgress.expectedTotalBytes!
+                                              : null,
+                                        ),
+                                      );
+                                    },
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return _buildLogoPlaceholder();
+                                    },
+                                  ),
+                                )
+                              : _buildLogoPlaceholder(),
                         ),
-                        child:
-                            lowongan.logo != null && lowongan.logo!.isNotEmpty
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.network(
-                                  ApiConfig.getFullImageUrl(lowongan.logo),
-                                  fit: BoxFit.contain,
-                                  loadingBuilder:
-                                      (context, child, loadingProgress) {
-                                        if (loadingProgress == null)
-                                          return child;
-                                        return Center(
-                                          child: CircularProgressIndicator(
-                                            value:
-                                                loadingProgress
-                                                        .expectedTotalBytes !=
-                                                    null
-                                                ? loadingProgress
-                                                          .cumulativeBytesLoaded /
-                                                      loadingProgress
-                                                          .expectedTotalBytes!
-                                                : null,
-                                          ),
-                                        );
-                                      },
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return _buildLogoPlaceholder();
-                                  },
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 200),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  lowongan.posisi,
+                                  style: const TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 16,
+                                    fontFamily: 'Poppins',
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              )
-                            : _buildLogoPlaceholder(),
-                      ),
-                      const SizedBox(width: 12),
-
-                      // Job Title and Company
-                      Expanded(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 200),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                lowongan.posisi,
-                                style: const TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 16,
-                                  fontFamily: 'Poppins',
-                                  fontWeight: FontWeight.w600,
+                                const SizedBox(height: 2),
+                                Text(
+                                  lowongan.namaPerusahaan,
+                                  style: const TextStyle(
+                                    color: Color(0xFF666666),
+                                    fontSize: 14,
+                                    fontFamily: 'Poppins',
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                lowongan.namaPerusahaan,
-                                style: const TextStyle(
-                                  color: Color(0xFF666666),
-                                  fontSize: 14,
-                                  fontFamily: 'Poppins',
-                                  fontWeight: FontWeight.w400,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-
-                      // Bookmark Icon
-                      GestureDetector(
-                        onTap: () {
-                          _toggleBookmark(lowongan.lowonganId);
-                        },
-                        child: SizedBox(
-                          width: 32,
-                          height: 32,
-                          child: Icon(
-                            Icons.bookmark_border,
-                            color: Colors.black.withOpacity(0.3),
-                            size: 24,
+                        GestureDetector(
+                          onTap: () {
+                            _toggleBookmark(lowongan.lowonganId);
+                          },
+                          child: SizedBox(
+                            width: 32,
+                            height: 32,
+                            child: Icon(
+                              Icons.bookmark_border,
+                              color: Colors.black.withOpacity(0.3),
+                              size: 24,
+                            ),
                           ),
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      _formatSalary(lowongan.gaji),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w700,
                       ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // Salary
-                  Text(
-                    _formatSalary(lowongan.gaji),
-                    style: const TextStyle(
-                      color: Color(0xFF1B56FD),
-                      fontSize: 18,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w700,
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _buildJobTag(lowongan.lokasi),
+                        _buildJobTag(lowongan.jenisPekerjaan),
+                        if (lowongan.opsiKerjaRemote) _buildJobTag('Remote'),
+                        if (lowongan.minimalLulusan != null &&
+                            lowongan.minimalLulusan!.isNotEmpty)
+                          _buildJobTag(lowongan.minimalLulusan!),
+                      ],
+                    ),
+                    const Spacer(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          lowongan.timeAgo,
+                          style: const TextStyle(
+                            color: Color(0xFF999999),
+                            fontSize: 12,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        Text(
+                          '${lowongan.jumlahPelamar} pelamar',
+                          style: const TextStyle(
+                            color: Color(0xFF999999),
+                            fontSize: 12,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              if (!canApply)
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.block,
+                        color: Colors.white,
+                        size: 40,
+                      ),
                     ),
                   ),
-
-                  const SizedBox(height: 12),
-
-                  // Tags
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _buildJobTag(lowongan.lokasi),
-                      _buildJobTag(lowongan.jenisPekerjaan),
-                      if (lowongan.opsiKerjaRemote) _buildJobTag('Remote'),
-                      if (lowongan.minimalLulusan != null &&
-                          lowongan.minimalLulusan!.isNotEmpty)
-                        _buildJobTag(lowongan.minimalLulusan!),
-                    ],
-                  ),
-
-                  const Spacer(),
-
-                  // Footer info
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        lowongan.timeAgo,
-                        style: const TextStyle(
-                          color: Color(0xFF999999),
-                          fontSize: 12,
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                      Text(
-                        '${lowongan.jumlahPelamar} pelamar',
-                        style: const TextStyle(
-                          color: Color(0xFF999999),
-                          fontSize: 12,
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
+                ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   void _showJobDetail(LowonganAcara lowongan) {
-    // Konversi LowonganAcara ke LokerUmumDetail
     final lokerDetail = _convertToLokerUmumDetail(lowongan);
 
     showModalBottomSheet(
@@ -901,14 +1002,8 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
       backgroundColor: Colors.transparent,
       builder: (context) => JobDetailSheetJobfair(loker: lokerDetail),
     ).then((shouldRefresh) {
-      // Handle refresh jika diperlukan setelah melamar lowongan
       if (shouldRefresh == true) {
-        // Refresh data jobfair detail
-        setState(() {
-          _jobfairDetailFuture = _apiService.getJobfairDetailById(
-            widget.jobfairId,
-          );
-        });
+        _refreshData();
       }
     });
   }
@@ -933,7 +1028,6 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
       peluangKarir: lowongan.peluangKarir,
       namaPerusahaan: lowongan.namaPerusahaan,
       logo: lowongan.logo ?? '',
-      // Field tambahan yang diperlukan oleh JobDetailSheetJobfair
       nib: '',
       npwp: '',
       bidangUsaha: '',
@@ -957,15 +1051,12 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
 
   Future<void> _toggleBookmark(String lowonganId) async {
     try {
-      // TODO: Implement bookmark functionality
       print('Bookmark toggled for: $lowonganId');
-      // Panggil API untuk save/unsave job
     } catch (e) {
       print('Error toggling bookmark: $e');
     }
   }
 
-  // Helper methods untuk _buildJobCard
   Widget _buildLogoPlaceholder() {
     return Container(
       decoration: BoxDecoration(
@@ -1003,7 +1094,6 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
     return 'Rp $gaji';
   }
 
-
   Widget _buildLoadingState() {
     return const Center(child: CircularProgressIndicator());
   }
@@ -1028,11 +1118,7 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () {
-              setState(() {
-                _jobfairDetailFuture = _apiService.getJobfairDetailById(
-                  widget.jobfairId,
-                );
-              });
+              _refreshData();
             },
             child: const Text('Coba Lagi'),
           ),
@@ -1064,5 +1150,11 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 }

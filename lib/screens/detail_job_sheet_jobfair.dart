@@ -11,8 +11,9 @@ class JobDetailSheetJobfair extends StatefulWidget {
   State<JobDetailSheetJobfair> createState() => _JobDetailSheetJobfairState();
 }
 
-class _JobDetailSheetJobfairState extends State<JobDetailSheetJobfair> 
-    with SingleTickerProviderStateMixin { // ✅ TAMBAHKAN INI
+class _JobDetailSheetJobfairState extends State<JobDetailSheetJobfair>
+    with SingleTickerProviderStateMixin {
+  // ✅ TAMBAHKAN INI
   int _selectedTab = 0;
   bool _isLoading = false;
   bool _isSaved = false;
@@ -31,16 +32,17 @@ class _JobDetailSheetJobfairState extends State<JobDetailSheetJobfair>
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize animation controller - FIXED
     _bookmarkController = AnimationController(
       duration: const Duration(milliseconds: 200),
-      vsync: this, // ✅ SEKSUDah BISA PAKAI 'this' karena sudah pakai SingleTickerProviderStateMixin
+      vsync:
+          this, // ✅ SEKSUDah BISA PAKAI 'this' karena sudah pakai SingleTickerProviderStateMixin
     );
     _bookmarkScale = Tween<double>(begin: 1.0, end: 1.3).animate(
       CurvedAnimation(parent: _bookmarkController, curve: Curves.easeInOut),
     );
-    
+
     // Check saved status ketika detail dibuka
     _checkSavedStatus();
   }
@@ -61,7 +63,9 @@ class _JobDetailSheetJobfairState extends State<JobDetailSheetJobfair>
     }
 
     try {
-      final isSaved = await _apiService.checkIfJobIsSaved(widget.loker!.lowonganId);
+      final isSaved = await _apiService.checkIfJobIsSaved(
+        widget.loker!.lowonganId,
+      );
       setState(() {
         _isSaved = isSaved;
         _checkingSavedStatus = false;
@@ -82,7 +86,7 @@ class _JobDetailSheetJobfairState extends State<JobDetailSheetJobfair>
     setState(() {
       _isSaved = !_isSaved;
     });
-    
+
     // Play animation
     _bookmarkController.forward().then((_) {
       _bookmarkController.reverse();
@@ -131,7 +135,7 @@ class _JobDetailSheetJobfairState extends State<JobDetailSheetJobfair>
   }
 
   // Di fungsi _lamarLoker di JobDetailSheetJobfair
-  Future<void> _lamarLoker() async {
+  Future<void> _lamarJobfair() async {
     if (widget.loker?.lowonganId == null) return;
 
     setState(() {
@@ -139,17 +143,17 @@ class _JobDetailSheetJobfairState extends State<JobDetailSheetJobfair>
     });
 
     try {
-      final response = await _apiService.lamarLokerUmum(
-        widget.loker!.lowonganId,
-      );
+      final response = await _apiService.lamarJobfair(widget.loker!.lowonganId);
 
       if (mounted) {
         _showSnackBar(response.message);
 
-        // Refresh data di halaman pencarian
+        // Return true untuk trigger refresh di halaman jobfair detail
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) {
-            Navigator.of(context).pop(true); // Return true untuk trigger refresh
+            Navigator.of(
+              context,
+            ).pop(true); // Return true untuk trigger refresh
           }
         });
       }
@@ -309,7 +313,8 @@ class _JobDetailSheetJobfairState extends State<JobDetailSheetJobfair>
                 children: [
                   if (isRemote) _buildTag('Remote'),
                   if (jenisPekerjaan.isNotEmpty) _buildTag(jenisPekerjaan),
-                  if (tingkatPengalaman.isNotEmpty) _buildTag(tingkatPengalaman),
+                  if (tingkatPengalaman.isNotEmpty)
+                    _buildTag(tingkatPengalaman),
                 ],
               ),
             ],
@@ -343,7 +348,7 @@ class _JobDetailSheetJobfairState extends State<JobDetailSheetJobfair>
                         : Icon(
                             Icons.bookmark_border,
                             key: const ValueKey('unsaved'),
-                            color: Colors.black.withValues(alpha:0.3),
+                            color: Colors.black.withValues(alpha: 0.3),
                             size: 24,
                           ),
                   ),
@@ -838,7 +843,7 @@ class _JobDetailSheetJobfairState extends State<JobDetailSheetJobfair>
       child: ElevatedButton(
         onPressed: (isKuotaPenuh || isExpired || _isLoading)
             ? null
-            : _lamarLoker,
+            : _lamarJobfair, // Ganti dengan _lamarJobfair
         style: ElevatedButton.styleFrom(
           backgroundColor: (isKuotaPenuh || isExpired)
               ? Colors.grey

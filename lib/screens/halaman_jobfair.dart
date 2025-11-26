@@ -104,154 +104,234 @@ class _HalamanJobfairState extends State<HalamanJobfair> {
     required Jobfair jobfair,
     required String imagePath,
   }) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => HalamanJobfairDetail(jobfairId: jobfair.id),
+    // Convert days until event start
+    final now = DateTime.now();
+    final diff = jobfair.tanggalMulaiAcara.difference(DateTime(now.year, now.month, now.day));
+    final daysLeft = diff.inDays;
+    final daysText = daysLeft > 0 ? '$daysLeft hari lagi' : 'Berlangsung';
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 16),
+      child: GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HalamanJobfairDetail(jobfairId: jobfair.id),
+            ),
+          );
+        },
+        child: Container(
+          width: 338,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(34),
           ),
-        );
-      },
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Stack(
-          children: [
-            // Background image
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Image.asset(
-                imagePath,
-                width: double.infinity,
-                height: 240,
-                fit: BoxFit.cover,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            jobfair.namaAcara,
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 16,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w500,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          daysText,
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 12,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      jobfair.acaraBkk ?? 'Politeknik Negeri Batam',
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 13,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            // Dark overlay
-            Container(
-              height: 240,
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-            // Content
-            Container(
-              height: 240,
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Stack(
                 children: [
-                  // Badges row
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
+                  ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(34),
+                      bottomRight: Radius.circular(34),
+                    ),
+                    child: Container(
+                      width: 338,
+                      height: 236,
+                      color: const Color(0xFFE8F0FE),
+                      child: Image.asset(
+                        imagePath,
+                        fit: BoxFit.cover,
+                        cacheWidth: 676,
+                        cacheHeight: 472,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    width: 338,
+                    height: 236,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.1),
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(34),
+                        bottomRight: Radius.circular(34),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: 24,
+                    top: 24,
                     child: Row(
                       children: [
-                        _buildBadge(jobfair.capacityText),
-                        const SizedBox(width: 6),
-                        _buildBadge(jobfair.jobsText),
-                        const SizedBox(width: 6),
-                        _buildBadge(jobfair.companiesText),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(45),
+                            border: Border.all(
+                              color: const Color(0xFFF3F6F9).withOpacity(0.4),
+                            ),
+                          ),
+                          child: Text(
+                            jobfair.jobsText,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(45),
+                            border: Border.all(
+                              color: const Color(0xFFF3F6F9).withOpacity(0.4),
+                            ),
+                          ),
+                          child: Text(
+                            jobfair.companiesText,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 18),
-                  // Title
-                  Text(
-                    jobfair.namaAcara,
-                    style: const TextStyle(
-                      color: Color(0xFFFFFBFB),
-                      fontSize: 18,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  // Location
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on,
-                        color: Color(0xFFFFFBFB),
-                        size: 12,
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          jobfair.acaraBkk ?? 'Politeknik Negeri Batam',
+                  Positioned(
+                    left: 24,
+                    bottom: 110,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: const [
+                            Icon(
+                              Icons.location_on,
+                              color: Colors.white,
+                              size: 14,
+                            ),
+                            SizedBox(width: 4),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.calendar_today,
+                              color: Colors.white,
+                              size: 12,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              jobfair.formattedDateRange,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Pendaftaran : ${DateFormat('dd MMM yyyy').format(jobfair.tanggalAwalPendaftaranAcara)} - ${DateFormat('dd MMM yyyy').format(jobfair.tanggalAkhirPendaftaranAcara)}',
                           style: const TextStyle(
-                            color: Color(0xFFFFFBFB),
-                            fontSize: 12,
+                            color: Colors.white,
+                            fontSize: 14,
                             fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 6),
-                  // Date
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.calendar_today,
-                        color: Color(0xFFFFFBFB),
-                        size: 10,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        jobfair.formattedDateRange,
-                        style: const TextStyle(
-                          color: Color(0xFFFFFBFB),
-                          fontSize: 12,
-                          fontFamily: 'Poppins',
+                  Positioned(
+                    left: 24,
+                    right: 24,
+                    bottom: 14,
+                    child: Container(
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(45),
+                        border: Border.all(
+                          color: const Color(0xFFF3F6F9).withOpacity(0.4),
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  // Registration info
-                  Text(
-                    'Pendaftaran : ${DateFormat('dd MMM yyyy').format(jobfair.tanggalAwalPendaftaranAcara)} - ${DateFormat('dd MMM yyyy').format(jobfair.tanggalAkhirPendaftaranAcara)}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const Spacer(),
-                  // Register button
-                  Container(
-                    width: double.infinity,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(45),
-                      border: Border.all(
-                        color: const Color(0xFFF1F5F9).withOpacity(0.4),
-                        width: 1,
-                      ),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'Lihat Detail',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Color(0xFFFFFBFB),
-                          fontSize: 12,
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w500,
+                      child: const Center(
+                        child: Text(
+                          'Lihat Detail',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -343,11 +423,11 @@ class _HalamanJobfairState extends State<HalamanJobfair> {
 
   Widget _buildEmptyState() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(30),
       child: const Column(
         children: [
           Icon(Icons.event_busy, size: 64, color: Colors.grey),
-          SizedBox(height: 16),
+          SizedBox(height: 40),
           Text(
             'Tidak ada job fair tersedia',
             style: TextStyle(

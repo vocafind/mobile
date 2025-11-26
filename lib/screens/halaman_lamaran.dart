@@ -1,3 +1,4 @@
+// halaman_lamaran.dart
 import 'package:flutter/material.dart';
 import 'package:jobfair/models/lamar_loker.dart';
 import 'package:jobfair/widget/bottom_navbar.dart';
@@ -13,11 +14,12 @@ class HalamanLamaran extends StatefulWidget {
 }
 
 class _HalamanLamaranState extends State<HalamanLamaran> {
-  int _selectedMainTab = 0; // 0 = Umum, 1 = Job fair
-  int _selectedFilterTab = 0; // 0 = Semua, 1 = Pending, 2 = Ditinjau, 3 = Interview, 4 = Diterima, 5 = Ditolak
+  int _selectedMainTab = 0;
+  int _selectedFilterTab = 0;
 
   final ApiService _apiService = ApiService();
-  List<LamaranSaya> _allLamaran = [];
+  List<LamaranSaya> _allLamaranUmum = [];
+  List<LamaranSaya> _allLamaranJobfair = [];
   List<LamaranSaya> _filteredLamaran = [];
   bool _isLoading = true;
   bool _hasError = false;
@@ -25,39 +27,56 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
   @override
   void initState() {
     super.initState();
-    _loadLamaran();
+    _loadAllLamaran();
   }
 
-  Future<void> _loadLamaran() async {
+  Future<void> _loadAllLamaran() async {
     setState(() {
       _isLoading = true;
       _hasError = false;
     });
 
     try {
-      final lamaran = await _apiService.getLamaranSaya();
+      // Load data paralel untuk performa lebih baik
+      final results = await Future.wait([
+        _apiService.getLamaranSaya(), // Endpoint umum - SUDAH DIFILTER
+        _apiService.getLamaranJobfairSaya(), // Endpoint jobfair khusus
+      ]);
+
       setState(() {
-        _allLamaran = lamaran;
-        _filteredLamaran = lamaran;
+        _allLamaranUmum = results[0];
+        _allLamaranJobfair = results[1];
+        _filteredLamaran = _selectedMainTab == 0 ? results[0] : results[1];
         _isLoading = false;
       });
+
+      // Debug info
+      print("""
+      📊 DATA LAMARAN:
+      - Umum: ${_allLamaranUmum.length} lamaran
+      - Jobfair: ${_allLamaranJobfair.length} lamaran
+      - Tab aktif: ${_selectedMainTab == 0 ? 'Umum' : 'Jobfair'}
+      - Filter aktif: ${_selectedFilterTab == 0 ? 'Semua' : 'Status $_selectedFilterTab'}
+      - Tampil: ${_filteredLamaran.length} lamaran
+      """);
+
     } catch (e) {
       setState(() {
         _isLoading = false;
         _hasError = true;
       });
-      print("Error loading lamaran: $e");
+      print("❌ Error loading lamaran: $e");
     }
   }
 
   void _filterLamaran() {
+    final baseList = _selectedMainTab == 0 ? _allLamaranUmum : _allLamaranJobfair;
+    
     if (_selectedFilterTab == 0) {
-      // Semua
       setState(() {
-        _filteredLamaran = _allLamaran;
+        _filteredLamaran = baseList;
       });
     } else {
-      // Filter berdasarkan status - SESUAIKAN DENGAN MODEL
       final statusMap = {
         1: 'pending', 
         2: 'reviewed', 
@@ -69,12 +88,24 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
       final status = statusMap[_selectedFilterTab];
       if (status != null) {
         setState(() {
-          _filteredLamaran = _allLamaran
+          _filteredLamaran = baseList
               .where((lamaran) => lamaran.status.toLowerCase() == status)
               .toList();
         });
       }
     }
+
+    print("🔄 Filter diterapkan: ${_filteredLamaran.length} lamaran");
+  }
+
+  void _onMainTabChanged(int tabIndex) {
+    setState(() {
+      _selectedMainTab = tabIndex;
+      _selectedFilterTab = 0;
+      _filteredLamaran = tabIndex == 0 ? _allLamaranUmum : _allLamaranJobfair;
+    });
+
+    print("🔀 Tab diubah ke: ${tabIndex == 0 ? 'Umum' : 'Jobfair'}");
   }
 
   @override
@@ -101,11 +132,7 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                 // Umum Tab
                 Expanded(
                   child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedMainTab = 0;
-                      });
-                    },
+                    onTap: () => _onMainTabChanged(0),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
                       height: 35,
@@ -115,10 +142,10 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(100),
                       ),
-                      child: const Center(
+                      child: Center(
                         child: Text(
-                          'Umum',
-                          style: TextStyle(
+                          'Umum ${_allLamaranUmum.isNotEmpty ? '(${_allLamaranUmum.length})' : ''}',
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 14,
                             fontFamily: 'Poppins',
@@ -133,11 +160,7 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                 // Job fair Tab
                 Expanded(
                   child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedMainTab = 1;
-                      });
-                    },
+                    onTap: () => _onMainTabChanged(1),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
                       height: 35,
@@ -147,10 +170,10 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(100),
                       ),
-                      child: const Center(
+                      child: Center(
                         child: Text(
-                          'Job fair',
-                          style: TextStyle(
+                          'Job fair ${_allLamaranJobfair.isNotEmpty ? '(${_allLamaranJobfair.length})' : ''}',
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 14,
                             fontFamily: 'Poppins',
@@ -166,7 +189,7 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
             ),
           ),
 
-          // Filter Tabs - SESUAIKAN DENGAN MODEL
+          // Filter Tabs
           Container(
             height: 42,
             padding: const EdgeInsets.only(left: 15, bottom: 8),
@@ -213,7 +236,7 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
     }
 
     return RefreshIndicator(
-      onRefresh: _loadLamaran,
+      onRefresh: _loadAllLamaran,
       child: ListView.separated(
         padding: const EdgeInsets.only(bottom: 100),
         itemCount: _filteredLamaran.length,
@@ -254,7 +277,7 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
           ),
           const SizedBox(height: 8),
           ElevatedButton(
-            onPressed: _loadLamaran,
+            onPressed: _loadAllLamaran,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF1E40AF),
               shape: RoundedRectangleBorder(
@@ -276,15 +299,22 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
   }
 
   Widget _buildEmptyState() {
+    final isJobfairTab = _selectedMainTab == 1;
+    final totalInTab = isJobfairTab ? _allLamaranJobfair.length : _allLamaranUmum.length;
+    
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.work_outline, size: 60, color: Color(0xFFB8B8B8)),
+          Icon(
+            isJobfairTab ? Icons.event_busy : Icons.work_outline, 
+            size: 60, 
+            color: const Color(0xFFB8B8B8)
+          ),
           const SizedBox(height: 16),
-          const Text(
-            'Belum ada lamaran',
-            style: TextStyle(
+          Text(
+            isJobfairTab ? 'Belum ada lamaran jobfair' : 'Belum ada lamaran',
+            style: const TextStyle(
               fontSize: 16,
               fontFamily: 'Poppins',
               fontWeight: FontWeight.w500,
@@ -292,15 +322,29 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Ayo lamar lowongan yang sesuai dengan minat kamu',
-            style: TextStyle(
+          Text(
+            isJobfairTab 
+              ? 'Ayo ikuti jobfair dan lamar lowongan yang sesuai'
+              : 'Ayo lamar lowongan yang sesuai dengan minat kamu',
+            style: const TextStyle(
               fontSize: 14,
               fontFamily: 'Poppins',
               color: Color(0xFFB8B8B8),
             ),
             textAlign: TextAlign.center,
           ),
+          if (totalInTab > 0 && _filteredLamaran.isEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Coba ubah filter status untuk melihat lamaran',
+              style: TextStyle(
+                fontSize: 12,
+                fontFamily: 'Poppins',
+                color: Colors.grey[600],
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ],
       ),
     );
@@ -347,10 +391,7 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
 
     return GestureDetector(
       onTap: () {
-        DetailLamaran.show(
-          context,
-          lamaran: lamaran,
-        );
+        DetailLamaran.show(context, lamaran: lamaran);
       },
       child: Container(
         height: 181,
@@ -409,17 +450,46 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                lowongan.posisi,
-                                style: const TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 16,
-                                  fontFamily: 'Poppins',
-                                  fontWeight: FontWeight.w500,
-                                  height: 1.25,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      lowongan.posisi,
+                                      style: const TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 16,
+                                        fontFamily: 'Poppins',
+                                        fontWeight: FontWeight.w500,
+                                        height: 1.25,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  // Badge Jobfair untuk tab jobfair
+                                  if (_selectedMainTab == 1) ...[
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF1B56FD),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Text(
+                                        'Jobfair',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontFamily: 'Poppins',
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
                               ),
                               const SizedBox(height: 4),
                               Text(

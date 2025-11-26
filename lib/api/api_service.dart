@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:jobfair/api/api_client.dart';
 import 'package:jobfair/models/jobfair_detail_model.dart';
 import 'package:jobfair/models/jobfair_model.dart';
+import 'package:jobfair/models/lamar_jobfair_model.dart';
 import 'package:jobfair/models/lamar_loker.dart';
 import 'package:jobfair/models/saved_job_model.dart';
 import 'package:jobfair/models/talent_award_model.dart';
@@ -1807,7 +1808,7 @@ class ApiService {
     }
   }
 
-  // ================== GET LAMARAN SAYA ==================
+  // ================== GET LAMARAN SAYA (UMUM) ==================
   Future<List<LamaranSaya>> getLamaranSaya() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
@@ -1819,7 +1820,6 @@ class ApiService {
     }
 
     try {
-      // Set headers dengan token
       _dio.options.headers = {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -1827,27 +1827,22 @@ class ApiService {
 
       final response = await _dio.get(ApiConfig.getLamaranSaya());
 
-      print("GET Lamaran Saya - STATUS: ${response.statusCode}");
-      print("GET Lamaran Saya - BODY: ${response.data}");
+      print("GET Lamaran Umum - STATUS: ${response.statusCode}");
+      print("GET Lamaran Umum - COUNT: ${response.data.length}");
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
-        return data.map((json) => LamaranSaya.fromJson(json)).toList();
+        
+        // Langsung return, tidak perlu filter lagi
+        return data.map((json) => LamaranSaya.fromJson({
+          ...json,
+          'isJobfair': false, // Tandai sebagai lamaran umum
+        })).toList();
       } else {
-        print("⚠️ Gagal ambil data lamaran: ${response.data}");
         throw Exception('Failed to load job applications');
       }
     } on DioException catch (e) {
-      print("❌ Error ambil lamaran: ${e.message}");
-
-      if (e.response != null) {
-        final errorData = e.response!.data;
-        final errorMessage =
-            errorData['message'] ??
-            'Terjadi kesalahan saat mengambil data lamaran';
-        throw Exception(errorMessage);
-      }
-
+      print("❌ Error ambil lamaran umum: ${e.message}");
       throw Exception('Terjadi kesalahan jaringan');
     }
   }
@@ -2262,6 +2257,268 @@ class ApiService {
     }
   }
 
+
+
+
+
+
+
+  //LAMAR JOBFAIR
+
+// --------------------------------------------------------------------------LAMAR JOBFAIR-----------------------------------------------------------
+
+  // ================== LAMAR JOBFAIR ==================
+  Future<LamarJobfairResponse> lamarJobfair(String lowonganId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final talentId = prefs.getString('talentId');
+
+    if (token == null || talentId == null) {
+      print("❌ Token atau TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      // Set headers dengan token
+      _dio.options.headers = {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      };
+
+      final response = await _dio.post(ApiConfig.lamarJobfair(lowonganId));
+
+      print("🔄 LAMAR JOBFAIR - LowonganID: $lowonganId");
+      print("📡 LAMAR JOBFAIR - Status: ${response.statusCode}");
+      print("📦 LAMAR JOBFAIR - Response: ${response.data}");
+
+      if (response.statusCode == 200) {
+        print("✅ Berhasil melamar jobfair");
+        return LamarJobfairResponse.fromJson(response.data);
+      } else {
+        final errorData = response.data;
+        final errorMessage = errorData['message'] ?? 'Gagal melamar pekerjaan di jobfair';
+        print("❌ Error melamar jobfair: $errorMessage");
+        throw Exception(errorMessage);
+      }
+    } on DioException catch (e) {
+      print("❌ Exception melamar jobfair: ${e.message}");
+
+      // Handle specific error responses
+      if (e.response != null) {
+        final errorData = e.response!.data;
+        final errorMessage = errorData['message'] ?? 'Terjadi kesalahan saat melamar jobfair';
+        throw Exception(errorMessage);
+      }
+
+      throw Exception('Terjadi kesalahan jaringan');
+    }
+  }
+
+  // ================== GET LAMARAN ACARA SAYA ==================
+  Future<List<LamaranAcara>> getLamaranAcaraSaya(String acaraId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final talentId = prefs.getString('talentId');
+
+    if (token == null || talentId == null) {
+      print("❌ Token atau TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      // Set headers dengan token
+      _dio.options.headers = {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      };
+
+      final response = await _dio.get(ApiConfig.getLamaranAcaraSaya(acaraId));
+
+      print("🔄 GET LAMARAN ACARA - AcaraID: $acaraId");
+      print("📡 GET LAMARAN ACARA - Status: ${response.statusCode}");
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        print("✅ Berhasil mengambil ${data.length} lamaran acara");
+        
+        return data.map((json) => LamaranAcara.fromJson(json)).toList();
+      } else {
+        final errorData = response.data;
+        final errorMessage = errorData['message'] ?? 'Gagal mengambil lamaran acara';
+        print("❌ Error mengambil lamaran acara: $errorMessage");
+        throw Exception(errorMessage);
+      }
+    } on DioException catch (e) {
+      print("❌ Exception mengambil lamaran acara: ${e.message}");
+
+      if (e.response != null) {
+        final errorData = e.response!.data;
+        final errorMessage = errorData['message'] ?? 'Terjadi kesalahan saat mengambil lamaran acara';
+        throw Exception(errorMessage);
+      }
+
+      throw Exception('Terjadi kesalahan jaringan');
+    }
+  }
+
+  // ================== GET SEMUA LAMARAN ACARA ==================
+  Future<List<LamaranAcara>> getSemuaLamaranAcara() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final talentId = prefs.getString('talentId');
+
+    if (token == null || talentId == null) {
+      print("❌ Token atau TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      // Set headers dengan token
+      _dio.options.headers = {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      };
+
+      final response = await _dio.get(ApiConfig.getSemuaLamaranAcara());
+
+      print("🔄 GET SEMUA LAMARAN ACARA");
+      print("📡 GET SEMUA LAMARAN ACARA - Status: ${response.statusCode}");
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        print("✅ Berhasil mengambil ${data.length} lamaran acara");
+        
+        return data.map((json) => LamaranAcara.fromJson(json)).toList();
+      } else {
+        final errorData = response.data;
+        final errorMessage = errorData['message'] ?? 'Gagal mengambil semua lamaran acara';
+        print("❌ Error mengambil semua lamaran acara: $errorMessage");
+        throw Exception(errorMessage);
+      }
+    } on DioException catch (e) {
+      print("❌ Exception mengambil semua lamaran acara: ${e.message}");
+
+      if (e.response != null) {
+        final errorData = e.response!.data;
+        final errorMessage = errorData['message'] ?? 'Terjadi kesalahan saat mengambil semua lamaran acara';
+        throw Exception(errorMessage);
+      }
+
+      throw Exception('Terjadi kesalahan jaringan');
+    }
+  }
+
+  // ================== BATALKAN LAMARAN ACARA ==================
+  Future<BatalLamaranAcaraResponse> batalkanLamaranAcara(String applyId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final talentId = prefs.getString('talentId');
+
+    if (token == null || talentId == null) {
+      print("❌ Token atau TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      // Set headers dengan token
+      _dio.options.headers = {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      };
+
+      final response = await _dio.delete(ApiConfig.batalkanLamaranAcara(applyId));
+
+      print("🔄 BATAL LAMARAN ACARA - ApplyID: $applyId");
+      print("📡 BATAL LAMARAN ACARA - Status: ${response.statusCode}");
+      print("📦 BATAL LAMARAN ACARA - Response: ${response.data}");
+
+      if (response.statusCode == 200) {
+        print("✅ Berhasil membatalkan lamaran acara");
+        return BatalLamaranAcaraResponse.fromJson(response.data);
+      } else {
+        final errorData = response.data;
+        final errorMessage = errorData['message'] ?? 'Gagal membatalkan lamaran acara';
+        print("❌ Error membatalkan lamaran acara: $errorMessage");
+        throw Exception(errorMessage);
+      }
+    } on DioException catch (e) {
+      print("❌ Exception membatalkan lamaran acara: ${e.message}");
+
+      if (e.response != null) {
+        final errorData = e.response!.data;
+        final errorMessage = errorData['message'] ?? 'Terjadi kesalahan saat membatalkan lamaran acara';
+        throw Exception(errorMessage);
+      }
+
+      throw Exception('Terjadi kesalahan jaringan');
+    }
+  }
+
+  // ================== GET STATUS REGISTRASI ACARA ==================
+  Future<StatusRegistrasiAcara> getStatusRegistrasiAcara(int acaraId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    if (token == null) {
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      _dio.options.headers = {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      };
+
+      final response = await _dio.get(ApiConfig.getStatusRegistrasiAcara(acaraId));
+
+      if (response.statusCode == 200) {
+        return StatusRegistrasiAcara.fromJson(response.data);
+      } else {
+        throw Exception('Gagal mengambil status registrasi acara');
+      }
+    } on DioException catch (e) {
+      throw Exception('Terjadi kesalahan jaringan');
+    }
+  }
+
+
+  // ================== GET LAMARAN JOBFAIR SAYA ==================
+  Future<List<LamaranSaya>> getLamaranJobfairSaya() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    if (token == null) {
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      _dio.options.headers = {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      };
+
+      final response = await _dio.get(ApiConfig.getLamaranJobfairSaya());
+
+      print("GET Lamaran Jobfair - STATUS: ${response.statusCode}");
+      print("GET Lamaran Jobfair - COUNT: ${response.data.length}");
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        
+        return data.map((json) {
+          return LamaranSaya.fromJson({
+            ...json,
+            'isJobfair': true, // Tandai sebagai lamaran jobfair
+          });
+        }).toList();
+      } else {
+        throw Exception('Gagal mengambil data lamaran jobfair');
+      }
+    } on DioException catch (e) {
+      print("❌ Error ambil lamaran jobfair: ${e.message}");
+      throw Exception('Terjadi kesalahan jaringan');
+    }
+  }
 
 
 }

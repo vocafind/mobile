@@ -60,4 +60,7 @@ class Jobfair {
   String get capacityText => '$maxCapacity Kapasitas';
   String get jobsText => '$totalLowongan Lowongan';
   String get companiesText => '$totalPerusahaan Perusahaan';
+
+
+  
 }

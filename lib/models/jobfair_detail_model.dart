@@ -2,122 +2,102 @@
 import 'package:intl/intl.dart';
 
 class JobfairDetail {
-  final int id;
+  final String jobfairId;
   final String namaAcara;
-  final String? acaraBkk;
-  final String? alamatAcara;
-  final String? provinsi;
-  final String? kabupaten;
-  final String? lokasi;
-  final DateTime tanggalAwalPendaftaranAcara;
-  final DateTime tanggalAkhirPendaftaranAcara;
-  final DateTime tanggalMulaiAcara;
-  final DateTime tanggalSelesaiAcara;
   final String? deskripsi;
-  final String status;
-  final int maxCapacity;
-  final int currentCapacity;
-  final DateTime? createdAt;
-  final List<CompanyJobfair> perusahaan;
+  final DateTime tanggalMulai;
+  final DateTime tanggalSelesai;
+  final DateTime batasPendaftaran;
+  final String? acaraBkk;
+  final int kapasitasPeserta;
   final List<FlyerAcara> flyerAcara;
+  final List<CompanyJobfair> perusahaan;
   final List<LowonganAcara> lowonganAcara;
 
   JobfairDetail({
-    required this.id,
+    required this.jobfairId,
     required this.namaAcara,
-    this.acaraBkk,
-    this.alamatAcara,
-    this.provinsi,
-    this.kabupaten,
-    this.lokasi,
-    required this.tanggalAwalPendaftaranAcara,
-    required this.tanggalAkhirPendaftaranAcara,
-    required this.tanggalMulaiAcara,
-    required this.tanggalSelesaiAcara,
     this.deskripsi,
-    required this.status,
-    required this.maxCapacity,
-    required this.currentCapacity,
-    this.createdAt,
-    required this.perusahaan,
+    required this.tanggalMulai,
+    required this.tanggalSelesai,
+    required this.batasPendaftaran,
+    this.acaraBkk,
+    required this.kapasitasPeserta,
     required this.flyerAcara,
+    required this.perusahaan,
     required this.lowonganAcara,
   });
 
   factory JobfairDetail.fromJson(Map<String, dynamic> json) {
     return JobfairDetail(
-      id: json['id'] ?? 0,
-      namaAcara: json['namaAcara'] ?? '',
-      acaraBkk: json['acaraBkk'],
-      alamatAcara: json['alamatAcara'],
-      provinsi: json['provinsi'],
-      kabupaten: json['kabupaten'],
-      lokasi: json['lokasi'],
-      tanggalAwalPendaftaranAcara: DateTime.parse(json['tanggalAwalPendaftaranAcara']),
-      tanggalAkhirPendaftaranAcara: DateTime.parse(json['tanggalAkhirPendaftaranAcara']),
-      tanggalMulaiAcara: DateTime.parse(json['tanggalMulaiAcara']),
-      tanggalSelesaiAcara: DateTime.parse(json['tanggalSelesaiAcara']),
-      deskripsi: json['deskripsi'],
-      status: json['status'] ?? '',
-      maxCapacity: json['maxCapacity'] ?? 0,
-      currentCapacity: json['currentCapacity'] ?? 0,
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
-      perusahaan: (json['perusahaan'] as List? ?? [])
-          .map((company) => CompanyJobfair.fromJson(company))
+      jobfairId: json['jobfairId']?.toString() ?? '',
+      namaAcara: json['namaAcara']?.toString() ?? '',
+      deskripsi: json['deskripsi']?.toString(),
+      tanggalMulai: DateTime.tryParse(json['tanggalMulai'] ?? '') ?? DateTime.now(),
+      tanggalSelesai: DateTime.tryParse(json['tanggalSelesai'] ?? '') ?? DateTime.now(),
+      batasPendaftaran: DateTime.tryParse(json['batasPendaftaran'] ?? '') ?? DateTime.now(),
+      acaraBkk: json['acaraBkk']?.toString(),
+      kapasitasPeserta: json['kapasitasPeserta'] is int
+          ? json['kapasitasPeserta']
+          : int.tryParse(json['kapasitasPeserta'].toString()) ?? 0,
+      flyerAcara: (json['flyerAcara'] as List<dynamic>? ?? [])
+          .map((e) => FlyerAcara.fromJson(e))
           .toList(),
-      flyerAcara: (json['flyerAcara'] as List? ?? [])
-          .map((flyer) => FlyerAcara.fromJson(flyer))
+      perusahaan: (json['perusahaan'] as List<dynamic>? ?? [])
+          .map((e) => CompanyJobfair.fromJson(e))
           .toList(),
-      lowonganAcara: (json['lowonganAcara'] as List? ?? [])
-          .map((lowongan) => LowonganAcara.fromJson(lowongan))
+      lowonganAcara: (json['lowonganAcara'] as List<dynamic>? ?? [])
+          .map((e) => LowonganAcara.fromJson(e))
           .toList(),
     );
   }
 
+  // Helper getters
   String get formattedDateRange {
-    final start = DateFormat('dd MMM yyyy').format(tanggalMulaiAcara);
-    final end = DateFormat('dd MMM yyyy').format(tanggalSelesaiAcara);
-    return '$start - $end';
+    final format = DateFormat('dd MMM yyyy');
+    return '${format.format(tanggalMulai)} - ${format.format(tanggalSelesai)}';
   }
 
   String get formattedRegistrationDate {
-    final start = DateFormat('dd MMM yyyy').format(tanggalAwalPendaftaranAcara);
-    final end = DateFormat('dd MMM yyyy').format(tanggalAkhirPendaftaranAcara);
-    return '$start - $end';
+    final format = DateFormat('dd MMM yyyy');
+    return '${format.format(batasPendaftaran)}';
   }
 
-  String get capacityText => '$maxCapacity Kapasitas';
+  String get capacityText => '$kapasitasPeserta Peserta';
+  
   String get jobsText => '${lowonganAcara.length} Lowongan';
+  
   String get companiesText => '${perusahaan.length} Perusahaan';
 }
 
+class FlyerAcara {
+  final String flyerUrl;
+
+  FlyerAcara({required this.flyerUrl});
+
+  factory FlyerAcara.fromJson(Map<String, dynamic> json) {
+    return FlyerAcara(
+      flyerUrl: json['flyerUrl']?.toString() ?? '',
+    );
+  }
+}
+
 class CompanyJobfair {
+  final String perusahaanId;
   final String namaPerusahaan;
   final String? logo;
 
   CompanyJobfair({
+    required this.perusahaanId,
     required this.namaPerusahaan,
     this.logo,
   });
 
   factory CompanyJobfair.fromJson(Map<String, dynamic> json) {
     return CompanyJobfair(
-      namaPerusahaan: json['namaPerusahaan'] ?? '',
-      logo: json['logo'],
-    );
-  }
-}
-
-class FlyerAcara {
-  final String flyerUrl;
-
-  FlyerAcara({
-    required this.flyerUrl,
-  });
-
-  factory FlyerAcara.fromJson(Map<String, dynamic> json) {
-    return FlyerAcara(
-      flyerUrl: json['flyerUrl'] ?? '',
+      perusahaanId: json['perusahaanId']?.toString() ?? '',
+      namaPerusahaan: json['namaPerusahaan']?.toString() ?? '',
+      logo: json['logo']?.toString(),
     );
   }
 }
@@ -131,11 +111,11 @@ class LowonganAcara {
   final String lokasi;
   final String gaji;
   final String jenisPekerjaan;
+  final String tingkatPengalaman;
   final DateTime tanggalPosting;
   final DateTime batasLamaran;
   final int batasPelamar;
   final int jumlahPelamar;
-  final String tingkatPengalaman;
   final bool opsiKerjaRemote;
   final String kontrakDurasi;
   final String peluangKarir;
@@ -151,11 +131,11 @@ class LowonganAcara {
     required this.lokasi,
     required this.gaji,
     required this.jenisPekerjaan,
+    required this.tingkatPengalaman,
     required this.tanggalPosting,
     required this.batasLamaran,
     required this.batasPelamar,
     required this.jumlahPelamar,
-    required this.tingkatPengalaman,
     required this.opsiKerjaRemote,
     required this.kontrakDurasi,
     required this.peluangKarir,
@@ -165,24 +145,28 @@ class LowonganAcara {
 
   factory LowonganAcara.fromJson(Map<String, dynamic> json) {
     return LowonganAcara(
-      lowonganId: json['lowonganId'] ?? '',
-      posisi: json['posisi'] ?? '',
-      deskripsiPekerjaan: json['deskripsiPekerjaan'] ?? '',
-      minimalLulusan: json['minimalLulusan'],
-      status: json['status'] ?? '',
-      lokasi: json['lokasi'] ?? '',
-      gaji: json['gaji'] ?? '',
-      jenisPekerjaan: json['jenisPekerjaan'] ?? '',
-      tanggalPosting: DateTime.parse(json['tanggalPosting']),
-      batasLamaran: DateTime.parse(json['batasLamaran']),
-      batasPelamar: json['batasPelamar'] ?? 0,
-      jumlahPelamar: json['jumlahPelamar'] ?? 0,
-      tingkatPengalaman: json['tingkatPengalaman'] ?? '',
-      opsiKerjaRemote: json['opsiKerjaRemote'] ?? false,
-      kontrakDurasi: json['kontrakDurasi'] ?? '',
-      peluangKarir: json['peluangKarir'] ?? '',
-      namaPerusahaan: json['namaPerusahaan'] ?? '',
-      logo: json['logo'],
+      lowonganId: json['lowonganId']?.toString() ?? '',
+      posisi: json['posisi']?.toString() ?? '',
+      deskripsiPekerjaan: json['deskripsiPekerjaan']?.toString() ?? '',
+      minimalLulusan: json['minimalLulusan']?.toString(),
+      status: json['status']?.toString() ?? '',
+      lokasi: json['lokasi']?.toString() ?? '',
+      gaji: json['gaji']?.toString() ?? '',
+      jenisPekerjaan: json['jenisPekerjaan']?.toString() ?? '',
+      tingkatPengalaman: json['tingkatPengalaman']?.toString() ?? '',
+      tanggalPosting: DateTime.tryParse(json['tanggalPosting'] ?? '') ?? DateTime.now(),
+      batasLamaran: DateTime.tryParse(json['batasLamaran'] ?? '') ?? DateTime.now(),
+      batasPelamar: json['batasPelamar'] is int
+          ? json['batasPelamar']
+          : int.tryParse(json['batasPelamar'].toString()) ?? 0,
+      jumlahPelamar: json['jumlahPelamar'] is int
+          ? json['jumlahPelamar']
+          : int.tryParse(json['jumlahPelamar'].toString()) ?? 0,
+      opsiKerjaRemote: json['opsiKerjaRemote'] == true || json['opsiKerjaRemote'] == 'true',
+      kontrakDurasi: json['kontrakDurasi']?.toString() ?? '',
+      peluangKarir: json['peluangKarir']?.toString() ?? '',
+      namaPerusahaan: json['namaPerusahaan']?.toString() ?? '',
+      logo: json['logo']?.toString(),
     );
   }
 
@@ -190,41 +174,14 @@ class LowonganAcara {
     final now = DateTime.now();
     final difference = now.difference(tanggalPosting);
     
-    if (difference.inDays == 0) {
-      return 'Hari ini';
-    } else if (difference.inDays == 1) {
-      return '1 hari lalu';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays} hari lalu';
-    } else if (difference.inDays < 30) {
-      final weeks = (difference.inDays / 7).floor();
-      return '$weeks minggu lalu';
-    } else {
-      final months = (difference.inDays / 30).floor();
-      return '$months bulan lalu';
-    }
-  }
-
-  String get daysUntilDeadline {
-    final now = DateTime.now();
-    final difference = batasLamaran.difference(now);
-    
-    if (difference.inDays == 0) {
-      return 'Berakhir hari ini';
-    } else if (difference.inDays == 1) {
-      return '1 hari lagi';
+    if (difference.inDays > 30) {
+      return '${(difference.inDays / 30).floor()} bulan lalu';
     } else if (difference.inDays > 0) {
-      return '${difference.inDays} hari lagi';
+      return '${difference.inDays} hari lalu';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} jam lalu';
     } else {
-      return 'Telah berakhir';
+      return 'Baru saja';
     }
-  }
-
-  bool get isExpired {
-    return DateTime.now().isAfter(batasLamaran);
-  }
-
-  bool get isAlmostFull {
-    return jumlahPelamar >= (batasPelamar * 0.8); // 80% terisi
   }
 }

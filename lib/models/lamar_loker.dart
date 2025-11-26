@@ -24,6 +24,7 @@ class LamaranSaya {
   final DateTime createdAt;
   final DateTime appliedAt;
   final LowonganLamaran lowongan;
+  final bool isJobfair; // TAMBAHKAN INI
 
   LamaranSaya({
     required this.applyId,
@@ -34,6 +35,7 @@ class LamaranSaya {
     required this.lowongan,
     this.interview,
     this.locationInterview,
+    required this.isJobfair, // TAMBAHKAN INI
   });
 
   factory LamaranSaya.fromJson(Map<String, dynamic> json) {
@@ -46,6 +48,7 @@ class LamaranSaya {
       createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toString()),
       appliedAt: DateTime.parse(json['appliedAt'] ?? DateTime.now().toString()),
       lowongan: LowonganLamaran.fromJson(json['lowongan'] ?? {}),
+      isJobfair: json['isJobfair'] ?? false, // DEFAULT false
     );
   }
 
