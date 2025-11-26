@@ -1,7 +1,7 @@
 class ApiConfig {
   // Ganti IP dengan IP komputer server kamu
-  static const String baseUrl = "http://10.136.153.37:5035/api";
-  static const String baseUrlFoto = "http://10.136.153.37:5035/";
+  static const String baseUrl = "http://10.136.135.54:5035/api";
+  static const String baseUrlFoto = "http://10.136.135.54:5035/";
   // static const String baseUrl = "https://trpl306-001-site1.ntempurl.com/api";
   // static const String baseUrlFoto = "https://trpl306-001-site1.ntempurl.com/";
 
@@ -11,6 +11,8 @@ class ApiConfig {
   static const String loginTalent = "$baseUrl/Auth/loginTalent";   // Login
   static const String refreshToken = "$baseUrl/Auth/refresh-token";   // Refresh token
   static const String logout = "$baseUrl/Auth/logout";   // Logout
+
+
 
 
 
