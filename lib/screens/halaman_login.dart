@@ -18,7 +18,7 @@ class _HalamanLoginState extends State<HalamanLogin> {
   final FocusNode _passwordFocus = FocusNode();
 
   bool _obscurePassword = true;
-  bool _isLoading = false; // Tambah state loading
+  bool _isLoading = false;
 
   // Validasi error messages
   String? _emailError;
@@ -226,59 +226,15 @@ class _HalamanLoginState extends State<HalamanLogin> {
 
               const SizedBox(height: 38),
 
-           // Button Masuk dengan Loading - Versi Improved
-Padding(
-  padding: const EdgeInsets.symmetric(horizontal: 46),
-  child: Material(
-    color: Colors.transparent,
-    child: InkWell(
-      onTap: _isLoading ? null : _handleLogin,
-      borderRadius: BorderRadius.circular(45),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: double.infinity,
-        height: 48,
-        decoration: BoxDecoration(
-          color: _isLoading
-              ? const Color(0xFF1548F5).withOpacity(0.7)
-              : const Color(0xFF1548F5),
-          borderRadius: BorderRadius.circular(45),
-          boxShadow: _isLoading
-              ? []
-              : [
-                  BoxShadow(
-                    color: const Color(0xFF1548F5).withOpacity(0.3),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-        ),
-        child: Center(
-          child: _isLoading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      Colors.white,
-                    ),
-                  ),
-                )
-              : const Text(
-                  'Masuk',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w600,
-                  ),
+              // Button Masuk dengan Hover Effect yang Diperbaiki
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 46),
+                child: _LoginButton(
+                  isLoading: _isLoading,
+                  onPressed: _handleLogin,
                 ),
-        ),
-      ),
-    ),
-  ),
-),
+              ),
+
               const SizedBox(height: 46),
 
               // Belum punya akun
@@ -309,7 +265,7 @@ Padding(
                       'Daftar disini',
                       style: TextStyle(
                         color: _isLoading
-                            ? const Color(0xFF1548F5).withValues(alpha:0.5)
+                            ? const Color(0xFF1548F5).withOpacity(0.5)
                             : const Color(0xFF1548F5),
                         fontSize: 12,
                         fontFamily: 'Poppins',
@@ -324,6 +280,97 @@ Padding(
         ),
       ),
     );
+  }
+}
+
+/// ------------------------ LOGIN BUTTON WIDGET ------------------------
+class _LoginButton extends StatefulWidget {
+  final bool isLoading;
+  final VoidCallback onPressed;
+
+  const _LoginButton({
+    required this.isLoading,
+    required this.onPressed,
+  });
+
+  @override
+  State<_LoginButton> createState() => _LoginButtonState();
+}
+
+class _LoginButtonState extends State<_LoginButton> {
+  bool _isHovered = false;
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _isPressed = true),
+        onTapUp: (_) => setState(() => _isPressed = false),
+        onTapCancel: () => setState(() => _isPressed = false),
+        onTap: widget.isLoading ? null : widget.onPressed,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: double.infinity,
+          height: 48,
+          decoration: BoxDecoration(
+            color: _getButtonColor(),
+            borderRadius: BorderRadius.circular(45),
+            boxShadow: _getBoxShadow(),
+          ),
+          child: Center(
+            child: widget.isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Colors.white,
+                      ),
+                    ),
+                  )
+                : const Text(
+                    'Masuk',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Color _getButtonColor() {
+    if (widget.isLoading) {
+      return const Color(0xFF1548F5).withOpacity(0.7);
+    }
+    if (_isPressed) {
+      return const Color(0xFF0D2BA8);
+    }
+    if (_isHovered) {
+      return const Color(0xFF1A52FF);
+    }
+    return const Color(0xFF1548F5);
+  }
+
+  List<BoxShadow> _getBoxShadow() {
+    if (widget.isLoading) {
+      return [];
+    }
+    return [
+      BoxShadow(
+        color: const Color(0xFF1548F5).withOpacity(0.3),
+        blurRadius: 10,
+        offset: const Offset(0, 5),
+      ),
+    ];
   }
 }
 
@@ -388,7 +435,7 @@ class _AnimatedTextFieldState extends State<AnimatedTextField> {
         boxShadow: _isFocused
             ? [
                 BoxShadow(
-                  color: const Color(0xFF1548F5).withValues(alpha: 0.15),
+                  color: const Color(0xFF1548F5).withOpacity(0.15),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 ),
@@ -522,7 +569,7 @@ class _AnimatedPasswordFieldState extends State<AnimatedPasswordField> {
         boxShadow: _isFocused
             ? [
                 BoxShadow(
-                  color: const Color(0xFF1548F5).withValues(alpha: 0.15),
+                  color: const Color(0xFF1548F5).withOpacity(0.15),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 ),
