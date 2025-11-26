@@ -42,17 +42,24 @@ class _TabRiwayatPekerjaanState extends State<TabRiwayatPekerjaan> {
         content: Text(
           message,
           style: const TextStyle(
-            color: Colors.black,
+            color: Colors.white,
             fontWeight: FontWeight.w500,
             fontFamily: 'Poppins',
           ),
         ),
-        backgroundColor: isError ? Colors.red[100] : Colors.white,
+        backgroundColor: isError ? Colors.red[700] : Colors.green,
         behavior: SnackBarBehavior.floating,
         elevation: 2,
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        duration: const Duration(seconds: 2),
+        action: SnackBarAction(
+          textColor: Colors.white,
+          label: 'Ok',
+          onPressed: () {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          },
+        ),
+        duration: const Duration(seconds: 5),
       ),
     );
   }

@@ -153,7 +153,7 @@ class _JobDetailSheetState extends State<JobDetailSheet>
         _showSnackBar(response.message);
 
         // Refresh data di halaman pencarian
-        Future.delayed(const Duration(seconds: 2), () {
+        Future.delayed(const Duration(seconds: 5), () {
           if (mounted) {
             Navigator.of(context).pop(true); // Return true untuk trigger refresh
           }

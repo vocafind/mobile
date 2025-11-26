@@ -76,12 +76,19 @@ class _TabPenghargaanState extends State<TabPenghargaan> {
         content: Text(
           message,
           style: const TextStyle(
-            color: Colors.black,
+            color: Colors.white,
             fontWeight: FontWeight.w500,
             fontFamily: 'Poppins',
           ),
         ),
-        backgroundColor: isError ? Colors.red[100] : Colors.white,
+        backgroundColor: isError ? Colors.red[700] : Colors.green,
+         action: SnackBarAction(
+          textColor: Colors.white,
+          label: 'Ok',
+          onPressed: () {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          },
+        ),
         behavior: SnackBarBehavior.floating,
         elevation: 2,
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
