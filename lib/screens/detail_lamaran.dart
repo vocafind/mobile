@@ -271,12 +271,6 @@ class _DetailLamaranState extends State<DetailLamaran> {
                   'title': 'Status',
                   'value': 'Tidak melanjutkan ke proses selanjutnya',
                 },
-                {
-                  'icon': Icons.lightbulb_rounded,
-                  'title': 'Saran',
-                  'value':
-                      'Terus kembangkan skill dan coba lagi di kesempatan berikutnya',
-                },
               ],
       },
     };
@@ -314,7 +308,7 @@ class _DetailLamaranState extends State<DetailLamaran> {
             width: 143,
             height: 5,
             decoration: BoxDecoration(
-              color: const Color(0xFF162781).withValues(alpha:0.9),
+              color: const Color(0xFF162781).withOpacity(0.9),
               borderRadius: BorderRadius.circular(20),
             ),
           ),
@@ -434,28 +428,46 @@ class _DetailLamaranState extends State<DetailLamaran> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFF383C).withValues(alpha:0.1),
+                      color: const Color(0xFFFF383C).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: const Color(0xFFFF383C).withValues(alpha:0.3),
+                        color: const Color(0xFFFF383C).withOpacity(0.3),
                       ),
                     ),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          Icons.cancel_rounded,
-                          color: const Color(0xFFFF383C),
-                          size: 20,
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.cancel_rounded,
+                              color: const Color(0xFFFF383C),
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Lamaran Anda tidak berhasil pada proses ini',
+                                style: TextStyle(
+                                  color: const Color(0xFF1A1A1A),
+                                  fontSize: 14,
+                                  fontFamily: 'SF Pro',
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 28),
                           child: Text(
-                            'Lamaran Anda tidak berhasil pada proses ini',
-                            style: TextStyle(
-                              color: const Color(0xFF1A1A1A),
-                              fontSize: 14,
+                            'Terima kasih telah melamar. Kami menghargai waktu dan usaha Anda. Jangan ragu untuk melamar posisi lainnya di perusahaan kami.',
+                            style: const TextStyle(
+                              color: Color(0xFF515151),
+                              fontSize: 13,
                               fontFamily: 'SF Pro',
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w400,
                             ),
                           ),
                         ),
@@ -468,10 +480,10 @@ class _DetailLamaranState extends State<DetailLamaran> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF34C759).withValues(alpha:0.1),
+                      color: const Color(0xFF34C759).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: const Color(0xFF34C759).withValues(alpha:0.3),
+                        color: const Color(0xFF34C759).withOpacity(0.3),
                       ),
                     ),
                     child: Row(
@@ -504,10 +516,10 @@ class _DetailLamaranState extends State<DetailLamaran> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF0088FF).withValues(alpha:0.1),
+                      color: const Color(0xFF0088FF).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: const Color(0xFF0088FF).withValues(alpha:0.3),
+                        color: const Color(0xFF0088FF).withOpacity(0.3),
                       ),
                     ),
                     child: Row(
@@ -694,7 +706,7 @@ class _DetailLamaranState extends State<DetailLamaran> {
               boxShadow: (isActive || isCompleted) && isAccessible
                   ? [
                       BoxShadow(
-                        color: backgroundColor.withValues(alpha:0.3),
+                        color: backgroundColor.withOpacity(0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -748,7 +760,7 @@ class _DetailLamaranState extends State<DetailLamaran> {
               border: Border.all(color: const Color(0xFFE5E8EB), width: 1),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha:0.05),
+                  color: Colors.black.withOpacity(0.05),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -778,12 +790,10 @@ class _DetailLamaranState extends State<DetailLamaran> {
                         ),
                         decoration: BoxDecoration(
                           color: (activeData['isSuccess'] ?? false)
-                              ? const Color(0xFF34C759).withValues(alpha:0.1)
+                              ? const Color(0xFF34C759).withOpacity(0.1)
                               : (activeData['isRejected'] ?? false)
-                              ? const Color(0xFFFF383C).withValues(alpha:0.1)
-                              : const Color(0xFF0088FF).withValues(alpha:
-                                  0.1,
-                                ), // ✅ WARNA BIRU UNTUK DIPROSES
+                              ? const Color(0xFFFF383C).withOpacity(0.1)
+                              : const Color(0xFF0088FF).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
@@ -795,15 +805,12 @@ class _DetailLamaranState extends State<DetailLamaran> {
                                   ? Icons.check_circle_rounded
                                   : (activeData['isRejected'] ?? false)
                                   ? Icons.cancel_rounded
-                                  : Icons
-                                        .access_time_rounded, // ✅ ICON JAM UNTUK DIPROSES
+                                  : Icons.access_time_rounded,
                               color: (activeData['isSuccess'] ?? false)
                                   ? const Color(0xFF34C759)
                                   : (activeData['isRejected'] ?? false)
                                   ? const Color(0xFFFF383C)
-                                  : const Color(
-                                      0xFF0088FF,
-                                    ), // ✅ WARNA BIRU UNTUK DIPROSES
+                                  : const Color(0xFF0088FF),
                               size: 14,
                             ),
                             const SizedBox(width: 4),
@@ -816,15 +823,13 @@ class _DetailLamaranState extends State<DetailLamaran> {
                                   : _getStatusText(
                                       currentStatus,
                                       activeData['title'],
-                                    ), // ✅ FUNGSI BARU UNTUK TEKS STATUS
+                                    ),
                               style: TextStyle(
                                 color: (activeData['isSuccess'] ?? false)
                                     ? const Color(0xFF34C759)
                                     : (activeData['isRejected'] ?? false)
                                     ? const Color(0xFFFF383C)
-                                    : const Color(
-                                        0xFF0088FF,
-                                      ), // ✅ WARNA BIRU UNTUK DIPROSES
+                                    : const Color(0xFF0088FF),
                                 fontSize: 11,
                                 fontFamily: 'SF Pro',
                                 fontWeight: FontWeight.w600,
@@ -857,9 +862,9 @@ class _DetailLamaranState extends State<DetailLamaran> {
           if (activeData['details'] != null)
             ..._buildDetailItems(activeData['details']),
 
-          if (_activeTimeline == 'interview' && widget.lamaran.hasInterviewData)
-            _buildInterviewQRCode(),
-
+          // ❌ DIHAPUS: Bagian QR Code untuk interview
+          // if (_activeTimeline == 'interview' && widget.lamaran.hasInterviewData)
+          //   _buildInterviewQRCode(),
           if (_activeTimeline == 'hasil')
             _buildFinalStatusInfo(isAccepted, isRejected),
         ],
@@ -870,7 +875,7 @@ class _DetailLamaranState extends State<DetailLamaran> {
   String _getStatusText(String currentStatus, String phaseTitle) {
     switch (currentStatus) {
       case 'pending':
-        return 'Diproses'; // ✅ TEKS BARU UNTUK PENDING
+        return 'Diproses';
       case 'reviewed':
         return 'Ditinjau';
       case 'interview':
@@ -880,8 +885,8 @@ class _DetailLamaranState extends State<DetailLamaran> {
       case 'reject_interview':
         return 'Ditolak';
       default:
-        return 'Diproses'; // Default fallback
-    } 
+        return 'Diproses';
+    }
   }
 
   List<Widget> _buildDetailItems(List<dynamic> details) {
@@ -963,205 +968,56 @@ class _DetailLamaranState extends State<DetailLamaran> {
     );
   }
 
-  Widget _buildInterviewQRCode() {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFF2643D7).withValues(alpha:0.2),
-          width: 1,
+  Widget _buildFinalStatusInfo(bool isAccepted, bool isRejected) {
+    // ✅ DIUBAH: Hanya tampilkan untuk status diterima saja
+    if (isAccepted) {
+      return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(top: 8),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF34C759).withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFF34C759).withOpacity(0.3)),
         ),
-      ),
-      child: Column(
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.qr_code_2_rounded, color: Color(0xFF2643D7), size: 20),
-              SizedBox(width: 8),
-              Text(
-                'QR Code untuk Check-in',
-                style: TextStyle(
-                  color: Color(0xFF1A1A1A),
-                  fontSize: 15,
-                  fontFamily: 'SF Pro',
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5F7FA),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE5E8EB)),
-            ),
-            child: Column(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Container(
-                  width: 160,
-                  height: 160,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.qr_code_2_rounded,
-                    size: 120,
-                    color: Colors.grey[300],
-                  ),
+                Icon(
+                  Icons.email_rounded,
+                  color: const Color(0xFF34C759),
+                  size: 18,
                 ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF162781).withValues(alpha:0.05),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    widget.lamaran.applyId,
-                    style: const TextStyle(
-                      color: Color(0xFF162781),
-                      fontSize: 13,
-                      fontFamily: 'SF Pro',
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Tunjukkan QR code ini saat check-in interview',
-                  textAlign: TextAlign.center,
+                const SizedBox(width: 8),
+                Text(
+                  'Informasi Selanjutnya',
                   style: TextStyle(
-                    color: Color(0xFF6B7280),
-                    fontSize: 12,
+                    color: const Color(0xFF1A1A1A),
+                    fontSize: 14,
                     fontFamily: 'SF Pro',
-                    fontWeight: FontWeight.w400,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 16),
-          GestureDetector(
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Row(
-                    children: [
-                      Icon(Icons.check_circle, color: Colors.white),
-                      SizedBox(width: 12),
-                      Text('QR Code berhasil diunduh'),
-                    ],
-                  ),
-                  backgroundColor: const Color(0xFF34C759),
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              );
-            },
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF2643D7).withValues(alpha:0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: const Color(0xFF2643D7).withValues(alpha:0.3),
-                ),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.download_rounded,
-                    color: Color(0xFF2643D7),
-                    size: 18,
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    'Unduh QR Code',
-                    style: TextStyle(
-                      color: Color(0xFF2643D7),
-                      fontSize: 14,
-                      fontFamily: 'SF Pro',
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
+            const SizedBox(height: 8),
+            Text(
+              'Tim HR akan menghubungi anda untuk proses selanjutnya. Pastikan email dan nomor telepon Anda aktif.',
+              style: const TextStyle(
+                color: Color(0xFF515151),
+                fontSize: 13,
+                fontFamily: 'SF Pro',
+                fontWeight: FontWeight.w400,
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFinalStatusInfo(bool isAccepted, bool isRejected) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isAccepted
-            ? const Color(0xFF34C759).withValues(alpha:0.1)
-            : const Color(0xFFFF383C).withValues(alpha:0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isAccepted
-              ? const Color(0xFF34C759).withValues(alpha:0.3)
-              : const Color(0xFFFF383C).withValues(alpha:0.3),
+          ],
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                isAccepted ? Icons.email_rounded : Icons.info_rounded,
-                color: isAccepted
-                    ? const Color(0xFF34C759)
-                    : const Color(0xFFFF383C),
-                size: 18,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                isAccepted ? 'Informasi Selanjutnya' : 'Pemberitahuan',
-                style: TextStyle(
-                  color: const Color(0xFF1A1A1A),
-                  fontSize: 14,
-                  fontFamily: 'SF Pro',
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            isAccepted
-                ? 'Tim HR akan menghubungi Anda dalam 1-3 hari kerja untuk proses selanjutnya. Pastikan email dan nomor telepon Anda aktif.'
-                : 'Terima kasih telah melamar. Kami menghargai waktu dan usaha Anda. Jangan ragu untuk melamar posisi lainnya di perusahaan kami.',
-            style: const TextStyle(
-              color: Color(0xFF515151),
-              fontSize: 13,
-              fontFamily: 'SF Pro',
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-        ],
-      ),
-    );
+      );
+    }
+
+    // ✅ Untuk status ditolak, return widget kosong (tidak tampil apa-apa)
+    return const SizedBox.shrink();
   }
 }
