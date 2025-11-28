@@ -18,6 +18,7 @@ class LamaranSaya {
   final String applyId;
   final String lowonganId;
   final String status;
+  final String? applicationCode; // ✅ TAMBAHKAN INI
   final String? interview;
   final String? locationInterview;
   final DateTime createdAt;
@@ -27,14 +28,15 @@ class LamaranSaya {
   final AcaraJobfair? acara;
   final InterviewSlot? interviewSlot;
   final int? interviewSlotId;
-  final String? qrCodeUrl; // Tambahkan ini
-  final bool hasQrCode; // Tambahkan ini
-  final String qrCodeSource; // Tambahkan ini
+  final String? qrCodeUrl;
+  final bool hasQrCode;
+  final String qrCodeSource;
 
   LamaranSaya({
     required this.applyId,
     required this.lowonganId,
     required this.status,
+    this.applicationCode, // ✅ TAMBAHKAN INI
     required this.createdAt,
     required this.appliedAt,
     required this.lowongan,
@@ -44,15 +46,16 @@ class LamaranSaya {
     this.acara,
     this.interviewSlot,
     this.interviewSlotId,
-    this.qrCodeUrl, // Tambahkan ini
-    required this.hasQrCode, // Tambahkan ini
-    required this.qrCodeSource, // Tambahkan ini
+    this.qrCodeUrl,
+    required this.hasQrCode,
+    required this.qrCodeSource,
   });
 
   factory LamaranSaya.fromJson(Map<String, dynamic> json) {
     print('=== PARSING LAMARAN SAYA ===');
     print('JSON keys: ${json.keys}');
     print('Acara data: ${json['Acara'] ?? json['acara']}');
+    print('Application Code: ${json['applicationCode']}'); // ✅ DEBUG
 
     // Parse QR Code data
     final qrCodeData = json['qrCodeData'];
@@ -73,6 +76,7 @@ class LamaranSaya {
       applyId: json['applyId'] ?? '',
       lowonganId: json['lowonganId'] ?? '',
       status: json['status'] ?? '',
+      applicationCode: json['applicationCode'], // ✅ TAMBAHKAN INI
       interview: json['Interview'] ?? json['interview'],
       locationInterview:
           json['LocationInterview'] ?? json['location_interview'],
@@ -92,10 +96,18 @@ class LamaranSaya {
           ? InterviewSlot.fromJson(json['InterviewSlotData'])
           : null,
       interviewSlotId: json['InterviewSlotId'] ?? json['interviewSlot'],
-      qrCodeUrl: qrCodeUrl, // Set QR Code URL
-      hasQrCode: hasQrCode, // Set has QR Code
-      qrCodeSource: qrCodeSource, // Set QR Code source
+      qrCodeUrl: qrCodeUrl,
+      hasQrCode: hasQrCode,
+      qrCodeSource: qrCodeSource,
     );
+  }
+
+  String get formattedApplicationCode {
+    return applicationCode ?? 'N/A';
+  }
+
+  bool get hasApplicationCode {
+    return applicationCode != null && applicationCode!.isNotEmpty;
   }
 
   // Method terpisah untuk parsing Acara

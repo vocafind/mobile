@@ -13,7 +13,6 @@ class JobDetailSheetJobfair extends StatefulWidget {
 
 class _JobDetailSheetJobfairState extends State<JobDetailSheetJobfair>
     with SingleTickerProviderStateMixin {
-  // ✅ TAMBAHKAN INI
   int _selectedTab = 0;
   bool _isLoading = false;
   bool _isSaved = false;
@@ -33,11 +32,10 @@ class _JobDetailSheetJobfairState extends State<JobDetailSheetJobfair>
   void initState() {
     super.initState();
 
-    // Initialize animation controller - FIXED
+    // Initialize animation controller
     _bookmarkController = AnimationController(
       duration: const Duration(milliseconds: 200),
-      vsync:
-          this, // ✅ SEKSUDah BISA PAKAI 'this' karena sudah pakai SingleTickerProviderStateMixin
+      vsync: this,
     );
     _bookmarkScale = Tween<double>(begin: 1.0, end: 1.3).animate(
       CurvedAnimation(parent: _bookmarkController, curve: Curves.easeInOut),
@@ -108,28 +106,34 @@ class _JobDetailSheetJobfairState extends State<JobDetailSheetJobfair>
         _isSaved = !_isSaved;
       });
       print("❌ Error toggling save job: $e");
-      // Tidak perlu show snackbar sesuai permintaan
     }
   }
 
-  // Fungsi snackbar dengan GlobalKey
+  // ✅ PERBAIKAN: Fungsi snackbar dengan style yang sama seperti JobDetailSheet
   void _showSnackBar(String message, {bool isError = false}) {
     _scaffoldMessengerKey.currentState?.showSnackBar(
       SnackBar(
         content: Text(
           message,
           style: const TextStyle(
-            color: Colors.black,
+            color: Colors.white,
             fontWeight: FontWeight.w500,
             fontFamily: 'Poppins',
           ),
         ),
-        backgroundColor: isError ? Colors.red[100] : Colors.white,
+        backgroundColor: isError ? Colors.red[700] : Colors.green,
         behavior: SnackBarBehavior.floating,
         elevation: 2,
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        duration: const Duration(seconds: 2),
+        action: SnackBarAction(
+          textColor: Colors.white,
+          label: 'Ok', 
+          onPressed: () {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          }
+        ),
+        duration: const Duration(seconds: 5),
       ),
     );
   }
@@ -149,11 +153,9 @@ class _JobDetailSheetJobfairState extends State<JobDetailSheetJobfair>
         _showSnackBar(response.message);
 
         // Return true untuk trigger refresh di halaman jobfair detail
-        Future.delayed(const Duration(seconds: 2), () {
+        Future.delayed(const Duration(seconds: 5), () {
           if (mounted) {
-            Navigator.of(
-              context,
-            ).pop(true); // Return true untuk trigger refresh
+            Navigator.of(context).pop(true); // Return true untuk trigger refresh
           }
         });
       }
@@ -179,7 +181,6 @@ class _JobDetailSheetJobfairState extends State<JobDetailSheetJobfair>
       maxChildSize: 0.95,
       builder: (context, scrollController) {
         return ScaffoldMessenger(
-          // BUNGKUS DENGAN ScaffoldMessenger
           key: _scaffoldMessengerKey,
           child: Scaffold(
             key: _scaffoldKey,
@@ -230,6 +231,7 @@ class _JobDetailSheetJobfairState extends State<JobDetailSheetJobfair>
     );
   }
 
+  // ... (method-method lainnya tetap sama)
   Widget _buildDragHandle() {
     return Container(
       margin: const EdgeInsets.only(top: 12),

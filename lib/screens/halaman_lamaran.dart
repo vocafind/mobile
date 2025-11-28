@@ -66,19 +66,21 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
   }
 
   void _filterLamaran() {
-    final baseList = _selectedMainTab == 0 ? _allLamaranUmum : _allLamaranJobfair;
-    
+    final baseList = _selectedMainTab == 0
+        ? _allLamaranUmum
+        : _allLamaranJobfair;
+
     if (_selectedFilterTab == 0) {
       setState(() {
         _filteredLamaran = baseList;
       });
     } else {
       final statusMap = {
-        1: 'pending', 
-        2: 'reviewed', 
-        3: 'interview', 
-        4: 'accepted', 
-        5: 'reject_interview'
+        1: 'pending',
+        2: 'reviewed',
+        3: 'interview',
+        4: 'accepted',
+        5: 'reject_interview',
       };
 
       final status = statusMap[_selectedFilterTab];
@@ -302,16 +304,18 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
 
   Widget _buildEmptyState() {
     final isJobfairTab = _selectedMainTab == 1;
-    final totalInTab = isJobfairTab ? _allLamaranJobfair.length : _allLamaranUmum.length;
-    
+    final totalInTab = isJobfairTab
+        ? _allLamaranJobfair.length
+        : _allLamaranUmum.length;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            isJobfairTab ? Icons.event_busy : Icons.work_outline, 
-            size: 60, 
-            color: const Color(0xFFB8B8B8)
+            isJobfairTab ? Icons.event_busy : Icons.work_outline,
+            size: 60,
+            color: const Color(0xFFB8B8B8),
           ),
           const SizedBox(height: 16),
           Text(
@@ -325,9 +329,9 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
           ),
           const SizedBox(height: 8),
           Text(
-            isJobfairTab 
-              ? 'Ayo ikuti jobfair dan lamar lowongan yang sesuai'
-              : 'Ayo lamar lowongan yang sesuai dengan minat kamu',
+            isJobfairTab
+                ? 'Ayo ikuti jobfair dan lamar lowongan yang sesuai'
+                : 'Ayo lamar lowongan yang sesuai dengan minat kamu',
             style: const TextStyle(
               fontSize: 14,
               fontFamily: 'Poppins',
@@ -391,8 +395,11 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
     final lowongan = lamaran.lowongan;
     final company = lowongan.company;
 
+    // Tentukan apakah ini jobfair dan ada acara
+    final isJobfairWithEvent = _selectedMainTab == 1 && lamaran.acara != null;
+
     return GestureDetector(
-      onTap: () => _handleCardTap(lamaran), // GUNAKAN METHOD BARU
+      onTap: () => _handleCardTap(lamaran),
       child: Container(
         height: 181,
         margin: const EdgeInsets.only(left: 16, right: 16, bottom: 17),
@@ -400,230 +407,255 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(34),
         ),
-        child: Column(
+        child: Stack(
           children: [
-            // Content Area
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 17, 16, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header with Logo and Title
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Company Logo
-                        Container(
-                          width: 40,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: company.logo.isNotEmpty
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.network(
-                                    company.logo,
-                                    fit: BoxFit.contain,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Image.asset(
-                                        'assets/icons/icon.png',
-                                        fit: BoxFit.contain,
-                                      );
-                                    },
-                                  ),
-                                )
-                              : Padding(
-                                  padding: const EdgeInsets.all(4),
-                                  child: Image.asset(
-                                    'assets/icons/icon.png',
-                                    fit: BoxFit.contain,
-                                  ),
-                                ),
-                        ),
-                        const SizedBox(width: 10),
-
-                        // Job Info
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      lowongan.posisi,
-                                      style: const TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 16,
-                                        fontFamily: 'Poppins',
-                                        fontWeight: FontWeight.w500,
-                                        height: 1.25,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  // Badge dengan nama acara untuk tab jobfair
-                                  if (_selectedMainTab == 1 && lamaran.acara != null) ...[
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      constraints: const BoxConstraints(
-                                        maxWidth: 120,
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF1B56FD),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Text(
-                                        _getShortEventName(lamaran.acara!.namaAcara),
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 10,
-                                          fontFamily: 'Poppins',
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                company.namaPerusahaan,
-                                style: TextStyle(
-                                  color: const Color(0xFF3C3C43).withOpacity(0.6),
-                                  fontSize: 14,
-                                  fontFamily: 'Poppins',
-                                  fontWeight: FontWeight.w400,
-                                  height: 1.3,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+            // Label Nama Acara untuk Jobfair - POSISI LEBIH TINGGI
+            if (isJobfairWithEvent)
+              Positioned(
+                right: 0,
+                top: 0,
+                child: Container(
+                  width: 130,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    // <-- HAPUS const
+                    color: const Color.fromARGB(255, 245, 245, 245),
+                    borderRadius: const BorderRadius.only(
+                      topRight: Radius.circular(34),
+                      bottomLeft: Radius.circular(20),
                     ),
-                    const SizedBox(height: 13),
-
-                    // Location and Remote Tags
-                    Row(
-                      children: [
-                        // Location Tag
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(
-                              color: Colors.black.withOpacity(0.06),
-                            ),
-                          ),
-                          child: Text(
-                            lowongan.lokasi.length > 25
-                                ? '${lowongan.lokasi.substring(0, 25)}...'
-                                : lowongan.lokasi,
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontSize: 14,
-                              fontFamily: 'SF Pro',
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ),
-
-                        // Remote Tag jika tersedia
-                        if (lowongan.opsiKerjaRemote) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(24),
-                              border: Border.all(
-                                color: Colors.black.withOpacity(0.06),
-                              ),
-                            ),
-                            child: const Text(
-                              'Remote',
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 14,
-                                fontFamily: 'SF Pro',
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
+                    border: Border.all(
+                      color: Colors.black.withOpacity(0.06), // <-- OUTLINE
+                      width: 1,
                     ),
-                  ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          _getShortEventName(lamaran.acara!.namaAcara),
+                          style: const TextStyle(
+                            color: Color.fromARGB(255, 0, 0, 0),
+                            fontSize: 11,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            // Divider
-            Container(
-              height: 1,
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              color: const Color(0xFFE9E9E9),
-            ),
+            // Content Area - TAMBAH JARAK LEBIH BANYAK UNTUK JOBFAIR
+            Column(
+              children: [
+                // Content Area
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      isJobfairWithEvent
+                          ? 35
+                          : 17, // ⬅️ TAMBAH JARAK DARI 25 KE 35
+                      16,
+                      0,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header with Logo and Title
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Company Logo
+                            Container(
+                              width: 40,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: company.logo.isNotEmpty
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.network(
+                                        company.logo,
+                                        fit: BoxFit.contain,
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                              return Image.asset(
+                                                'assets/icons/icon.png',
+                                                fit: BoxFit.contain,
+                                              );
+                                            },
+                                      ),
+                                    )
+                                  : Padding(
+                                      padding: const EdgeInsets.all(4),
+                                      child: Image.asset(
+                                        'assets/icons/icon.png',
+                                        fit: BoxFit.contain,
+                                      ),
+                                    ),
+                            ),
+                            const SizedBox(width: 10),
 
-            // Footer with Date and Status
-            Container(
-              height: 54,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Dilamar ${_formatDate(lamaran.appliedAt)}',
-                    style: const TextStyle(
-                      color: Color(0xFF464E5E),
-                      fontSize: 12,
-                      fontFamily: 'SF Pro',
-                      fontWeight: FontWeight.w400,
-                      height: 2.0,
+                            // Job Info
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    lowongan.posisi,
+                                    style: const TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 16,
+                                      fontFamily: 'Poppins',
+                                      fontWeight: FontWeight.w500,
+                                      height: 1.25,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    company.namaPerusahaan,
+                                    style: TextStyle(
+                                      color: const Color(
+                                        0xFF3C3C43,
+                                      ).withOpacity(0.6),
+                                      fontSize: 14,
+                                      fontFamily: 'Poppins',
+                                      fontWeight: FontWeight.w400,
+                                      height: 1.3,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 13),
+
+                        // Location and Remote Tags
+                        Row(
+                          children: [
+                            // Location Tag
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(
+                                  color: Colors.black.withOpacity(0.06),
+                                ),
+                              ),
+                              child: Text(
+                                lowongan.lokasi.length > 25
+                                    ? '${lowongan.lokasi.substring(0, 25)}...'
+                                    : lowongan.lokasi,
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 14,
+                                  fontFamily: 'SF Pro',
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ),
+
+                            // Remote Tag jika tersedia
+                            if (lowongan.opsiKerjaRemote) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(24),
+                                  border: Border.all(
+                                    color: Colors.black.withOpacity(0.06),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Remote',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 14,
+                                    fontFamily: 'SF Pro',
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: lamaran.statusColor,
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: Text(
-                      lamaran.statusText,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontFamily: 'SF Pro',
-                        fontWeight: FontWeight.w600,
-                        height: 1.43,
+                ),
+
+                // Divider
+                Container(
+                  height: 1,
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  color: const Color(0xFFE9E9E9),
+                ),
+
+                // Footer with Date and Status
+                Container(
+                  height: 54,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Dilamar ${_formatDate(lamaran.appliedAt)}',
+                        style: const TextStyle(
+                          color: Color(0xFF464E5E),
+                          fontSize: 12,
+                          fontFamily: 'SF Pro',
+                          fontWeight: FontWeight.w400,
+                          height: 2.0,
+                        ),
                       ),
-                    ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: lamaran.statusColor,
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Text(
+                          lamaran.statusText,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontFamily: 'SF Pro',
+                            fontWeight: FontWeight.w600,
+                            height: 1.43,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ],
         ),
@@ -634,13 +666,15 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
   // Helper method untuk memendekkan nama acara jika terlalu panjang
   String _getShortEventName(String fullName) {
     if (fullName.length <= 15) return fullName;
-    
+
     final words = fullName.split(' ');
     if (words.length > 1) {
       final shortName = words.take(2).join(' ');
-      return shortName.length <= 15 ? shortName : '${shortName.substring(0, 12)}...';
+      return shortName.length <= 15
+          ? shortName
+          : '${shortName.substring(0, 12)}...';
     }
-    
+
     return '${fullName.substring(0, 12)}...';
   }
 
@@ -775,8 +809,18 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
 
   String _getMonthName(int month) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
     ];
     return months[month - 1];
   }

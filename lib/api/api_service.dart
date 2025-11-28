@@ -2522,6 +2522,7 @@ class ApiService {
   }
 
 
+
   // ================== GET LAMARAN JOBFAIR SAYA ==================
   Future<List<LamaranSaya>> getLamaranJobfairSaya() async {
     final prefs = await SharedPreferences.getInstance();
@@ -2542,14 +2543,25 @@ class ApiService {
       print("GET Lamaran Jobfair - STATUS: ${response.statusCode}");
       print("GET Lamaran Jobfair - COUNT: ${response.data.length}");
 
+      // ✅ DEBUG: Cetak data lengkap untuk memeriksa applicationCode
+      if (response.data is List && response.data.isNotEmpty) {
+        print("DEBUG - First item full data:");
+        print(response.data[0]);
+        print("DEBUG - applicationCode: ${response.data[0]['applicationCode']}");
+      }
+
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
         
         return data.map((json) {
-          return LamaranSaya.fromJson({
-            ...json,
-            'isJobfair': true, // Tandai sebagai lamaran jobfair
-          });
+          // ✅ JANGAN timpa seluruh JSON, biarkan data asli dari API
+          // Hanya tambah isJobfair jika belum ada
+          final processedJson = Map<String, dynamic>.from(json);
+          if (!processedJson.containsKey('isJobfair')) {
+            processedJson['isJobfair'] = true;
+          }
+          
+          return LamaranSaya.fromJson(processedJson);
         }).toList();
       } else {
         throw Exception('Gagal mengambil data lamaran jobfair');
@@ -2559,6 +2571,5 @@ class ApiService {
       throw Exception('Terjadi kesalahan jaringan');
     }
   }
-
 
 }

@@ -1,5 +1,9 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:jobfair/models/lamar_loker.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class DetailLamaranJobfair extends StatefulWidget {
   final LamaranSaya lamaran;
@@ -272,12 +276,6 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
                   'title': 'Status',
                   'value': 'Tidak melanjutkan ke proses selanjutnya',
                 },
-                {
-                  'icon': Icons.lightbulb_rounded,
-                  'title': 'Saran',
-                  'value':
-                      'Terus kembangkan skill dan coba lagi di kesempatan berikutnya',
-                },
               ],
       },
     };
@@ -448,22 +446,40 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
                         color: const Color(0xFFFF383C).withOpacity(0.3),
                       ),
                     ),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          Icons.cancel_rounded,
-                          color: const Color(0xFFFF383C),
-                          size: 20,
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.cancel_rounded,
+                              color: const Color(0xFFFF383C),
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Lamaran Anda tidak berhasil pada proses ini',
+                                style: TextStyle(
+                                  color: const Color(0xFF1A1A1A),
+                                  fontSize: 14,
+                                  fontFamily: 'SF Pro',
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 28),
                           child: Text(
-                            'Lamaran Anda tidak berhasil pada proses ini',
-                            style: TextStyle(
-                              color: const Color(0xFF1A1A1A),
-                              fontSize: 14,
+                            'Terima kasih telah melamar. Kami menghargai waktu dan usaha Anda. Jangan ragu untuk melamar posisi lainnya di perusahaan kami.',
+                            style: const TextStyle(
+                              color: Color(0xFF515151),
+                              fontSize: 13,
                               fontFamily: 'SF Pro',
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w400,
                             ),
                           ),
                         ),
@@ -955,8 +971,22 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
   }
 
   Widget _buildInterviewQRCode() {
-    // Cek apakah memiliki QR Code
-    if (!widget.lamaran.hasQrCode || widget.lamaran.qrCodeUrl == null) {
+    // Debug informasi QR Code
+    print('🟡 Building QR Code Widget:');
+    print('🟡 hasQrCode: ${widget.lamaran.hasQrCode}');
+    print('🟡 qrCodeUrl: ${widget.lamaran.qrCodeUrl}');
+    print('🟡 qrCodeUrl is null: ${widget.lamaran.qrCodeUrl == null}');
+    print('🟡 qrCodeUrl is empty: ${widget.lamaran.qrCodeUrl?.isEmpty}');
+
+    final hasValidQr =
+        widget.lamaran.hasQrCode &&
+        widget.lamaran.qrCodeUrl != null &&
+        widget.lamaran.qrCodeUrl!.isNotEmpty &&
+        widget.lamaran.qrCodeUrl!.startsWith('http');
+
+    print('🟡 hasValidQr: $hasValidQr');
+
+    if (!hasValidQr) {
       return Container(
         width: double.infinity,
         margin: const EdgeInsets.only(top: 8),
@@ -1013,10 +1043,12 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'QR Code akan tersedia saat jadwal interview mendekati',
+                  Text(
+                    widget.lamaran.qrCodeUrl == null
+                        ? 'URL QR Code tidak tersedia'
+                        : 'URL: ${widget.lamaran.qrCodeUrl}',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Color(0xFF9CA3AF),
                       fontSize: 12,
                       fontFamily: 'SF Pro',
@@ -1146,7 +1178,7 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    widget.lamaran.applyId,
+                    widget.lamaran.formattedApplicationCode,
                     style: const TextStyle(
                       color: Color(0xFF162781),
                       fontSize: 13,
@@ -1157,26 +1189,7 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0088FF).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    'Sumber: ${widget.lamaran.qrCodeSource}',
-                    style: const TextStyle(
-                      color: Color(0xFF0088FF),
-                      fontSize: 10,
-                      fontFamily: 'SF Pro',
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
+
                 const Text(
                   'Tunjukkan QR code ini saat check-in interview',
                   textAlign: TextAlign.center,
@@ -1232,120 +1245,221 @@ class _DetailLamaranJobfairState extends State<DetailLamaranJobfair> {
     );
   }
 
-  void _downloadQRCode(BuildContext context) {
+  Future<void> _downloadQRCode(BuildContext context) async {
+    print('🔵 Download QR Code dipanggil');
+    print('🔵 QR Code URL: ${widget.lamaran.qrCodeUrl}');
+
     if (widget.lamaran.qrCodeUrl == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Row(
-            children: [
-              Icon(Icons.error_outline, color: Colors.white, size: 20),
-              SizedBox(width: 8),
-              Text('QR Code tidak tersedia untuk diunduh'),
-            ],
-          ),
-          backgroundColor: const Color(0xFFFF383C),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
+      print('🔴 QR Code URL null');
+      if (mounted) _showErrorSnackbar('QR Code tidak tersedia untuk diunduh');
       return;
     }
 
-    // Simulasikan proses download
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Row(
-          children: [
-            Icon(Icons.download_rounded, color: Colors.white, size: 20),
-            SizedBox(width: 8),
-            Text('Mengunduh QR Code...'),
-          ],
-        ),
-        backgroundColor: const Color(0xFF0088FF),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    // Simpan ScaffoldMessengerState di awal
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-    // Setelah 2 detik, tampilkan notifikasi berhasil
-    Future.delayed(const Duration(seconds: 2), () {
-      ScaffoldMessenger.of(context).showSnackBar(
+    try {
+      print('🟡 Memulai proses download...');
+
+      // Tampilkan loading dengan mounted check
+      if (!mounted) return;
+
+      scaffoldMessenger.showSnackBar(
         SnackBar(
           content: const Row(
             children: [
-              Icon(Icons.check_circle, color: Colors.white, size: 20),
-              SizedBox(width: 8),
-              Text('QR Code berhasil diunduh'),
+              SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              ),
+              SizedBox(width: 12),
+              Text('Mengunduh QR Code...'),
             ],
           ),
-          backgroundColor: const Color(0xFF34C759),
+          backgroundColor: const Color(0xFF0088FF),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          duration: const Duration(seconds: 3),
+          duration: const Duration(seconds: 30),
         ),
       );
-    });
+
+      print('🟡 Requesting storage permission...');
+      // Request permission storage
+      final status = await Permission.storage.request();
+      print('🟡 Permission status: $status');
+
+      if (!mounted) {
+        scaffoldMessenger.hideCurrentSnackBar();
+        return;
+      }
+
+      if (!status.isGranted) {
+        print('🔴 Permission denied');
+        scaffoldMessenger.hideCurrentSnackBar();
+        if (mounted) {
+          _showErrorSnackbar(
+            'Izin akses penyimpanan diperlukan untuk mengunduh',
+          );
+        }
+        return;
+      }
+
+      print('🟡 Downloading image from URL...');
+      // Download gambar dari URL
+      final response = await http.get(Uri.parse(widget.lamaran.qrCodeUrl!));
+      print('🟡 Response status code: ${response.statusCode}');
+
+      if (!mounted) {
+        scaffoldMessenger.hideCurrentSnackBar();
+        return;
+      }
+
+      if (response.statusCode == 200) {
+        print('🟡 Image downloaded successfully, saving to gallery...');
+
+        // Gunakan image_gallery_saver_plus
+        final result = await ImageGallerySaverPlus.saveImage(
+          Uint8List.fromList(response.bodyBytes),
+          quality: 100,
+          name: "QR_Code_${widget.lamaran.formattedApplicationCode}",
+        );
+
+        print('🟡 Save result: $result');
+
+        // Tutup snackbar loading
+        scaffoldMessenger.hideCurrentSnackBar();
+
+        // Tunggu sebentar agar snackbar loading benar-benar hilang
+        await Future.delayed(const Duration(milliseconds: 300));
+
+        if (!mounted) return;
+
+        // Cek result dengan berbagai kemungkinan
+        final bool isSuccess =
+            result is Map &&
+            (result['isSuccess'] == true ||
+                result['success'] == true ||
+                result['filePath'] != null ||
+                result.toString().contains('success'));
+
+        if (isSuccess) {
+          print('🟢 QR Code berhasil disimpan');
+          _showSuccessSnackbar('QR Code berhasil disimpan di galeri');
+        } else {
+          print('🔴 Gagal menyimpan QR Code: $result');
+          _showErrorSnackbar('Gagal menyimpan QR Code');
+        }
+      } else {
+        throw Exception('Gagal mengunduh gambar: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('🔴 Error during download: $e');
+
+      // Tutup loading snackbar
+      scaffoldMessenger.hideCurrentSnackBar();
+
+      // Tunggu sebentar sebelum menampilkan error
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      // Final check sebelum menampilkan snackbar
+      if (mounted) {
+        _showErrorSnackbar('Error: ${e.toString()}');
+      }
+    }
+  }
+
+  void _showSuccessSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.white, size: 20),
+            const SizedBox(width: 8),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: const Color(0xFF34C759),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 5),
+      ),
+    );
+  }
+
+  void _showErrorSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.error_outline, color: Colors.white, size: 20),
+            const SizedBox(width: 8),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: const Color(0xFFFF383C),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   Widget _buildFinalStatusInfo(bool isAccepted, bool isRejected) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isAccepted
-            ? const Color(0xFF34C759).withOpacity(0.1)
-            : const Color(0xFFFF383C).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isAccepted
-              ? const Color(0xFF34C759).withOpacity(0.3)
-              : const Color(0xFFFF383C).withOpacity(0.3),
+    // ✅ DIUBAH: Hanya tampilkan untuk status diterima saja
+    if (isAccepted) {
+      return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(top: 8),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF34C759).withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFF34C759).withOpacity(0.3)),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                isAccepted ? Icons.email_rounded : Icons.info_rounded,
-                color: isAccepted
-                    ? const Color(0xFF34C759)
-                    : const Color(0xFFFF383C),
-                size: 18,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                isAccepted ? 'Informasi Selanjutnya' : 'Pemberitahuan',
-                style: TextStyle(
-                  color: const Color(0xFF1A1A1A),
-                  fontSize: 14,
-                  fontFamily: 'SF Pro',
-                  fontWeight: FontWeight.w600,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.email_rounded,
+                  color: const Color(0xFF34C759),
+                  size: 18,
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            isAccepted
-                ? 'Tim HR akan menghubungi Anda dalam 1-3 hari kerja untuk proses selanjutnya. Pastikan email dan nomor telepon Anda aktif.'
-                : 'Terima kasih telah melamar. Kami menghargai waktu dan usaha Anda. Jangan ragu untuk melamar posisi lainnya di perusahaan kami.',
-            style: const TextStyle(
-              color: Color(0xFF515151),
-              fontSize: 13,
-              fontFamily: 'SF Pro',
-              fontWeight: FontWeight.w400,
+                const SizedBox(width: 8),
+                Text(
+                  'Informasi Selanjutnya',
+                  style: TextStyle(
+                    color: const Color(0xFF1A1A1A),
+                    fontSize: 14,
+                    fontFamily: 'SF Pro',
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
-    );
+            const SizedBox(height: 8),
+            Text(
+              'Tim HR akan menghubungi anda untuk proses selanjutnya. Pastikan email dan nomor telepon Anda aktif.',
+              style: const TextStyle(
+                color: Color(0xFF515151),
+                fontSize: 13,
+                fontFamily: 'SF Pro',
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // ✅ Untuk status ditolak, return widget kosong (tidak tampil apa-apa)
+    return const SizedBox.shrink();
   }
 }

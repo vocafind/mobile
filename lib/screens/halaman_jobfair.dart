@@ -16,7 +16,7 @@ class HalamanJobfair extends StatefulWidget {
 class _HalamanJobfairState extends State<HalamanJobfair> {
   final ApiService _apiService = ApiService();
   late Future<List<Jobfair>> _jobfairsFuture;
-  
+
   // Daftar background colors yang akan digunakan secara berurutan
   final List<String> backgroundImages = const [
     'assets/images/kuning.png',
@@ -39,14 +39,14 @@ class _HalamanJobfairState extends State<HalamanJobfair> {
           Column(
             children: [
               // Fixed Header
-              const HeaderWidget(
-                showNotification: true,
-                showFilter: false,
-              ),
+              const HeaderWidget(showNotification: true, showFilter: false),
               // Content area dengan scroll
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 18,
+                  ),
                   child: FutureBuilder<List<Jobfair>>(
                     future: _jobfairsFuture,
                     builder: (context, snapshot) {
@@ -106,7 +106,9 @@ class _HalamanJobfairState extends State<HalamanJobfair> {
   }) {
     // Convert days until event start
     final now = DateTime.now();
-    final diff = jobfair.tanggalMulaiAcara.difference(DateTime(now.year, now.month, now.day));
+    final diff = jobfair.tanggalMulaiAcara.difference(
+      DateTime(now.year, now.month, now.day),
+    );
     final daysLeft = diff.inDays;
     final daysText = daysLeft > 0 ? '$daysLeft hari lagi' : 'Berlangsung';
 
@@ -212,7 +214,10 @@ class _HalamanJobfairState extends State<HalamanJobfair> {
                     child: Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.08),
                             borderRadius: BorderRadius.circular(45),
@@ -232,7 +237,10 @@ class _HalamanJobfairState extends State<HalamanJobfair> {
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.08),
                             borderRadius: BorderRadius.circular(45),
@@ -253,23 +261,37 @@ class _HalamanJobfairState extends State<HalamanJobfair> {
                       ],
                     ),
                   ),
+                  // HAPUS SizedBox yang di sini karena tidak efektif
                   Positioned(
                     left: 24,
-                    bottom: 110,
+                    top:
+                        70, // UBAH dari bottom: 110 MENJADI top: 70 (atau nilai lain)
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Baris Lokasi
                         Row(
-                          children: const [
-                            Icon(
+                          children: [
+                            const Icon(
                               Icons.location_on,
                               color: Colors.white,
                               size: 14,
                             ),
-                            SizedBox(width: 4),
+                            const SizedBox(width: 4),
+                            Text(
+                              jobfair.acaraBkk ?? 'Lokasi tidak tersedia',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
                           ],
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 8),
+
+                        // Baris Tanggal Acara
                         Row(
                           children: [
                             const Icon(
@@ -290,6 +312,8 @@ class _HalamanJobfairState extends State<HalamanJobfair> {
                           ],
                         ),
                         const SizedBox(height: 8),
+
+                        // Baris Periode Pendaftaran
                         Text(
                           'Pendaftaran : ${DateFormat('dd MMM yyyy').format(jobfair.tanggalAwalPendaftaranAcara)} - ${DateFormat('dd MMM yyyy').format(jobfair.tanggalAkhirPendaftaranAcara)}',
                           style: const TextStyle(
@@ -302,6 +326,7 @@ class _HalamanJobfairState extends State<HalamanJobfair> {
                       ],
                     ),
                   ),
+
                   Positioned(
                     left: 24,
                     right: 24,
@@ -376,9 +401,7 @@ class _HalamanJobfairState extends State<HalamanJobfair> {
                   color: Colors.grey[300],
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Center(
-                  child: CircularProgressIndicator(),
-                ),
+                child: const Center(child: CircularProgressIndicator()),
               ),
               if (i < 1) const SizedBox(height: 15),
             ],
@@ -396,10 +419,7 @@ class _HalamanJobfairState extends State<HalamanJobfair> {
           const SizedBox(height: 16),
           const Text(
             'Gagal memuat data job fair',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
@@ -430,10 +450,7 @@ class _HalamanJobfairState extends State<HalamanJobfair> {
           SizedBox(height: 40),
           Text(
             'Tidak ada job fair tersedia',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 8),
           Text(
