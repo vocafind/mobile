@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:jobfair/api/endpoints.dart';
 import 'package:jobfair/models/lamar_jobfair_model.dart';
-import 'package:jobfair/models/loker_umum_detail_model.dart';
+import 'package:jobfair/models/loker_umum_model.dart';
 import 'package:jobfair/screens/detail_job_sheet_jobfair.dart';
 import 'package:jobfair/widget/bottom_navbar.dart';
 import 'package:jobfair/api/api_service.dart';
@@ -20,6 +20,7 @@ class HalamanJobfairDetail extends StatefulWidget {
 class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
   final ApiService _apiService = ApiService();
   late Future<JobfairDetail?> _jobfairDetailFuture;
+  late Future<List<LokerUmum>> _lokerJobfairFuture;
   late Future<StatusRegistrasiAcara> _statusRegistrasiFuture;
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _jobsSectionKey = GlobalKey();
@@ -28,13 +29,19 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
   void initState() {
     super.initState();
     _jobfairDetailFuture = _apiService.getJobfairDetailById(widget.jobfairId);
-    _statusRegistrasiFuture = _apiService.getStatusRegistrasiAcara(widget.jobfairId);
+    _lokerJobfairFuture = _apiService.getAllLokerByJobfair(widget.jobfairId);
+    _statusRegistrasiFuture = _apiService.getStatusRegistrasiAcara(
+      widget.jobfairId,
+    );
   }
 
   void _refreshData() {
     setState(() {
       _jobfairDetailFuture = _apiService.getJobfairDetailById(widget.jobfairId);
-      _statusRegistrasiFuture = _apiService.getStatusRegistrasiAcara(widget.jobfairId);
+      _lokerJobfairFuture = _apiService.getAllLokerByJobfair(widget.jobfairId);
+      _statusRegistrasiFuture = _apiService.getStatusRegistrasiAcara(
+        widget.jobfairId,
+      );
     });
   }
 
@@ -99,7 +106,7 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
       future: _statusRegistrasiFuture,
       builder: (context, statusSnapshot) {
         final statusRegistrasi = statusSnapshot.data;
-        
+
         return SingleChildScrollView(
           controller: _scrollController,
           child: Column(
@@ -117,7 +124,11 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
     );
   }
 
-  Widget _buildHeader(BuildContext context, JobfairDetail jobfair, StatusRegistrasiAcara? statusRegistrasi) {
+  Widget _buildHeader(
+    BuildContext context,
+    JobfairDetail jobfair,
+    StatusRegistrasiAcara? statusRegistrasi,
+  ) {
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -284,21 +295,14 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.15),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.3),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                Icons.check_circle,
-                color: Colors.green[300],
-                size: 20,
-              ),
+              Icon(Icons.check_circle, color: Colors.green[300], size: 20),
               const SizedBox(width: 8),
               const Text(
                 'Anda sudah terdaftar',
@@ -333,11 +337,7 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
   Widget _buildRegistrationInfoRow(String label, String value, IconData icon) {
     return Row(
       children: [
-        Icon(
-          icon,
-          color: Colors.white.withOpacity(0.7),
-          size: 16,
-        ),
+        Icon(icon, color: Colors.white.withOpacity(0.7), size: 16),
         const SizedBox(width: 8),
         Expanded(
           child: Column(
@@ -567,54 +567,78 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
   }
 
   Widget _buildAboutSection(JobfairDetail jobfair) {
-    return Container(
-      width: double.infinity,
-      color: Colors.white,
-      padding: const EdgeInsets.all(19),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Tentang acara',
-            style: TextStyle(
-              color: Color(0xFF18181B),
-              fontSize: 20,
-              fontFamily: 'SF Pro',
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-          const SizedBox(height: 16),
-          RichText(
-            textAlign: TextAlign.justify,
-            text: TextSpan(
-              style: const TextStyle(
-                color: Color(0xFF525252),
-                fontSize: 14,
-                fontFamily: 'SF Pro',
-                height: 1.3,
+    bool isExpanded = false;
+
+    return StatefulBuilder(
+      builder: (context, setState) {
+        return Container(
+          width: double.infinity,
+          color: Colors.white,
+          padding: const EdgeInsets.all(19),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Tentang acara',
+                style: TextStyle(
+                  color: Color(0xFF18181B),
+                  fontSize: 20,
+                  fontFamily: 'SF Pro',
+                  fontWeight: FontWeight.w400,
+                ),
               ),
-              children: [
-                TextSpan(text: _getDescriptionText(jobfair.deskripsi)),
-                if (_shouldShowReadMore(jobfair.deskripsi))
-                  const TextSpan(
-                    text: ' Read more',
-                    style: TextStyle(color: Color(0xFF2563EB)),
+              const SizedBox(height: 16),
+              RichText(
+                textAlign: TextAlign.justify,
+                text: TextSpan(
+                  style: const TextStyle(
+                    color: Color(0xFF525252),
+                    fontSize: 14,
+                    fontFamily: 'SF Pro',
+                    height: 1.3,
                   ),
-              ],
-            ),
+                  children: [
+                    TextSpan(
+                      text: _getDescriptionText(jobfair.deskripsi, isExpanded),
+                    ),
+                    if (_shouldShowReadMore(jobfair.deskripsi))
+                      WidgetSpan(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              isExpanded = !isExpanded;
+                            });
+                          },
+                          child: Text(
+                            isExpanded
+                                ? ' Baca lebih sedikit'
+                                : ' Baca selengkapnya',
+                            style: const TextStyle(
+                              color: Color(0xFF2563EB),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  String _getDescriptionText(String? deskripsi) {
+  String _getDescriptionText(String? deskripsi, bool isExpanded) {
     if (deskripsi == null || deskripsi.isEmpty) {
       return 'Tidak ada deskripsi tersedia untuk acara ini.';
     }
-    if (deskripsi.length > 200) {
+
+    if (!isExpanded && deskripsi.length > 200) {
       return '${deskripsi.substring(0, 200)}...';
     }
+
     return deskripsi;
   }
 
@@ -733,9 +757,48 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
     );
   }
 
-  Widget _buildJobsSection(JobfairDetail jobfair, StatusRegistrasiAcara? statusRegistrasi) {
+  Widget _buildJobsSection(
+    JobfairDetail jobfair,
+    StatusRegistrasiAcara? statusRegistrasi,
+  ) {
     final canApply = statusRegistrasi?.canApplyMore ?? true;
-    
+
+    return FutureBuilder<List<LokerUmum>>(
+      future: _lokerJobfairFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return _buildLoadingJobs();
+        } else if (snapshot.hasError) {
+          return _buildErrorJobs(snapshot.error.toString());
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return _buildEmptyJobs();
+        } else {
+          return _buildJobsContent(snapshot.data!, canApply);
+        }
+      },
+    );
+  }
+
+  String _formatTimeAgo(DateTime tanggalPosting) {
+    final now = DateTime.now();
+    final difference = now.difference(tanggalPosting);
+
+    if (difference.inDays == 0) {
+      return 'Hari ini';
+    } else if (difference.inDays == 1) {
+      return '1 hari lalu';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} hari lalu';
+    } else if (difference.inDays < 30) {
+      final weeks = (difference.inDays / 7).floor();
+      return '$weeks minggu lalu';
+    } else {
+      final months = (difference.inDays / 30).floor();
+      return '$months bulan lalu';
+    }
+  }
+
+  Widget _buildJobsContent(List<LokerUmum> lokers, bool canApply) {
     return Container(
       key: _jobsSectionKey,
       width: double.infinity,
@@ -750,7 +813,7 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Lowongan tersedia (${jobfair.lowonganAcara.length})',
+                  'Lowongan tersedia (${lokers.length})',
                   style: const TextStyle(
                     color: Color(0xFF18181B),
                     fontSize: 20,
@@ -791,11 +854,11 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(
-              children: jobfair.lowonganAcara
+              children: lokers
                   .map(
-                    (lowongan) => Padding(
+                    (loker) => Padding(
                       padding: const EdgeInsets.only(bottom: 16),
-                      child: _buildJobCard(lowongan, canApply),
+                      child: _buildJobCard(loker, canApply),
                     ),
                   )
                   .toList(),
@@ -807,11 +870,11 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
     );
   }
 
-  Widget _buildJobCard(LowonganAcara lowongan, bool canApply) {
+  Widget _buildJobCard(LokerUmum loker, bool canApply) {
     return GestureDetector(
       onTap: canApply
           ? () {
-              _showJobDetail(lowongan);
+              _showJobDetail(loker.lowonganId);
             }
           : null,
       child: Opacity(
@@ -847,23 +910,30 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
                             color: const Color(0xFFF8FAFC),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: lowongan.logo != null && lowongan.logo!.isNotEmpty
+                          child: loker.logo != null && loker.logo!.isNotEmpty
                               ? ClipRRect(
                                   borderRadius: BorderRadius.circular(8),
                                   child: Image.network(
-                                    ApiConfig.getFullImageUrl(lowongan.logo),
+                                    ApiConfig.getFullImageUrl(loker.logo!),
                                     fit: BoxFit.contain,
-                                    loadingBuilder: (context, child, loadingProgress) {
-                                      if (loadingProgress == null) return child;
-                                      return Center(
-                                        child: CircularProgressIndicator(
-                                          value: loadingProgress.expectedTotalBytes != null
-                                              ? loadingProgress.cumulativeBytesLoaded /
-                                                    loadingProgress.expectedTotalBytes!
-                                              : null,
-                                        ),
-                                      );
-                                    },
+                                    loadingBuilder:
+                                        (context, child, loadingProgress) {
+                                          if (loadingProgress == null)
+                                            return child;
+                                          return Center(
+                                            child: CircularProgressIndicator(
+                                              value:
+                                                  loadingProgress
+                                                          .expectedTotalBytes !=
+                                                      null
+                                                  ? loadingProgress
+                                                            .cumulativeBytesLoaded /
+                                                        loadingProgress
+                                                            .expectedTotalBytes!
+                                                  : null,
+                                            ),
+                                          );
+                                        },
                                     errorBuilder: (context, error, stackTrace) {
                                       return _buildLogoPlaceholder();
                                     },
@@ -879,7 +949,7 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  lowongan.posisi,
+                                  loker.posisi,
                                   style: const TextStyle(
                                     color: Colors.black,
                                     fontSize: 16,
@@ -891,7 +961,7 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  lowongan.namaPerusahaan,
+                                  loker.namaPerusahaan,
                                   style: const TextStyle(
                                     color: Color(0xFF666666),
                                     fontSize: 14,
@@ -907,7 +977,7 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            _toggleBookmark(lowongan.lowonganId);
+                            _toggleBookmark(loker.lowonganId);
                           },
                           child: SizedBox(
                             width: 32,
@@ -923,7 +993,7 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      _formatSalary(lowongan.gaji),
+                      _formatSalary(loker.gaji),
                       style: const TextStyle(
                         fontSize: 18,
                         fontFamily: 'Poppins',
@@ -935,12 +1005,12 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        _buildJobTag(lowongan.lokasi),
-                        _buildJobTag(lowongan.jenisPekerjaan),
-                        if (lowongan.opsiKerjaRemote) _buildJobTag('Remote'),
-                        if (lowongan.minimalLulusan != null &&
-                            lowongan.minimalLulusan!.isNotEmpty)
-                          _buildJobTag(lowongan.minimalLulusan!),
+                        _buildJobTag(loker.lokasi),
+                        _buildJobTag(loker.jenisPekerjaan),
+                        if (loker.opsiKerjaRemote) _buildJobTag('Remote'),
+                        if (loker.minimalLulusan != null &&
+                            loker.minimalLulusan!.isNotEmpty)
+                          _buildJobTag(loker.minimalLulusan!),
                       ],
                     ),
                     const Spacer(),
@@ -948,7 +1018,9 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          lowongan.timeAgo,
+                          _formatTimeAgo(
+                            loker.tanggalPosting,
+                          ), // Ganti loker.timeAgo dengan ini
                           style: const TextStyle(
                             color: Color(0xFF999999),
                             fontSize: 12,
@@ -957,7 +1029,7 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
                           ),
                         ),
                         Text(
-                          '${lowongan.jumlahPelamar} pelamar',
+                          '${loker.jumlahPelamar} pelamar',
                           style: const TextStyle(
                             color: Color(0xFF999999),
                             fontSize: 12,
@@ -978,11 +1050,7 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Center(
-                      child: Icon(
-                        Icons.block,
-                        color: Colors.white,
-                        size: 40,
-                      ),
+                      child: Icon(Icons.block, color: Colors.white, size: 40),
                     ),
                   ),
                 ),
@@ -993,60 +1061,32 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
     );
   }
 
-  void _showJobDetail(LowonganAcara lowongan) {
-    final lokerDetail = _convertToLokerUmumDetail(lowongan);
+  void _showJobDetail(String lowonganId) async {
+    try {
+      final lokerDetail = await _apiService.getLokerJobfairDetail(lowonganId);
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => JobDetailSheetJobfair(loker: lokerDetail),
-    ).then((shouldRefresh) {
-      if (shouldRefresh == true) {
-        _refreshData();
-      }
-    });
-  }
-
-  LokerUmumDetail _convertToLokerUmumDetail(LowonganAcara lowongan) {
-    return LokerUmumDetail(
-      lowonganId: lowongan.lowonganId,
-      posisi: lowongan.posisi,
-      deskripsiPekerjaan: lowongan.deskripsiPekerjaan,
-      minimalLulusan: lowongan.minimalLulusan ?? '',
-      status: lowongan.status,
-      lokasi: lowongan.lokasi,
-      gaji: lowongan.gaji,
-      jenisPekerjaan: lowongan.jenisPekerjaan,
-      tanggalPosting: lowongan.tanggalPosting,
-      batasLamaran: lowongan.batasLamaran,
-      batasPelamar: lowongan.batasPelamar,
-      jumlahPelamar: lowongan.jumlahPelamar,
-      tingkatPengalaman: lowongan.tingkatPengalaman,
-      opsiKerjaRemote: lowongan.opsiKerjaRemote,
-      kontrakDurasi: lowongan.kontrakDurasi,
-      peluangKarir: lowongan.peluangKarir,
-      namaPerusahaan: lowongan.namaPerusahaan,
-      logo: lowongan.logo ?? '',
-      nib: '',
-      npwp: '',
-      bidangUsaha: '',
-      alamat: '',
-      provinsi: '',
-      kota: '',
-      email: '',
-      nomorTelepon: '',
-      website: '',
-      deskripsiPerusahaan: '',
-      jumlahKaryawan: 0,
-      kebijakanKerja: '',
-      budayaPerusahaan: '',
-      jumlahProyekBerjalan: 0,
-      jobQualifications: [],
-      jobBenefits: [],
-      jobAdditionalRequirements: [],
-      jobAdditionalFacilities: [],
-    );
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) => JobDetailSheetJobfair(loker: lokerDetail),
+      ).then((shouldRefresh) {
+        if (shouldRefresh == true) {
+          _refreshData();
+        }
+      });
+    } catch (e) {
+      print('Error loading job detail: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Gagal memuat detail lowongan: $e',
+            style: const TextStyle(fontFamily: 'Poppins'),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Future<void> _toggleBookmark(String lowonganId) async {
@@ -1092,6 +1132,54 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
       return gaji;
     }
     return 'Rp $gaji';
+  }
+
+  Widget _buildLoadingJobs() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      child: const Center(child: CircularProgressIndicator()),
+    );
+  }
+
+  Widget _buildErrorJobs(String error) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          const Icon(Icons.error_outline, size: 50, color: Colors.red),
+          const SizedBox(height: 10),
+          Text(
+            'Gagal memuat lowongan: $error',
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.red),
+          ),
+          const SizedBox(height: 10),
+          ElevatedButton(
+            onPressed: () {
+              _refreshData();
+            },
+            child: const Text('Coba Lagi'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyJobs() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          const Icon(Icons.work_outline, size: 50, color: Colors.grey),
+          const SizedBox(height: 10),
+          const Text(
+            'Belum ada lowongan tersedia',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildLoadingState() {

@@ -2259,6 +2259,46 @@ class ApiService {
 
 
 
+// ================== GET ALL LOKER BY JOBFAIR ==================
+  Future<List<LokerUmum>> getAllLokerByJobfair(int jobfairId) async {
+    final url = Uri.parse(ApiConfig.allLokerByJobfair(jobfairId.toString()));
+    
+    try {
+      final response = await http.get(url);
+      
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => LokerUmum.fromJson(json)).toList();
+      } else {
+        throw Exception('Failed to load jobfair loker: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching jobfair loker: $e');
+    }
+  }
+
+  // ================== GET LOKER JOBFAIR DETAIL ==================
+  Future<LokerUmumDetail> getLokerJobfairDetail(String id) async {
+    final url = Uri.parse(ApiConfig.lokerJobfairDetail(id));
+    
+    try {
+      final response = await http.get(url);
+      
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        return LokerUmumDetail.fromJson(data);
+      } else {
+        throw Exception('Failed to load jobfair loker detail: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching jobfair loker detail: $e');
+    }
+  }
+
+
+
+
+
 
 
 

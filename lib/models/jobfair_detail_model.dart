@@ -37,9 +37,9 @@ class JobfairDetail {
       tanggalSelesai: DateTime.tryParse(json['tanggalSelesai'] ?? '') ?? DateTime.now(),
       batasPendaftaran: DateTime.tryParse(json['batasPendaftaran'] ?? '') ?? DateTime.now(),
       acaraBkk: json['acaraBkk']?.toString(),
-      kapasitasPeserta: json['kapasitasPeserta'] is int
-          ? json['kapasitasPeserta']
-          : int.tryParse(json['kapasitasPeserta'].toString()) ?? 0,
+      kapasitasPeserta: json['maxCapacity'] is int
+          ? json['maxCapacity']
+          : int.tryParse(json['maxCapacity'].toString()) ?? 0,
       flyerAcara: (json['flyerAcara'] as List<dynamic>? ?? [])
           .map((e) => FlyerAcara.fromJson(e))
           .toList(),
