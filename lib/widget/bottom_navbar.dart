@@ -5,7 +5,7 @@ import 'package:jobfair/screens/halaman_jobfair.dart';
 import 'package:jobfair/screens/profil/halaman_profil.dart';
 import 'package:jobfair/screens/halaman_lamaran.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'dart:ui'; // ✅ Import untuk BackdropFilter
+import 'dart:ui';
 
 class BottomNavBar extends StatefulWidget {
   final int currentIndex;
@@ -57,13 +57,11 @@ class _BottomNavBarState extends State<BottomNavBar>
   void _handleNavigation(int index) {
     if (index == widget.currentIndex) return;
 
-    // Call onTap callback if provided
     if (widget.onTap != null) {
       widget.onTap!(index);
       return;
     }
 
-    // Navigate to corresponding page
     Widget page;
     switch (index) {
       case 0:
@@ -85,7 +83,6 @@ class _BottomNavBarState extends State<BottomNavBar>
         return;
     }
 
-    // Navigate with replacement without transition
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) => page,
@@ -97,24 +94,33 @@ class _BottomNavBarState extends State<BottomNavBar>
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    
+    // ✅ Simple adjustment untuk device kecil
+    final isSmallDevice = screenWidth < 360;
+    
     return Container(
-      margin: const EdgeInsets.only(left: 28, right: 28, bottom: 20),
-      height: 68,
+      margin: EdgeInsets.only(
+        left: isSmallDevice ? 16 : 28,
+        right: isSmallDevice ? 16 : 28,
+        bottom: isSmallDevice ? 12 : 20,
+      ),
+      height: isSmallDevice ? 60 : 68,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(60),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10), // ✅ Efek blur
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.3), // ✅ Lebih transparan
+              color: Colors.black.withOpacity(0.3), // ✅ Fix: withOpacity bukan withValues
               borderRadius: BorderRadius.circular(60),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.1), // ✅ Border subtle
+                color: Colors.white.withOpacity(0.1), // ✅ Fix: withOpacity
                 width: 1,
               ),
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6),
+              padding: EdgeInsets.symmetric(horizontal: isSmallDevice ? 4 : 6),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -122,26 +128,31 @@ class _BottomNavBarState extends State<BottomNavBar>
                     index: 0,
                     svgPath: 'assets/icons/home.svg',
                     label: 'Beranda',
+                    isSmallDevice: isSmallDevice,
                   ),
                   _buildNavButton(
                     index: 1,
                     svgPath: 'assets/icons/search.svg',
-                    label: 'Cari Loker',
+                    label: isSmallDevice ? 'Cari' : 'Cari Loker', // ✅ Shorten label di device kecil
+                    isSmallDevice: isSmallDevice,
                   ),
                   _buildNavButton(
                     index: 2,
                     svgPath: 'assets/icons/jobfairIcon.svg',
                     label: 'Jobfair',
+                    isSmallDevice: isSmallDevice,
                   ),
                   _buildNavButton(
                     index: 3,
                     svgPath: 'assets/icons/lamaran.svg',
                     label: 'Lamaran',
+                    isSmallDevice: isSmallDevice,
                   ),
                   _buildNavButton(
                     index: 4,
                     svgPath: 'assets/icons/profile.svg',
-                    label: 'Profile',
+                    label: 'Profil', // ✅ Fix: 'Profile' jadi 'Profil'
+                    isSmallDevice: isSmallDevice,
                   ),
                 ],
               ),
@@ -156,6 +167,7 @@ class _BottomNavBarState extends State<BottomNavBar>
     required int index,
     required String svgPath,
     required String label,
+    required bool isSmallDevice,
   }) {
     final bool isActive = widget.currentIndex == index;
 
@@ -165,8 +177,10 @@ class _BottomNavBarState extends State<BottomNavBar>
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeInOut,
         padding: EdgeInsets.symmetric(
-          horizontal: isActive ? 16 : 8,
-          vertical: 10,
+          horizontal: isActive 
+              ? (isSmallDevice ? 12 : 16) 
+              : (isSmallDevice ? 6 : 8),
+          vertical: isSmallDevice ? 8 : 10,
         ),
         decoration: BoxDecoration(
           color: isActive ? Colors.white : Colors.transparent,
@@ -177,22 +191,22 @@ class _BottomNavBarState extends State<BottomNavBar>
           children: [
             SvgPicture.asset(
               svgPath,
-              width: 30,
-              height: 30,
+              width: isSmallDevice ? 26 : 30, // ✅ Icon lebih kecil di device kecil
+              height: isSmallDevice ? 26 : 30,
               colorFilter: ColorFilter.mode(
                 isActive ? Colors.black : Colors.white,
                 BlendMode.srcIn,
               ),
             ),
             if (isActive) ...[
-              const SizedBox(width: 8),
+              SizedBox(width: isSmallDevice ? 6 : 8),
               FadeTransition(
                 opacity: _fadeAnimation,
                 child: Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.black,
-                    fontSize: 12,
+                    fontSize: isSmallDevice ? 10 : 12, // ✅ Font lebih kecil di device kecil
                     fontFamily: 'Poppins',
                     fontWeight: FontWeight.w500,
                   ),

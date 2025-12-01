@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '/widget/bottom_navbar.dart';
 import 'halaman_notifikasi.dart';
-import 'halaman_bookmark.dart'; // Import halaman bookmark
+import 'halaman_bookmark.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class HalamanBeranda extends StatefulWidget {
   const HalamanBeranda({super.key});
@@ -12,8 +13,6 @@ class HalamanBeranda extends StatefulWidget {
 
 class _HalamanBerandaState extends State<HalamanBeranda> {
   final ScrollController _scrollController = ScrollController();
-
-  // ✅ ValueNotifier untuk scroll offset (tidak rebuild seluruh widget)
   final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
 
   @override
@@ -22,7 +21,6 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
     _scrollController.addListener(_onScroll);
   }
 
-  // ✅ Update ValueNotifier, bukan setState
   void _onScroll() {
     _scrollOffset.value = _scrollController.offset;
   }
@@ -38,74 +36,84 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
   @override
   Widget build(BuildContext context) {
     final double topPadding = MediaQuery.of(context).padding.top;
+    // Hitung tinggi header maksimal (saat tidak di-scroll)
+    final double maxHeaderHeight = topPadding + 12 + 120 + 44 + 30;
 
     return Scaffold(
-      body: Stack(
-        children: [
-          // ✅ RepaintBoundary untuk isolasi scroll content
-          RepaintBoundary(
-            child: SingleChildScrollView(
-              controller: _scrollController,
-              child: Container(
-                decoration: const BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage('assets/images/frame15.jpg'),
-                    fit: BoxFit.cover,
-                    alignment: Alignment(0, -0.9),
+  backgroundColor: const Color(0xFFF0F4F9),
+  body: Stack(
+    children: [
+      RepaintBoundary(
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          child: Column(
+            children: [
+              // Tambah spacing agar content tidak tertimpa header
+              SizedBox(height: maxHeaderHeight + 20),
+              const _CocokUntukKamuSection(),
+              const SizedBox(height: 40),
+              
+              // Divider
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Container(
+                  height: 1,
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [
+                        Color(0x00C7C7C7),
+                        Color(0xFFC7C7C7),
+                        Color(0x00C7C7C7),
+                      ],
+                    ),
                   ),
                 ),
-                child: Column(
-                  children: const [
-                    SizedBox(height: 220),
-                    _CocokUntukKamuSection(),
-                    SizedBox(height: 50),
-                    AyoTemuiMerekaSection(),
-                    SizedBox(height: 60),
-                    _JobFairSection(),
-                    SizedBox(height: 60),
-                    _KesepatanSegeraSection(),
-                    SizedBox(height: 0),
-                  ],
-                ),
               ),
-            ),
+              
+              const SizedBox(height: 40),
+              const _JelajahiKesempatanKarierSection(),
+              const SizedBox(height: 60),
+              const _TemuiMerekaDanKesempatanSegeraSection(),
+              const SizedBox(height: 120),
+            ],
           ),
+        ),
+      ),
 
-          // ✅ Header dengan ValueListenableBuilder (hanya rebuild header)
-          ValueListenableBuilder<double>(
-            valueListenable: _scrollOffset,
-            builder: (context, offset, child) {
-              final bool showSearchOnly = offset > 100;
-              final double headerHeight = showSearchOnly
-                  ? topPadding + 25 + 50 + 16
-                  : topPadding + 12 + 120 + 44 + 30;
+      ValueListenableBuilder<double>(
+        valueListenable: _scrollOffset,
+        builder: (context, offset, child) {
+          final bool showSearchOnly = offset > 100;
+          final double headerHeight = showSearchOnly
+              ? topPadding + 25 + 50 + 16
+              : topPadding + 12 + 120 + 44 + 30;
 
-              return Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                height: headerHeight,
-                child: _AnimatedHeader(
-                  showSearchOnly: showSearchOnly,
-                  topPadding: topPadding,
-                ),
-              );
-            },
-          ),
-
-          const Positioned(
+          return Positioned(
+            top: 0,
             left: 0,
             right: 0,
-            bottom: 0,
-            child: BottomNavBar(currentIndex: 0),
-          ),
-        ],
+            height: headerHeight,
+            child: _AnimatedHeader(
+              showSearchOnly: showSearchOnly,
+              topPadding: topPadding,
+            ),
+          );
+        },
       ),
-    );
-  }
-}
 
-// ✅ Extract Header sebagai widget terpisah (MODIFIED)
+      const Positioned(
+        left: 0,
+        right: 0,
+        bottom: 0,
+        child: BottomNavBar(currentIndex: 0),
+      ),
+    ],
+  ),
+);
+  }
+  }
 class _AnimatedHeader extends StatelessWidget {
   final bool showSearchOnly;
   final double topPadding;
@@ -120,16 +128,16 @@ class _AnimatedHeader extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          begin: Alignment.bottomCenter,
-          end: Alignment.topRight,
-          colors: [Color(0xFF0118D8), Color(0xFF1B56FD)],
+          begin: Alignment(1.00, 0.30),
+          end: Alignment(0.50, 1.00),
+          colors: [Color(0xFF1B56FD), Color(0xFF0118D8)],
         ),
         boxShadow: showSearchOnly
             ? [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
+                  color: Colors.black.withOpacity(0.25),
                   blurRadius: 4,
-                  offset: const Offset(0, 2),
+                  offset: const Offset(0, 4),
                 ),
               ]
             : null,
@@ -148,19 +156,21 @@ class _AnimatedHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // ✅ Gunakan Visibility untuk hide/show
               Visibility(
                 visible: !showSearchOnly,
                 child: const Padding(
                   padding: EdgeInsets.only(bottom: 24),
-                  child: Text(
-                    'Hai! Aku siap bantu cari pekerjaan terbaik buat kamu.',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 26,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w600,
-                      height: 1.15,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Hai Nama! Aku siap bantu cari pekerjaan terbaik buat kamu.',
+                      style: TextStyle(
+                        color: Color(0xFFFFF8F8),
+                        fontSize: 26,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w600,
+                        height: 1.15,
+                      ),
                     ),
                   ),
                 ),
@@ -171,22 +181,25 @@ class _AnimatedHeader extends StatelessWidget {
                   Expanded(
                     child: Container(
                       height: 44,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(50),
+                      decoration: ShapeDecoration(
+                        color: const Color(0x19EEEEEE),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(50),
+                        ),
                       ),
                       child: const Row(
                         children: [
-                          SizedBox(width: 20),
+                          SizedBox(width: 16),
                           Icon(Icons.search, color: Colors.white, size: 20),
                           SizedBox(width: 12),
                           Text(
                             'Cari lowongan kerja...',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: Color(0xFFFFF8F8),
                               fontSize: 14,
                               fontFamily: 'Poppins',
                               fontWeight: FontWeight.w500,
+                              height: 1.71,
                             ),
                           ),
                         ],
@@ -195,10 +208,8 @@ class _AnimatedHeader extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
 
-                  // ✅ TAMBAHKAN ICON BOOKMARK DI SAMPING NOTIFICATION
                   Row(
                     children: [
-                      // Bookmark Icon
                       GestureDetector(
                         onTap: () {
                           Navigator.push(
@@ -211,9 +222,9 @@ class _AnimatedHeader extends StatelessWidget {
                         child: Container(
                           width: 44,
                           height: 44,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
+                          decoration: const ShapeDecoration(
+                            color: Color(0x19EEEEEE),
+                            shape: OvalBorder(),
                           ),
                           child: const Icon(
                             Icons.bookmark_border,
@@ -223,8 +234,6 @@ class _AnimatedHeader extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 12),
-
-                      // Notification Icon
                       GestureDetector(
                         onTap: () {
                           Navigator.push(
@@ -237,9 +246,9 @@ class _AnimatedHeader extends StatelessWidget {
                         child: Container(
                           width: 44,
                           height: 44,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
+                          decoration: const ShapeDecoration(
+                            color: Color(0x19EEEEEE),
+                            shape: OvalBorder(),
                           ),
                           child: const Icon(
                             Icons.notifications_outlined,
@@ -260,250 +269,51 @@ class _AnimatedHeader extends StatelessWidget {
   }
 }
 
-// ✅ Extract section sebagai StatelessWidget
 class _CocokUntukKamuSection extends StatelessWidget {
   const _CocokUntukKamuSection();
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 610,
-      child: Stack(
-        children: [
-          // ✅ Positioned.fill di luar, RepaintBoundary di dalam
-          Positioned.fill(
-            child: RepaintBoundary(
-              child: ShaderMask(
-                shaderCallback: (bounds) {
-                  return LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.white,
-                      Colors.white,
-                      Colors.white,
-                      Colors.white.withValues(alpha: 0.5),
-                      Colors.white.withValues(alpha: 0.0),
-                    ],
-                    stops: const [0.0, 0.0, 0.7, 0.85, 1.0],
-                  ).createShader(bounds);
-                },
-                blendMode: BlendMode.dstIn,
-                child: Image.asset(
-                  'assets/images/iphone14bg.jpg',
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-          ),
+    final screenWidth = MediaQuery.of(context).size.width;
+    final cardWidth = (screenWidth * 0.9).clamp(300.0, 380.0);
+    final cardHeight = cardWidth * 0.685;
 
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 60),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
-                  child: Text(
-                    'Cocok untuk kamu',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 26,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.only(left: 20, bottom: 5),
-                    itemCount: 3,
-                    itemExtent: 354,
-                    itemBuilder: (context, index) {
-                      return const _CocokUntukKamuCard();
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// Widget untuk bagian "Ayo Temui Mereka" dengan auto-scroll looping
-class AyoTemuiMerekaSection extends StatefulWidget {
-  const AyoTemuiMerekaSection({super.key});
-
-  @override
-  State<AyoTemuiMerekaSection> createState() => _AyoTemuiMerekaSectionState();
-}
-
-class _AyoTemuiMerekaSectionState extends State<AyoTemuiMerekaSection> {
-  late ScrollController _scrollController;
-  bool _isAutoScrolling = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController = ScrollController();
-    _startAutoScroll();
-  }
-
-  void _startAutoScroll() async {
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    while (mounted && _isAutoScrolling) {
-      if (_scrollController.hasClients) {
-        final maxScroll = _scrollController.position.maxScrollExtent;
-
-        await _scrollController.animateTo(
-          maxScroll,
-          duration: const Duration(seconds: 10),
-          curve: Curves.linear,
-        );
-
-        if (mounted && _isAutoScrolling) {
-          _scrollController.jumpTo(0);
-          await Future.delayed(const Duration(milliseconds: 100));
-        }
-      } else {
-        await Future.delayed(const Duration(milliseconds: 100));
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _isAutoScrolling = false;
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20),
-          child: Text(
-            'Ayo Temui Mereka',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 26,
-              fontFamily: 'Poppins',
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        // ✅ RepaintBoundary untuk isolasi animasi scroll
-        RepaintBoundary(
-          child: GestureDetector(
-            onHorizontalDragStart: (_) {
-              setState(() {
-                _isAutoScrolling = false;
-              });
-            },
-            onHorizontalDragEnd: (_) {
-              setState(() {
-                _isAutoScrolling = true;
-                _startAutoScroll();
-              });
-            },
-            child: Container(
-              height: 113,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(34),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
+          child: const Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Cocok untuk kamu',
+              style: TextStyle(
+                color: Color(0xFF070707),
+                fontSize: 26,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w600,
+                height: 1.15,
               ),
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              child: ListView.builder(
-                controller: _scrollController,
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 28,
-                  vertical: 28,
-                ),
-                itemCount: 15,
-                // ✅ Tambahkan itemExtent
-                itemExtent: 97, // 62 width + 35 padding
-                itemBuilder: (context, index) {
-                  return const _CompanyLogo();
-                },
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ✅ Extract logo sebagai widget terpisah dengan const
-class _CompanyLogo extends StatelessWidget {
-  const _CompanyLogo();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 62,
-      height: 56,
-      child: Image.asset(
-        'assets/icons/poltek.png',
-        width: 62,
-        height: 56,
-        fit: BoxFit.contain,
-        // ✅ Cache image
-        cacheWidth: 124, // 2x untuk retina
-        cacheHeight: 112,
-      ),
-    );
-  }
-}
-
-class _JobFairSection extends StatelessWidget {
-  const _JobFairSection();
-
-  static const List<String> backgrounds = [
-    'assets/images/biru.png',
-    'assets/images/kuning.png',
-    'assets/images/pink.png',
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20),
-          child: Text(
-            'Jelajahi Kesempatan Karier',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 26,
-              fontFamily: 'Poppins',
-              fontWeight: FontWeight.w600,
             ),
           ),
         ),
         const SizedBox(height: 16),
         SizedBox(
-          height: 335,
+          height: cardHeight + 30, // Tambah space untuk shadow/glow
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.only(left: 20, bottom: 5),
+            padding: EdgeInsets.only(
+              left: screenWidth * 0.05,
+              top: 5, // Padding atas untuk shadow
+              bottom: 5, // Padding bawah untuk shadow
+            ),
+            clipBehavior: Clip.none, // Biarkan shadow tidak terpotong
             itemCount: 3,
-            // ✅ Tambahkan itemExtent
-            itemExtent: 354, // 338 width + 16 padding
             itemBuilder: (context, index) {
-              return _JobFairCard(backgroundImage: backgrounds[index]);
+              return Padding(
+                padding: EdgeInsets.only(right: screenWidth * 0.04),
+                child: const _CocokUntukKamuCard(),
+              );
             },
           ),
         ),
@@ -512,453 +322,752 @@ class _JobFairSection extends StatelessWidget {
   }
 }
 
-class _KesepatanSegeraSection extends StatelessWidget {
-  const _KesepatanSegeraSection();
+class _JelajahiKesempatanKarierSection extends StatelessWidget {
+  const _JelajahiKesempatanKarierSection();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: const Color(0xFFFAFAFA).withValues(alpha: 0.8),
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(34),
-          topRight: Radius.circular(34),
-        ),
-      ),
-      padding: const EdgeInsets.only(top: 31, bottom: 120),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 23),
+    final screenWidth = MediaQuery.of(context).size.width;
+    final cardWidth = (screenWidth * 0.9).clamp(300.0, 400.0);
+    final cardHeight = cardWidth * 0.91;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
+          child: const Align(
+            alignment: Alignment.centerLeft,
             child: Text(
-              'Kesempatan Segera!',
+              'Jelajahi Kesempatan Karier',
               style: TextStyle(
                 color: Colors.black,
                 fontSize: 26,
                 fontFamily: 'Poppins',
                 fontWeight: FontWeight.w600,
+                height: 1.15,
               ),
             ),
           ),
-          SizedBox(height: 24),
-          _UrgentJobCard(),
-          SizedBox(height: 15),
-          _UrgentJobCard(),
-          SizedBox(height: 15),
-          _UrgentJobCard(),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: cardHeight + 20,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: EdgeInsets.only(left: screenWidth * 0.05),
+            itemCount: 2,
+            itemBuilder: (context, index) {
+              return Padding(
+                padding: EdgeInsets.only(right: screenWidth * 0.04),
+                child: const _EventCard(
+                  eventTitle: "Tech Career Expo 2025",
+                  location: "Politeknik Negeri Batam",
+                  dateRange: "19 Sep 2025 - 20 Sep 2025",
+                  registration: "Pendaftaran : 7 Sep 2025 - 19 Sep 2025",
+                  jobsCount: "10 Lowongan",
+                  companiesCount: "3 Perusahaan",
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TemuiMerekaDanKesempatanSegeraSection extends StatelessWidget {
+  const _TemuiMerekaDanKesempatanSegeraSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.only(top: 31, bottom: 60), // Tambah padding atas dan bawah
+      decoration: const BoxDecoration(
+        color: Color(0xFFFAFAFA),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 23),
+            child: Text(
+              'Temui Mereka',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 26,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w600,
+                height: 1.15,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            height: 113,
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: ShapeDecoration(
+              color: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(34),
+              ),
+            ),
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 28),
+              itemCount: 6,
+              itemExtent: 97,
+              itemBuilder: (context, index) {
+                return const _CompanyLogo();
+              },
+            ),
+          ),
+          const SizedBox(height: 40),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 23),
+            child: Text(
+              'Dibutuhkan Segera!',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 16,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w600,
+                height: 1.75,
+                letterSpacing: 0.35,
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          const _UrgentJobCard(),
+          const SizedBox(height: 15),
+          const _UrgentJobCard(),
+          const SizedBox(height: 15),
+          const _UrgentJobCard(),
         ],
       ),
     );
   }
 }
 
-// Card untuk "Cocok untuk kamu" dengan animasi bookmark
-class _CocokUntukKamuCard extends StatefulWidget {
+class _CocokUntukKamuCard extends StatelessWidget {
   const _CocokUntukKamuCard();
 
   @override
-  State<_CocokUntukKamuCard> createState() => _CocokUntukKamuCardState();
-}
-
-class _CocokUntukKamuCardState extends State<_CocokUntukKamuCard> {
-  bool isSaved = false;
-
-  @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 16),
-      child: Container(
-        width: 338,
-        height: 410,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.85),
-          borderRadius: BorderRadius.circular(34),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(34),
-                    topRight: Radius.circular(34),
-                  ),
-                  child: Container(
-                    width: 338,
-                    height: 236,
-                    color: const Color(0xFFE8F0FE),
-                    child: Image.asset(
-                      'assets/images/job.png',
-                      fit: BoxFit.cover,
-                      // ✅ Cache image
-                      cacheWidth: 676,
-                      cacheHeight: 472,
-                    ),
-                  ),
+    final screenWidth = MediaQuery.of(context).size.width;
+    
+    // Responsive dimensions
+    final cardWidth = (screenWidth * 0.9).clamp(300.0, 380.0);
+    final cardHeight = cardWidth * 0.685; // Rasio 343:235
+    
+    return SizedBox(
+      width: cardWidth,
+      height: cardHeight,
+      child: Stack(
+        children: [
+          // Background shadow
+          Container(
+            width: cardWidth,
+            height: cardHeight,
+            decoration: ShapeDecoration(
+              color: const Color(0xFFF0F4F9),
+              shape: RoundedRectangleBorder(
+                side: const BorderSide(
+                  width: 1,
+                  color: Color(0xFFC7C7C7),
                 ),
-                Positioned(
-                  right: 0,
-                  top: 22,
-                  child: Container(
-                    width: 153,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.5),
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(22),
-                        bottomLeft: Radius.circular(22),
-                      ),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'Kecocokan 76 %',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 17,
-                          fontFamily: 'SF Pro',
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ),
-                  ),
+                borderRadius: BorderRadius.circular(cardWidth * 0.102),
+              ),
+            ),
+          ),
+
+          // Main card dengan border dan glow biru
+          Container(
+            width: cardWidth,
+            height: cardHeight,
+            decoration: ShapeDecoration(
+              color: Colors.white,
+              shape: RoundedRectangleBorder(
+                side: const BorderSide(
+                  width: 3,
+                  color: Color(0xFF0118D8),
+                ),
+                borderRadius: BorderRadius.circular(cardWidth * 0.102),
+              ),
+              shadows: const [
+                BoxShadow(
+                  color: Color(0xFF9FAAFF),
+                  blurRadius: 20,
+                  offset: Offset(0, 0),
+                  spreadRadius: 0,
                 ),
               ],
             ),
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Fulltime Backend Develop...',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 22,
-                      fontFamily: 'SF Pro',
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Kota Batam',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 12,
-                      fontFamily: 'SF Pro',
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  const Text(
-                    'Rp. 9.000.000',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 12,
-                      fontFamily: 'SF Pro',
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    height: 0.5,
-                    color: Colors.black.withValues(alpha: 0.36),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Image.asset(
-                          'assets/icons/poltek.png',
-                          fit: BoxFit.contain,
-                          cacheWidth: 56,
-                          cacheHeight: 56,
-                        ),
+            child: Stack(
+              children: [
+                // Badge urgent
+                Positioned(
+                  left: 0,
+                  top: 0,
+                  child: Container(
+                    width: cardWidth * 0.379,
+                    height: cardHeight * 0.119,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0E37EB),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(cardWidth * 0.102),
+                        bottomRight: Radius.circular(cardWidth * 0.058),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Perusahaan',
-                              style: TextStyle(
-                                color: Colors.black.withValues(alpha: 0.6),
-                                fontSize: 11,
-                                fontFamily: 'SF Pro',
-                                fontWeight: FontWeight.w600,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.bolt,
+                          color: const Color(0xFFFFCC00),
+                          size: screenWidth * 0.037,
+                        ),
+                        SizedBox(width: cardWidth * 0.012),
+                        Text(
+                          '3 hari lagi',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: screenWidth * 0.029,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                Padding(
+                  padding: EdgeInsets.all(cardWidth * 0.058),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(height: cardHeight * 0.119),
+
+                      // Company logo and info
+                      Row(
+                        children: [
+                          Container(
+                            width: cardWidth * 0.117,
+                            height: cardWidth * 0.105,
+                            decoration: const BoxDecoration(
+                              image: DecorationImage(
+                                image: AssetImage("images/poltek.png"),
+                                fit: BoxFit.cover,
                               ),
                             ),
-                            const Text(
-                              'Inforsys Indonesia',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                          ),
+                          SizedBox(width: cardWidth * 0.058),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Fulltime Backend Developer',
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: screenWidth * 0.042,
+                                    fontFamily: 'Poppins',
+                                    fontWeight: FontWeight.w500,
+                                    height: 1.25,
+                                    letterSpacing: -0.24,
+                                  ),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Inforsys Indonesia',
+                                  style: TextStyle(
+                                    color: const Color(0x993C3C43),
+                                    fontSize: screenWidth * 0.037,
+                                    fontFamily: 'Poppins',
+                                    fontWeight: FontWeight.w400,
+                                    height: 1.29,
+                                    letterSpacing: -0.08,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      SizedBox(height: cardHeight * 0.085),
+
+                      // Salary
+                      Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'Rp',
                               style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 13,
-                                fontFamily: 'SF Pro',
+                                color: const Color(0xFF40403F),
+                                fontSize: screenWidth * 0.037,
+                                fontFamily: 'Poppins',
                                 fontWeight: FontWeight.w600,
+                                height: 1.43,
+                                letterSpacing: -0.24,
+                              ),
+                            ),
+                            TextSpan(
+                              text: ' 9.000.000 - ',
+                              style: TextStyle(
+                                color: const Color(0xFF40403F),
+                                fontSize: screenWidth * 0.047,
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w600,
+                                height: 1.11,
+                                letterSpacing: -0.24,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'Rp',
+                              style: TextStyle(
+                                color: const Color(0xFF40403F),
+                                fontSize: screenWidth * 0.037,
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w600,
+                                height: 1.43,
+                                letterSpacing: -0.24,
+                              ),
+                            ),
+                            TextSpan(
+                              text: ' 12.000.000',
+                              style: TextStyle(
+                                color: const Color(0xFF40403F),
+                                fontSize: screenWidth * 0.047,
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w600,
+                                height: 1.11,
+                                letterSpacing: -0.24,
                               ),
                             ),
                           ],
                         ),
                       ),
+
+                      SizedBox(height: cardHeight * 0.068),
+
+                      // Location and remote tags
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: cardWidth * 0.035,
+                              vertical: cardHeight * 0.017,
+                            ),
+                            decoration: ShapeDecoration(
+                              color: const Color(0xFFF0F4F9),
+                              shape: RoundedRectangleBorder(
+                                side: const BorderSide(
+                                  width: 1,
+                                  color: Color(0xFFC7C7C7),
+                                ),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: Text(
+                              'Batam Kota, Kepulauan Riau',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: screenWidth * 0.032,
+                                fontFamily: 'SF Pro',
+                                fontWeight: FontWeight.w400,
+                                height: 1.43,
+                                letterSpacing: -0.50,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: cardWidth * 0.035,
+                              vertical: cardHeight * 0.017,
+                            ),
+                            decoration: ShapeDecoration(
+                              color: const Color(0xFFF0F4F9),
+                              shape: RoundedRectangleBorder(
+                                side: const BorderSide(
+                                  width: 1,
+                                  color: Color(0xFFC7C7C7),
+                                ),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: Text(
+                              'Remote',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: screenWidth * 0.032,
+                                fontFamily: 'SF Pro',
+                                fontWeight: FontWeight.w400,
+                                height: 1.43,
+                                letterSpacing: -0.50,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const Spacer(),
+
+                      // Posted time
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          '1 hari lalu',
+                          style: TextStyle(
+                            color: const Color(0xFF464E5E),
+                            fontSize: screenWidth * 0.032,
+                            fontFamily: 'SF Pro',
+                            fontWeight: FontWeight.w400,
+                            height: 2,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _JobFairCard extends StatelessWidget {
-  final String backgroundImage;
+class _EventCard extends StatelessWidget {
+  final String eventTitle;
+  final String location;
+  final String dateRange;
+  final String registration;
+  final String jobsCount;
+  final String companiesCount;
 
-  const _JobFairCard({required this.backgroundImage});
+  const _EventCard({
+    required this.eventTitle,
+    required this.location,
+    required this.dateRange,
+    required this.registration,
+    required this.jobsCount,
+    required this.companiesCount,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 16),
-      child: Container(
-        width: 338,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(34),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Padding(
-              padding: EdgeInsets.all(24),
+    // Mendapatkan ukuran layar
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    
+    // Menghitung dimensi responsif dengan clamp untuk mencegah terlalu besar/kecil
+    final cardWidth = (screenWidth * 0.9).clamp(300.0, 400.0);
+    final cardHeight = cardWidth * 0.91; // Rasio 338:308
+    final headerHeight = 66.0; // Fixed height untuk header
+    final imageHeight = cardHeight - headerHeight;
+    
+    // Responsive padding dan spacing
+    final horizontalPadding = screenWidth * 0.05;
+    final contentPadding = cardWidth * 0.071; // 24/338
+
+    return Center(
+      child: SizedBox(
+        width: cardWidth,
+        height: cardHeight,
+        child: Stack(
+        children: [
+          // Event info card (header)
+          Positioned(
+            top: 0,
+            child: Container(
+              width: cardWidth,
+              height: headerHeight,
+              padding: EdgeInsets.only(
+                top: headerHeight * 0.21,
+                left: contentPadding,
+                right: contentPadding,
+              ),
+              decoration: ShapeDecoration(
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(cardWidth * 0.1),
+                    topRight: Radius.circular(cardWidth * 0.1),
+                  ),
+                ),
+              ),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Tech Career Expo 2025',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 16,
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w500,
+                      Expanded(
+                        child: Text(
+                          eventTitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: screenWidth * 0.042,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w500,
+                            height: 1.25,
+                            letterSpacing: -0.90,
+                          ),
                         ),
                       ),
+                      SizedBox(width: screenWidth * 0.02),
                       Text(
                         '3 hari lagi',
+                        textAlign: TextAlign.right,
                         style: TextStyle(
                           color: Colors.black,
-                          fontSize: 12,
+                          fontSize: screenWidth * 0.032,
                           fontFamily: 'Poppins',
                           fontWeight: FontWeight.w400,
+                          height: 1.50,
+                          letterSpacing: -0.08,
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: 4),
+                  SizedBox(height: headerHeight * 0.08),
                   Text(
-                    'Politeknik Negeri Batam',
+                    location,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: Colors.black,
-                      fontSize: 13,
+                      fontSize: screenWidth * 0.034,
                       fontFamily: 'Poppins',
                       fontWeight: FontWeight.w400,
+                      height: 1.38,
+                      letterSpacing: -0.08,
                     ),
                   ),
                 ],
               ),
             ),
-            Stack(
+          ),
+
+          // Event image dengan gradient background
+          Positioned(
+            top: headerHeight,
+            child: Container(
+              width: cardWidth,
+              height: imageHeight,
+              decoration: ShapeDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF57a1ba),
+                    Color(0xFF034685),
+                    Color(0xFF043b87),
+                  ],
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(cardWidth * 0.1),
+                    bottomRight: Radius.circular(cardWidth * 0.1),
+                  ),
+                ),
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(cardWidth * 0.1),
+                    bottomRight: Radius.circular(cardWidth * 0.1),
+                  ),
+                  image: DecorationImage(
+                    image: const NetworkImage("https://placehold.co/338x236"),
+                    fit: BoxFit.cover,
+                    colorFilter: ColorFilter.mode(
+                      Colors.black.withOpacity(0.3),
+                      BlendMode.darken,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Stats chips
+          Positioned(
+            left: contentPadding,
+            top: headerHeight + 34,
+            child: Row(
               children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(34),
-                    bottomRight: Radius.circular(34),
-                  ),
-                  child: Container(
-                    width: 338,
-                    height: 236,
-                    color: const Color(0xFFE8F0FE),
-                    child: Image.asset(
-                      backgroundImage,
-                      fit: BoxFit.cover,
-                      cacheWidth: 676,
-                      cacheHeight: 472,
-                    ),
-                  ),
-                ),
                 Container(
-                  width: 338,
-                  height: 236,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(34),
-                      bottomRight: Radius.circular(34),
-                    ),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: screenWidth * 0.04,
+                    vertical: screenHeight * 0.005,
                   ),
-                ),
-                Positioned(
-                  left: 24,
-                  top: 24,
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(45),
-                          border: Border.all(
-                            color: const Color(
-                              0xFFF3F6F9,
-                            ).withValues(alpha: 0.4),
-                          ),
-                        ),
-                        child: const Text(
-                          '10 Lowongan',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
+                  decoration: ShapeDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    shape: RoundedRectangleBorder(
+                      side: const BorderSide(
+                        width: 1,
+                        color: Color(0x66F3F6F9),
                       ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(45),
-                          border: Border.all(
-                            color: const Color(
-                              0xFFF3F6F9,
-                            ).withValues(alpha: 0.4),
-                          ),
-                        ),
-                        child: const Text(
-                          '3 Perusahaan',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Positioned(
-                  left: 24,
-                  bottom: 110,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.location_on,
-                            color: Colors.white,
-                            size: 14,
-                          ),
-                          SizedBox(width: 4),
-                          Text(
-                            'Batam Kota',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.calendar_today,
-                            color: Colors.white,
-                            size: 12,
-                          ),
-                          SizedBox(width: 6),
-                          Text(
-                            '19 Sep 2025 - 20 Sep 2025',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        'Pendaftaran : 7 Sep 2025 - 19 Sep 2025',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Positioned(
-                  left: 24,
-                  right: 24,
-                  bottom: 14,
-                  child: Container(
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(45),
-                      border: Border.all(
-                        color: const Color(0xFFF3F6F9).withValues(alpha: 0.4),
-                      ),
                     ),
-                    child: const Center(
-                      child: Text(
-                        'Daftar Sekarang',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w500,
-                        ),
+                  ),
+                  child: Text(
+                    jobsCount,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: screenWidth * 0.036,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w400,
+                      height: 1.71,
+                    ),
+                  ),
+                ),
+                SizedBox(width: screenWidth * 0.02),
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: screenWidth * 0.04,
+                    vertical: screenHeight * 0.005,
+                  ),
+                  decoration: ShapeDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    shape: RoundedRectangleBorder(
+                      side: const BorderSide(
+                        width: 1,
+                        color: Color(0x66F3F6F9),
                       ),
+                      borderRadius: BorderRadius.circular(45),
+                    ),
+                  ),
+                  child: Text(
+                    companiesCount,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: screenWidth * 0.036,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w400,
+                      height: 1.71,
                     ),
                   ),
                 ),
               ],
             ),
-          ],
+          ),
+
+          // Location and date info
+          Positioned(
+            left: contentPadding,
+            right: contentPadding,
+            top: headerHeight + 114,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  location,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: screenWidth * 0.036,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w400,
+                    height: 1.29,
+                  ),
+                ),
+                SizedBox(height: screenHeight * 0.008),
+                Text(
+                  dateRange,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: screenWidth * 0.036,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w400,
+                    height: 1.29,
+                  ),
+                ),
+                SizedBox(height: screenHeight * 0.008),
+                Text(
+                  registration,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: screenWidth * 0.036,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w500,
+                    height: 1.71,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Register button
+          Positioned(
+            left: contentPadding,
+            right: contentPadding,
+            bottom: 14,
+            child: Container(
+              height: 40,
+              decoration: ShapeDecoration(
+                color: Colors.white.withOpacity(0.2),
+                shape: RoundedRectangleBorder(
+                  side: const BorderSide(
+                    width: 1,
+                    color: Color(0x66F3F6F9),
+                  ),
+                  borderRadius: BorderRadius.circular(45),
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  'Daftar Sekarang',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: screenWidth * 0.034,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w500,
+                    height: 1.85,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      ),
+    );
+  }
+}
+class _CompanyLogo extends StatelessWidget {
+  const _CompanyLogo();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 62,
+      height: 56,
+      margin: const EdgeInsets.only(right: 35),
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/icons/poltek.png'),
+          fit: BoxFit.cover,
         ),
       ),
     );
@@ -981,7 +1090,7 @@ class _UrgentJobCardState extends State<_UrgentJobCard>
   @override
   void initState() {
     super.initState();
-    isSaved = false; // Default tidak disimpan
+    isSaved = false;
     _bookmarkController = AnimationController(
       duration: const Duration(milliseconds: 200),
       vsync: this,
@@ -1006,253 +1115,302 @@ class _UrgentJobCardState extends State<_UrgentJobCard>
     });
   }
 
-  // ✅ TAG TANPA ICON - SAMA DENGAN HALAMAN CARI LOKER
-  Widget _buildTag(String text, {Color? backgroundColor, Color? textColor}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: backgroundColor ?? Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: backgroundColor != null
-              ? Colors.transparent
-              : Colors.grey.shade200,
-        ),
-      ),
-      child: Text(
-        text.length > 15 ? '${text.substring(0, 15)}...' : text,
-        style: TextStyle(
-          color: textColor ?? Colors.grey.shade700,
-          fontSize: 12,
-          fontFamily: 'Poppins',
-          fontWeight: FontWeight.w400,
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        width: double.infinity,
-        height: 220, // ✅ SAMA DENGAN HALAMAN CARI LOKER
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha:0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            // ✅ URGENT BADGE - SAMA DENGAN HALAMAN CARI LOKER
-            Positioned(
-              left: 0,
-              top: 0,
-              child: Container(
-                width: 130,
-                height: 28,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF0E37EB),
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(20),
-                  ),
+      child: Stack(
+        children: [
+          // Background shadow
+          Container(
+            width: double.infinity,
+            height: 235,
+            decoration: ShapeDecoration(
+              color: const Color(0xFFF0F4F9),
+              shape: RoundedRectangleBorder(
+                side: const BorderSide(
+                  width: 1,
+                  color: Color(0xFFC7C7C7),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.bolt, color: Color(0xFFFFCC00), size: 14),
-                    const SizedBox(width: 4),
-                    Text(
-                      '5 hari lagi', // Contoh hari tersisa
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
+                borderRadius: BorderRadius.circular(35),
               ),
             ),
+          ),
 
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 40, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+          // Main card
+          Container(
+            width: double.infinity,
+            height: 235,
+            decoration: ShapeDecoration(
+              color: Colors.white,
+              shape: RoundedRectangleBorder(
+                side: const BorderSide(
+                  width: 1,
+                  color: Color(0xFFC7C7C7),
+                ),
+                borderRadius: BorderRadius.circular(35),
+              ),
+            ),
+            child: Stack(
+              children: [
+                // Badge baru
+                Positioned(
+                  left: 0,
+                  top: 0,
+                  child: Container(
+                    width: 130,
+                    height: 28,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF0E37EB),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(35),
+                        bottomRight: Radius.circular(20),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.bolt, color: Color(0xFFFFCC00), size: 14),
+                        const SizedBox(width: 4),
+                        Text(
+                          '3 hari lagi',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Company Logo
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Image.asset(
-                          'assets/icons/poltek.png',
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
+                      const SizedBox(height: 28),
 
-                      // Job Info
-                      Expanded(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 200),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Fulltime Backend Developer', // Contoh data
-                                style: const TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 16,
-                                  fontFamily: 'Poppins',
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                      // Company logo and info
+                      Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 36,
+                            decoration: const BoxDecoration(
+                              image: DecorationImage(
+                                image: NetworkImage("https://placehold.co/40x36"),
+                                fit: BoxFit.cover,
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'Inforsys Indonesia', // Contoh data
-                                style: const TextStyle(
-                                  color: Color(0xFF666666),
-                                  fontSize: 14,
-                                  fontFamily: 'Poppins',
-                                  fontWeight: FontWeight.w400,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      // Bookmark Button
-                      GestureDetector(
-                        onTap: _toggleBookmark,
-                        child: ScaleTransition(
-                          scale: _bookmarkScale,
-                          child: SizedBox(
-                            width: 32,
-                            height: 32,
-                            child: AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 200),
-                              child: isSaved
-                                  ? const Icon(
-                                      Icons.bookmark,
-                                      key: ValueKey('saved'),
-                                      color: Color(0xFF0E37EB),
-                                      size: 24,
-                                    )
-                                  : Icon(
-                                      Icons.bookmark_border,
-                                      key: const ValueKey('unsaved'),
-                                      color: Colors.black.withValues(alpha:0.3),
-                                      size: 24,
-                                    ),
                             ),
                           ),
+                          const SizedBox(width: 20),
+                          Expanded(
+                            child: SizedBox(
+                              height: 48,
+                              child: Stack(
+                                children: [
+                                  const Positioned(
+                                    left: 0,
+                                    top: 0,
+                                    child: Text(
+                                      'Fulltime Backend Developer',
+                                      style: TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 16,
+                                        fontFamily: 'Poppins',
+                                        fontWeight: FontWeight.w500,
+                                        height: 1.25,
+                                        letterSpacing: -0.24,
+                                      ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    left: 0,
+                                    top: 24,
+                                    child: Text(
+                                      'Inforsys Indonesia',
+                                      style: TextStyle(
+                                        color: const Color(0x993C3C43),
+                                        fontSize: 14,
+                                        fontFamily: 'Poppins',
+                                        fontWeight: FontWeight.w400,
+                                        height: 1.29,
+                                        letterSpacing: -0.08,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: _toggleBookmark,
+                            child: ScaleTransition(
+                              scale: _bookmarkScale,
+                              child: SizedBox(
+                                width: 32,
+                                height: 32,
+                                child: AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 200),
+                                  child: isSaved
+                                      ? const Icon(
+                                          Icons.bookmark,
+                                          key: ValueKey('saved'),
+                                          color: Color(0xFF0118D8),
+                                          size: 24,
+                                        )
+                                      : Icon(
+                                          Icons.bookmark_border,
+                                          key: const ValueKey('unsaved'),
+                                          color: Colors.black.withOpacity(0.3),
+                                          size: 24,
+                                        ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Salary
+                      Text.rich(
+                        TextSpan(
+                          children: [
+                            const TextSpan(
+                              text: 'Rp',
+                              style: TextStyle(
+                                color: Color(0xFF40403F),
+                                fontSize: 14,
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w600,
+                                height: 1.43,
+                                letterSpacing: -0.24,
+                              ),
+                            ),
+                            const TextSpan(
+                              text: ' 9.000.000 - ',
+                              style: TextStyle(
+                                color: Color(0xFF40403F),
+                                fontSize: 18,
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w600,
+                                height: 1.11,
+                                letterSpacing: -0.24,
+                              ),
+                            ),
+                            const TextSpan(
+                              text: 'Rp',
+                              style: TextStyle(
+                                color: Color(0xFF40403F),
+                                fontSize: 14,
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w600,
+                                height: 1.43,
+                                letterSpacing: -0.24,
+                              ),
+                            ),
+                            const TextSpan(
+                              text: ' 12.000.000 ',
+                              style: TextStyle(
+                                color: Color(0xFF40403F),
+                                fontSize: 18,
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w600,
+                                height: 1.11,
+                                letterSpacing: -0.24,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Location and remote tags - FIX OVERFLOW
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            decoration: ShapeDecoration(
+                              color: const Color(0xFFF0F4F9),
+                              shape: RoundedRectangleBorder(
+                                side: const BorderSide(
+                                  width: 1,
+                                  color: Color(0xFFC7C7C7),
+                                ),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: const Text(
+                              "Batam Kota, Kepulauan Riau",
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 12,
+                                fontFamily: 'SF Pro',
+                                fontWeight: FontWeight.w400,
+                                height: 1.43,
+                                letterSpacing: -0.50,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            decoration: ShapeDecoration(
+                              color: const Color(0xFFF0F4F9),
+                              shape: RoundedRectangleBorder(
+                                side: const BorderSide(
+                                  width: 1,
+                                  color: Color(0xFFC7C7C7),
+                                ),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: const Text(
+                              "Remote",
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 12,
+                                fontFamily: 'SF Pro',
+                                fontWeight: FontWeight.w400,
+                                height: 1.43,
+                                letterSpacing: -0.50,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      // Posted time
+                      const Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          "1 hari lalu",
+                          style: TextStyle(
+                            color: Color(0xFF464E5E),
+                            fontSize: 12,
+                            fontFamily: 'SF Pro',
+                            fontWeight: FontWeight.w400,
+                            height: 2,
+                          ),
                         ),
                       ),
                     ],
                   ),
-
-                  const SizedBox(height: 12),
-
-                  // Salary
-                  Text(
-                    'Rp 9.000.000', // Contoh data
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // ✅ TAGS - SAMA DENGAN HALAMAN CARI LOKER
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _buildTag('Batam Kota'), // Contoh data
-
-                      _buildTag('Full-time'), // Contoh data
-
-                      _buildTag('Remote'),
-                    ],
-                  ),
-
-                  const Spacer(),
-
-                  // Footer info
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        _formatTimeAgo(
-                          DateTime.now().subtract(const Duration(days: 1)),
-                        ), // Contoh data
-                        style: const TextStyle(
-                          color: Color(0xFF999999),
-                          fontSize: 12,
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-
-                      Text(
-                        '50 pelamar', // Contoh data
-                        style: const TextStyle(
-                          color: Color(0xFF999999),
-                          fontSize: 12,
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
-  }
-
-  String _formatTimeAgo(DateTime tanggal) {
-    final now = DateTime.now();
-    final difference = now.difference(tanggal);
-
-    if (difference.inDays == 0) {
-      return 'Hari ini';
-    } else if (difference.inDays == 1) {
-      return '1 hari lalu';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays} hari lalu';
-    } else if (difference.inDays < 30) {
-      final weeks = (difference.inDays / 7).floor();
-      return '$weeks minggu lalu';
-    } else {
-      final months = (difference.inDays / 30).floor();
-      return '$months bulan lalu';
-    }
   }
 }
