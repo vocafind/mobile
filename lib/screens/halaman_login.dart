@@ -1,5 +1,7 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:jobfair/api/api_service.dart';
+import 'package:jobfair/api/fcm_service.dart';
 import 'halaman_register.dart';
 import 'halaman_beranda.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -34,7 +36,6 @@ class _HalamanLoginState extends State<HalamanLogin> {
   }
 
   void _handleLogin() async {
-    // Jika sedang loading, jangan proses lagi
     if (_isLoading) return;
 
     setState(() {
@@ -45,13 +46,12 @@ class _HalamanLoginState extends State<HalamanLogin> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
-    // Validasi dasar
+    // Validasi
     if (email.isEmpty) {
       setState(() => _emailError = "Email tidak boleh kosong");
       return;
     }
 
-    // Validasi format email
     if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
       setState(() => _emailError = "Format email tidak valid");
       return;
@@ -62,30 +62,60 @@ class _HalamanLoginState extends State<HalamanLogin> {
       return;
     }
 
-    // Set loading state
     setState(() {
       _isLoading = true;
     });
 
     try {
-      // ✅ Clear old session data sebelum login
+      // Clear old session
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
 
+      print('🔑 Attempting login...');
       final result = await ApiService().loginTalent(email, password);
 
-      // ✅ Jika login berhasil dan ada token
       if (result['accessToken'] != null) {
-        final prefs = await SharedPreferences.getInstance();
+        final accessToken = result['accessToken'];
+        final talentId = result['talentId'] ?? '';
+        final nama = result['nama'] ?? '';
 
-        await prefs.setString('token', result['accessToken']);
+        // Simpan ke shared preferences
+        await prefs.setString('token', accessToken);
         await prefs.setString('refreshToken', result['refreshToken']);
-        await prefs.setString('talentId', result['talentId']);
-        await prefs.setString('nama', result['message']);
+        await prefs.setString('talentId', talentId);
+        await prefs.setString('nama', nama);
+        await prefs.setString('accessToken', accessToken);
 
-        print("TOKEN: ${prefs.getString('token')}");
-        print("TALENT ID: ${prefs.getString('talentId')}");
+        print("✅ Login successful!");
+        print("👤 Talent ID: $talentId");
+        print("👤 Nama: $nama");
 
+        // ✅ HANYA GUNAKAN SATU METHOD: sendTokenToServer()
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          try {
+            print('🚀 Starting FCM process...');
+
+            // Beri sedikit delay untuk memastikan navigasi berjalan
+            await Future.delayed(const Duration(milliseconds: 500));
+
+            final fcmService = FcmService();
+
+            // Hanya gunakan sendTokenToServer()
+            bool success = await fcmService.sendTokenToServer(accessToken);
+
+            if (success) {
+              print('✅ FCM token sent successfully');
+            } else {
+              print('⚠️ Failed to send FCM token, but login continues...');
+              // Tidak perlu retry atau fallback, biarkan background process yang handle
+            }
+          } catch (e) {
+            print('⚠️ FCM process error (non-critical): $e');
+            // Ignore error, tidak perlu mengganggu flow login
+          }
+        });
+
+        // Navigate ke home TANPA TUNGGU FCM
         if (mounted) {
           Navigator.pushReplacement(
             context,
@@ -93,7 +123,6 @@ class _HalamanLoginState extends State<HalamanLogin> {
           );
         }
       } else {
-        // ✅ Tampilkan pesan error dari server
         if (mounted) {
           setState(() {
             _passwordError = result['message'] ?? 'Login gagal';
@@ -101,10 +130,10 @@ class _HalamanLoginState extends State<HalamanLogin> {
         }
       }
     } catch (e) {
-      // ✅ Handle unexpected errors
+      print("❌ Login exception: $e");
       if (mounted) {
         setState(() {
-          _passwordError = 'Terjadi kesalahan tak terduga';
+          _passwordError = 'Terjadi kesalahan. Coba lagi.';
         });
       }
     } finally {
@@ -288,10 +317,7 @@ class _LoginButton extends StatefulWidget {
   final bool isLoading;
   final VoidCallback onPressed;
 
-  const _LoginButton({
-    required this.isLoading,
-    required this.onPressed,
-  });
+  const _LoginButton({required this.isLoading, required this.onPressed});
 
   @override
   State<_LoginButton> createState() => _LoginButtonState();
@@ -327,9 +353,7 @@ class _LoginButtonState extends State<_LoginButton> {
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2.5,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Colors.white,
-                      ),
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   )
                 : const Text(
@@ -458,11 +482,14 @@ class _AnimatedTextFieldState extends State<AnimatedTextField> {
                   color: Color(0xFF515151),
                   fontSize: 14,
                   fontFamily: 'Poppins',
-                  height: 1.0, // Atur height untuk kontrol vertikal yang lebih baik
+                  height:
+                      1.0, // Atur height untuk kontrol vertikal yang lebih baik
                 ),
                 decoration: const InputDecoration(
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.only(bottom: 2), // Sesuaikan untuk posisi tengah
+                  contentPadding: EdgeInsets.only(
+                    bottom: 2,
+                  ), // Sesuaikan untuk posisi tengah
                   isDense: true,
                   errorStyle: TextStyle(fontSize: 0, height: 0),
                 ),
@@ -603,11 +630,14 @@ class _AnimatedPasswordFieldState extends State<AnimatedPasswordField> {
                   color: Color(0xFF515151),
                   fontSize: 14,
                   fontFamily: 'Poppins',
-                  height: 1.0, // Atur height untuk kontrol vertikal yang lebih baik
+                  height:
+                      1.0, // Atur height untuk kontrol vertikal yang lebih baik
                 ),
                 decoration: const InputDecoration(
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.only(bottom: 2), // Sesuaikan untuk posisi tengah
+                  contentPadding: EdgeInsets.only(
+                    bottom: 2,
+                  ), // Sesuaikan untuk posisi tengah
                   isDense: true,
                   errorStyle: TextStyle(fontSize: 0, height: 0),
                 ),

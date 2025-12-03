@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:jobfair/models/saved_job_model.dart';
 import 'package:jobfair/widget/bottom_navbar.dart';
@@ -17,17 +18,19 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
   final ScrollController _scrollController = ScrollController();
   final ApiService _apiService = ApiService();
 
-  // ✅ ValueNotifier untuk state management efisien
   final ValueNotifier<int> _selectedTab = ValueNotifier<int>(0);
 
   // Data lowongan
   List<LokerUmum> _allLowongan = [];
   List<LokerUmum> _filteredLowongan = [];
+  List<LokerUmum> _searchResults = [];
   bool _isLoading = true;
   bool _hasError = false;
   bool _isLoadingMore = false;
+  bool _isSearching = false;
+  String _currentSearchQuery = '';
   List<String> _appliedJobIds = [];
-  List<String> _savedJobIds = []; // Tambah state untuk saved jobs
+  List<String> _savedJobIds = [];
 
   // Lazy loading state
   int _currentPage = 1;
@@ -41,14 +44,20 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
         'lokasi': '',
         'gaji': '',
         'minimalLulusan': '',
-        'remote': null, // Ubah dari false menjadi null
+        'remote': null,
       });
+
+  // TAMBAH: Controller untuk search (DIUBAH: public agar bisa diakses HeaderWidget)
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+  Timer? _searchDebounceTimer;
 
   @override
   void initState() {
     super.initState();
     _loadData();
     _setupScrollController();
+    _setupSearchListener();
   }
 
   @override
@@ -56,6 +65,9 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
     _scrollController.dispose();
     _selectedTab.dispose();
     _filterState.dispose();
+    _searchController.dispose();
+    _searchFocusNode.dispose();
+    _searchDebounceTimer?.cancel();
     super.dispose();
   }
 
@@ -68,7 +80,100 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
     });
   }
 
+  // TAMBAH: Setup listener untuk search
+  void _setupSearchListener() {
+    _searchController.addListener(() {
+      final query = _searchController.text;
+      _onSearchChanged(query);
+    });
+  }
+
+  // TAMBAH: Method untuk handle search dengan debounce
+  void _onSearchChanged(String query) {
+    print("🔍 Search query changed: '$query'");
+
+    // Cancel timer sebelumnya
+    _searchDebounceTimer?.cancel();
+
+    setState(() {
+      _currentSearchQuery = query;
+    });
+
+    if (query.trim().isEmpty) {
+      // Jika search kosong, kembali ke data normal
+      print("🔍 Search cleared, returning to normal data");
+      setState(() {
+        _isSearching = false;
+        _searchResults.clear();
+      });
+      _applyCurrentFilters();
+      return;
+    }
+
+    // Set timer baru untuk debouncing (500ms)
+    _searchDebounceTimer = Timer(const Duration(milliseconds: 500), () {
+      print("🔍 Performing search for: '$query'");
+      _performSearch(query.trim());
+    });
+  }
+
+  // TAMBAH: Method untuk melakukan search
+  Future<void> _performSearch(String query) async {
+    if (query.isEmpty) return;
+
+    print("🔍 API Search started for: '$query'");
+
+    setState(() {
+      _isSearching = true;
+      _isLoading = true;
+    });
+
+    try {
+      final results = await _apiService.searchLokerUmum(query);
+
+      print("🔍 API Search results: ${results.length} lowongan found");
+
+      setState(() {
+        _searchResults = results;
+        _isLoading = false;
+      });
+
+      print("🔍 Search results for '$query': ${results.length} lowongan found");
+    } catch (e) {
+      print("❌ Error searching: $e");
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  // TAMBAH: Method untuk clear search
+  void _clearSearch() {
+    print("🔍 Clearing search");
+    _searchController.clear();
+    setState(() {
+      _isSearching = false;
+      _searchResults.clear();
+      _currentSearchQuery = '';
+    });
+    _applyCurrentFilters();
+  }
+
+  // TAMBAH: Method untuk apply current filters
+  void _applyCurrentFilters() {
+    if (_filterState.value.values.any(
+      (value) =>
+          (value != null && value.toString().isNotEmpty) || (value is bool),
+    )) {
+      _applyFilters(_filterState.value);
+    } else {
+      // Jika tidak ada filter, reload semua data
+      _loadData();
+    }
+  }
+
   Future<void> _loadData() async {
+    print("📥 Loading data...");
     setState(() {
       _isLoading = true;
       _hasError = false;
@@ -81,7 +186,7 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
       final results = await Future.wait<dynamic>([
         _apiService.getAllLokerUmum(),
         _apiService.getLowonganSudahDilamar(),
-        _apiService.getSavedJobs(), // Tambah loading saved jobs
+        _apiService.getSavedJobs(),
       ]);
 
       // Cast ke tipe yang benar
@@ -93,9 +198,7 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
         _allLowongan = lowongan;
         _filteredLowongan = _getPaginatedData(lowongan, 1);
         _appliedJobIds = appliedIds;
-        _savedJobIds = savedJobs
-            .map((job) => job.lowonganId)
-            .toList(); // Extract lowonganId dari saved jobs
+        _savedJobIds = savedJobs.map((job) => job.lowonganId).toList();
         _isLoading = false;
       });
 
@@ -112,13 +215,12 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
   }
 
   Future<void> _loadMoreData() async {
-    if (_isLoadingMore || !_hasMoreData) return;
+    if (_isLoadingMore || !_hasMoreData || _isSearching) return;
 
     setState(() {
       _isLoadingMore = true;
     });
 
-    // Simulate API delay
     await Future.delayed(const Duration(milliseconds: 500));
 
     try {
@@ -161,32 +263,32 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
     _currentPage = 1;
     _hasMoreData = true;
 
+    // TAMBAH: Clear search saat pindah tab
+    if (_isSearching) {
+      _clearSearch();
+    }
+
     // Filter data berdasarkan tab
     if (index == 0) {
-      // Semua lowongan
       setState(() {
         _filteredLowongan = _getPaginatedData(_allLowongan, 1);
       });
     } else {
-      // Rekomendasi AI - untuk sekarang tampilkan semua juga
       setState(() {
         _filteredLowongan = _getPaginatedData(_allLowongan, 1);
       });
     }
   }
 
-  // ✅ Fungsi untuk toggle save job
   Future<void> _toggleSaveJob(String lowonganId, bool currentlySaved) async {
     try {
       if (currentlySaved) {
-        // Unsave job
         await _apiService.unsaveJobByLowonganId(lowonganId);
         setState(() {
           _savedJobIds.remove(lowonganId);
         });
         print("✅ Job unsaved: $lowonganId");
       } else {
-        // Save job
         await _apiService.saveJob(lowonganId);
         setState(() {
           _savedJobIds.add(lowonganId);
@@ -195,13 +297,16 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
       }
     } catch (e) {
       print("❌ Error toggling save job: $e");
-      // Tidak perlu show snackbar sesuai permintaan
     }
   }
 
-  // ✅ Fungsi untuk menerapkan filter dengan API
-  // ✅ Fungsi untuk menerapkan filter dengan API
   Future<void> _applyFilters(Map<String, dynamic> filters) async {
+    // TAMBAH: Reset search saat filter diterapkan
+    if (_isSearching) {
+      _clearSearch();
+    }
+
+    print("🔍 Applying filters: $filters");
     _filterState.value = filters;
     _currentPage = 1;
     _hasMoreData = true;
@@ -212,7 +317,6 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
     });
 
     try {
-      // Konversi filter gaji ke format yang sesuai dengan API
       String? rangeGaji;
       if (filters['gaji'] != null && filters['gaji'].isNotEmpty) {
         switch (filters['gaji']) {
@@ -230,15 +334,10 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
         }
       }
 
-      // Konversi remote filter - HANYA kirim jika user memilih (bukan null)
       bool? remote;
       if (filters.containsKey('remote') && filters['remote'] != null) {
         remote = filters['remote'];
       }
-
-      print("🔍 Applying filters: $filters");
-      print("🔍 Range Gaji: $rangeGaji");
-      print("🔍 Remote: $remote");
 
       // Panggil API filter
       final filteredLowongan = await _apiService.filterLokerUmum(
@@ -248,7 +347,7 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
         lokasi: filters['lokasi']?.isNotEmpty == true
             ? filters['lokasi']
             : null,
-        remote: remote, // Sekarang bisa null jika user tidak memilih
+        remote: remote,
         minimalLulusan: filters['minimalLulusan']?.isNotEmpty == true
             ? filters['minimalLulusan']
             : null,
@@ -263,7 +362,6 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
 
       print("✅ Filter applied: ${filteredLowongan.length} lowongan found");
 
-      // Jika tidak ada hasil, tampilkan pesan
       if (filteredLowongan.isEmpty) {
         print("ℹ️ No lowongan found with current filters");
       }
@@ -273,20 +371,15 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
         _hasError = true;
       });
       print("❌ Error applying filters: $e");
-
-      // Fallback ke filter lokal jika API error
       _applyLocalFilters(filters);
     }
   }
 
-  // ✅ Fallback filter lokal jika API error
-  // ✅ Fallback filter lokal jika API error
   void _applyLocalFilters(Map<String, dynamic> filters) {
     print("🔄 Using local filter fallback");
 
     List<LokerUmum> filtered = _allLowongan;
 
-    // Filter berdasarkan jenis pekerjaan
     if (filters['jenisPekerjaan'] != null &&
         filters['jenisPekerjaan'].isNotEmpty) {
       filtered = filtered
@@ -296,10 +389,8 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
             ),
           )
           .toList();
-      print("📍 Filtered by jenisPekerjaan: ${filtered.length}");
     }
 
-    // Filter berdasarkan lokasi
     if (filters['lokasi'] != null && filters['lokasi'].isNotEmpty) {
       filtered = filtered
           .where(
@@ -308,10 +399,8 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
             ),
           )
           .toList();
-      print("📍 Filtered by lokasi: ${filtered.length}");
     }
 
-    // Filter berdasarkan minimalLulusan (exact match seperti API)
     if (filters['minimalLulusan'] != null &&
         filters['minimalLulusan'].isNotEmpty) {
       filtered = filtered
@@ -321,37 +410,32 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
                 filters['minimalLulusan'].toLowerCase(),
           )
           .toList();
-      print("📍 Filtered by minimalLulusan: ${filtered.length}");
     }
 
-    // Filter berdasarkan remote - HANYA jika user memilih (bukan null)
     if (filters['remote'] != null) {
       filtered = filtered
           .where((loker) => loker.opsiKerjaRemote == filters['remote'])
           .toList();
-      print("📍 Filtered by remote: ${filtered.length}");
     }
 
-    // Filter berdasarkan gaji
     if (filters['gaji'] != null && filters['gaji'].isNotEmpty) {
       final gajiFilter = filters['gaji'];
       if (gajiFilter == '0-5') {
         filtered = filtered.where((loker) {
           final gaji = _parseGaji(loker.gaji);
-          return gaji < 10000000; // below10m
+          return gaji < 10000000;
         }).toList();
       } else if (gajiFilter == '5-10') {
         filtered = filtered.where((loker) {
           final gaji = _parseGaji(loker.gaji);
-          return gaji >= 10000000 && gaji <= 20000000; // 10m-20m
+          return gaji >= 10000000 && gaji <= 20000000;
         }).toList();
       } else if (gajiFilter == '10+') {
         filtered = filtered.where((loker) {
           final gaji = _parseGaji(loker.gaji);
-          return gaji > 20000000; // above20m
+          return gaji > 20000000;
         }).toList();
       }
-      print("📍 Filtered by gaji: ${filtered.length}");
     }
 
     setState(() {
@@ -361,10 +445,8 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
     print("✅ Local filter applied: ${filtered.length} lowongan found");
   }
 
-  // Helper function untuk parse gaji
   double _parseGaji(String gaji) {
     try {
-      // Remove non-digit characters except decimal point
       final cleaned = gaji.replaceAll(RegExp(r'[^\d]'), '');
       return double.tryParse(cleaned) ?? 0;
     } catch (e) {
@@ -372,26 +454,25 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
     }
   }
 
-  // ✅ Fungsi untuk reset filter
-  // ✅ Fungsi untuk reset filter
   void _resetFilters() {
+    if (_isSearching) {
+      _clearSearch();
+    }
+
     _filterState.value = {
       'jenisPekerjaan': '',
       'lokasi': '',
       'gaji': '',
       'minimalLulusan': '',
-      'remote': null, // Kembali ke null
+      'remote': null,
     };
     _currentPage = 1;
     _hasMoreData = true;
 
-    // Load ulang semua data tanpa filter
     _loadData();
-
     print("🔄 Filters reset");
   }
 
-  // ✅ Fungsi untuk membuka filter dialog
   void _showFilterDialog() {
     showModalBottomSheet(
       context: context,
@@ -405,25 +486,20 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
     );
   }
 
-  // ✅ Fungsi untuk membuka detail lowongan
   Future<void> _showJobDetail(LokerUmum lowongan) async {
     try {
-      // Tampilkan loading terlebih dahulu
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (context) => const Center(child: CircularProgressIndicator()),
       );
 
-      // Ambil data detail dari API
       final detailLowongan = await _apiService.getLokerUmumDetailById(
         lowongan.lowonganId,
       );
 
-      // Tutup loading
       if (mounted) Navigator.of(context).pop();
 
-      // Tampilkan bottom sheet dengan data detail
       if (mounted) {
         showModalBottomSheet(
           context: context,
@@ -431,17 +507,14 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
           backgroundColor: Colors.transparent,
           builder: (context) => JobDetailSheet(loker: detailLowongan),
         ).then((shouldRefresh) {
-          // Handle refresh setelah melamar
           if (shouldRefresh == true) {
-            _loadData(); // Refresh data
+            _loadData();
           }
         });
       }
     } catch (e) {
-      // Tutup loading jika error
       if (mounted) Navigator.of(context).pop();
 
-      // Tampilkan error
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -458,13 +531,19 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
     return Scaffold(
       extendBody: true,
       body: Container(
-        color: const Color(0xFFFAFAFA), // Background color sederhana
+        color: const Color(0xFFFAFAFA),
         child: Column(
           children: [
-            // Fixed Header
-            const HeaderWidget(showNotification: true, showFilter: false),
+            // Fixed Header DENGAN SEARCH CONTROLLER YANG SAMA
+            HeaderWidget(
+              showNotification: true,
+              showFilter: false,
+              showBookmark: false,
+              externalSearchController:
+                  _searchController, // PASS controller yang sama
+              onSearch: _onSearchChanged, // Tambahkan callback untuk search
+            ),
 
-            // ✅ Fixed Filter Tabs dengan ValueListenableBuilder
             ValueListenableBuilder<int>(
               valueListenable: _selectedTab,
               builder: (context, selectedTab, child) {
@@ -476,7 +555,36 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
               },
             ),
 
-            // ✅ Main content dengan ValueListenableBuilder
+            // TAMBAH: Search results indicator
+            if (_isSearching && _currentSearchQuery.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                color: Colors.white,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        "Hasil pencarian: '$_currentSearchQuery'",
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 18),
+                      onPressed: _clearSearch,
+                    ),
+                  ],
+                ),
+              ),
+
             Expanded(
               child: Container(
                 decoration: const BoxDecoration(
@@ -494,6 +602,14 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
                   child: ValueListenableBuilder<int>(
                     valueListenable: _selectedTab,
                     builder: (context, selectedTab, child) {
+                      final displayData = _isSearching
+                          ? _searchResults
+                          : _filteredLowongan;
+                      final displayIsLoading = _isSearching
+                          ? _isLoading
+                          : (_isLoading && !_isSearching);
+                      final displayHasError = _hasError && !_isSearching;
+
                       return RefreshIndicator(
                         onRefresh: _loadData,
                         child: CustomScrollView(
@@ -503,27 +619,29 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
                               child: Column(
                                 children: [
                                   const SizedBox(height: 17),
-                                  if (_isLoading)
+                                  if (displayIsLoading)
                                     _buildLoadingState()
-                                  else if (_hasError)
+                                  else if (displayHasError)
                                     _buildErrorState()
-                                  else if (_filteredLowongan.isEmpty)
-                                    _buildEmptyState(),
+                                  else if (displayData.isEmpty)
+                                    _buildEmptyState(
+                                      isSearching: _isSearching,
+                                      searchQuery: _currentSearchQuery,
+                                    ),
                                 ],
                               ),
                             ),
 
-                            // List lowongan
-                            if (!_isLoading &&
-                                !_hasError &&
-                                _filteredLowongan.isNotEmpty)
+                            if (!displayIsLoading &&
+                                !displayHasError &&
+                                displayData.isNotEmpty)
                               SliverList(
                                 delegate: SliverChildBuilderDelegate((
                                   context,
                                   index,
                                 ) {
-                                  if (index < _filteredLowongan.length) {
-                                    final lowongan = _filteredLowongan[index];
+                                  if (index < displayData.length) {
+                                    final lowongan = displayData[index];
                                     final daysLeft = _calculateDaysLeft(
                                       lowongan.batasLamaran,
                                     );
@@ -560,11 +678,10 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
                                     );
                                   }
                                   return null;
-                                }, childCount: _filteredLowongan.length),
+                                }, childCount: displayData.length),
                               ),
 
-                            // Loading more indicator
-                            if (_isLoadingMore)
+                            if (_isSearching && _isLoading)
                               const SliverToBoxAdapter(
                                 child: Padding(
                                   padding: EdgeInsets.all(16.0),
@@ -574,8 +691,19 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
                                 ),
                               ),
 
-                            // End of list indicator
-                            if (!_hasMoreData && _filteredLowongan.isNotEmpty)
+                            if (!_isSearching && _isLoadingMore)
+                              const SliverToBoxAdapter(
+                                child: Padding(
+                                  padding: EdgeInsets.all(16.0),
+                                  child: Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                ),
+                              ),
+
+                            if (!_hasMoreData &&
+                                displayData.isNotEmpty &&
+                                !_isSearching)
                               const SliverToBoxAdapter(
                                 child: Padding(
                                   padding: EdgeInsets.all(16.0),
@@ -592,7 +720,6 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
                                 ),
                               ),
 
-                            // Bottom spacing
                             const SliverToBoxAdapter(
                               child: SizedBox(height: 100),
                             ),
@@ -670,7 +797,7 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState({bool isSearching = false, String searchQuery = ''}) {
     return Container(
       padding: const EdgeInsets.all(40),
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -678,28 +805,55 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: const Column(
+      child: Column(
         children: [
-          Icon(Icons.work_outline, size: 60, color: Color(0xFFB8B8B8)),
-          SizedBox(height: 16),
+          Icon(
+            isSearching ? Icons.search_off : Icons.work_outline,
+            size: 60,
+            color: const Color(0xFFB8B8B8),
+          ),
+          const SizedBox(height: 16),
           Text(
-            'Belum ada lowongan',
-            style: TextStyle(
+            isSearching
+                ? 'Tidak ditemukan lowongan\nuntuk "$searchQuery"'
+                : 'Belum ada lowongan',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
               fontSize: 16,
               fontFamily: 'Poppins',
               fontWeight: FontWeight.w500,
               color: Color(0xFF515151),
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
-            'Coba lagi nanti',
-            style: TextStyle(
+            isSearching ? 'Coba kata kunci lain' : 'Coba lagi nanti',
+            style: const TextStyle(
               fontSize: 14,
               fontFamily: 'Poppins',
               color: Color(0xFFB8B8B8),
             ),
           ),
+          if (isSearching) ...[
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _clearSearch,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1E40AF),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text(
+                'Kembali ke Semua Lowongan',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -979,15 +1133,14 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   void _onSearchChanged(String value) {
     setState(() {
       if (value.isEmpty) {
-        _filteredLocations = _lokasiOptions; // GANTI: dari _lokasiOptions
+        _filteredLocations = _lokasiOptions;
       } else {
-        _filteredLocations =
-            _lokasiOptions // GANTI: dari _lokasiOptions
-                .where(
-                  (location) =>
-                      location.toLowerCase().contains(value.toLowerCase()),
-                )
-                .toList();
+        _filteredLocations = _lokasiOptions
+            .where(
+              (location) =>
+                  location.toLowerCase().contains(value.toLowerCase()),
+            )
+            .toList();
       }
     });
   }
@@ -1088,8 +1241,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
 
           Expanded(
             child: SingleChildScrollView(
-              controller:
-                  _scrollController, // ✅ Tambahkan controller untuk scroll
+              controller: _scrollController,
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1239,7 +1391,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                         borderRadius: BorderRadius.circular(10),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha:0.1),
+                            color: Colors.black.withOpacity(0.1),
                             blurRadius: 10,
                             offset: const Offset(0, 5),
                           ),
@@ -1342,7 +1494,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                   ),
                 ),
                 child: Text(
-                  label, // Gunakan variabel label yang sudah di-cast
+                  label,
                   style: TextStyle(
                     color: isSelected ? Colors.white : Colors.grey.shade700,
                     fontFamily: 'Poppins',
@@ -1361,7 +1513,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             _selectedFilters['remote'] == true ? 'Remote' : 'Dikantor',
             onRemove: () {
               setState(() {
-                _selectedFilters['remote'] = null; // Reset ke null
+                _selectedFilters['remote'] = null;
               });
             },
           ),
@@ -1597,7 +1749,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                         text: _selectedFilters['minimalLulusan'] ?? '',
                       ),
                       focusNode: _pendidikanFocusNode,
-                      enabled: false, // Nonaktifkan input manual
+                      enabled: false,
                       decoration: InputDecoration(
                         hintText: 'Pilih minimal lulusan...',
                         hintStyle: const TextStyle(
@@ -1626,7 +1778,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       style: const TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 14,
-                        color: Colors.black, // Pastikan text terlihat
+                        color: Colors.black,
                       ),
                     ),
                   ),
@@ -1641,7 +1793,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       borderRadius: BorderRadius.circular(10),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha:0.1),
+                          color: Colors.black.withOpacity(0.1),
                           blurRadius: 10,
                           offset: const Offset(0, 5),
                         ),
@@ -1766,10 +1918,6 @@ class __JobCardState extends State<_JobCard>
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final cardWidth = (screenWidth - 32).clamp(300.0, 380.0);
-    final cardHeight = 235.0; // Sesuai dengan urgent job card di beranda
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: GestureDetector(
@@ -1779,14 +1927,11 @@ class __JobCardState extends State<_JobCard>
             // Background shadow seperti di beranda
             Container(
               width: double.infinity,
-              height: cardHeight,
+              height: 235,
               decoration: ShapeDecoration(
                 color: const Color(0xFFF0F4F9),
                 shape: RoundedRectangleBorder(
-                  side: const BorderSide(
-                    width: 1,
-                    color: Color(0xFFC7C7C7),
-                  ),
+                  side: const BorderSide(width: 1, color: Color(0xFFC7C7C7)),
                   borderRadius: BorderRadius.circular(35),
                 ),
               ),
@@ -1795,14 +1940,11 @@ class __JobCardState extends State<_JobCard>
             // Main card seperti di beranda
             Container(
               width: double.infinity,
-              height: cardHeight,
+              height: 235,
               decoration: ShapeDecoration(
                 color: Colors.white,
                 shape: RoundedRectangleBorder(
-                  side: const BorderSide(
-                    width: 1,
-                    color: Color(0xFFC7C7C7),
-                  ),
+                  side: const BorderSide(width: 1, color: Color(0xFFC7C7C7)),
                   borderRadius: BorderRadius.circular(35),
                 ),
               ),
@@ -1826,9 +1968,10 @@ class __JobCardState extends State<_JobCard>
                         child: const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.check_circle, 
-                              color: Colors.white, 
-                              size: 14
+                            Icon(
+                              Icons.check_circle,
+                              color: Colors.white,
+                              size: 14,
                             ),
                             SizedBox(width: 4),
                             Text(
@@ -1907,9 +2050,7 @@ class __JobCardState extends State<_JobCard>
                                         fit: BoxFit.contain,
                                       )
                                     : const DecorationImage(
-                                        image: AssetImage(
-                                          "images/poltek.png",
-                                        ),
+                                        image: AssetImage("images/poltek.png"),
                                         fit: BoxFit.cover,
                                       ),
                               ),
@@ -1977,8 +2118,9 @@ class __JobCardState extends State<_JobCard>
                                         : Icon(
                                             Icons.bookmark_border,
                                             key: const ValueKey('unsaved'),
-                                            color: Colors.black
-                                                .withOpacity(0.3),
+                                            color: Colors.black.withOpacity(
+                                              0.3,
+                                            ),
                                             size: 24,
                                           ),
                                   ),
@@ -2006,7 +2148,8 @@ class __JobCardState extends State<_JobCard>
                                 ),
                               ),
                               TextSpan(
-                                text: ' ${_formatSalaryValue(widget.lowongan.gaji)}',
+                                text:
+                                    ' ${_formatSalaryValue(widget.lowongan.gaji)}',
                                 style: const TextStyle(
                                   color: Color(0xFF40403F),
                                   fontSize: 18,
@@ -2029,8 +2172,8 @@ class __JobCardState extends State<_JobCard>
                           children: [
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 12, 
-                                vertical: 4
+                                horizontal: 12,
+                                vertical: 4,
                               ),
                               decoration: ShapeDecoration(
                                 color: const Color(0xFFF0F4F9),
@@ -2058,8 +2201,8 @@ class __JobCardState extends State<_JobCard>
                             ),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 12, 
-                                vertical: 4
+                                horizontal: 12,
+                                vertical: 4,
                               ),
                               decoration: ShapeDecoration(
                                 color: const Color(0xFFF0F4F9),
@@ -2086,8 +2229,8 @@ class __JobCardState extends State<_JobCard>
                             if (widget.lowongan.opsiKerjaRemote)
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, 
-                                  vertical: 4
+                                  horizontal: 12,
+                                  vertical: 4,
                                 ),
                                 decoration: ShapeDecoration(
                                   color: const Color(0xFFF0F4F9),
@@ -2154,7 +2297,7 @@ class __JobCardState extends State<_JobCard>
     );
   }
 
-String _formatSalaryValue(String gaji) {
+  String _formatSalaryValue(String gaji) {
     if (gaji.startsWith('Rp')) {
       return gaji;
     }
@@ -2180,6 +2323,7 @@ String _formatSalaryValue(String gaji) {
     }
   }
 }
+
 class _JobCardSkeleton extends StatelessWidget {
   const _JobCardSkeleton();
 
@@ -2196,10 +2340,7 @@ class _JobCardSkeleton extends StatelessWidget {
             decoration: ShapeDecoration(
               color: const Color(0xFFF0F4F9),
               shape: RoundedRectangleBorder(
-                side: const BorderSide(
-                  width: 1,
-                  color: Color(0xFFC7C7C7),
-                ),
+                side: const BorderSide(width: 1, color: Color(0xFFC7C7C7)),
                 borderRadius: BorderRadius.circular(35),
               ),
             ),
@@ -2212,10 +2353,7 @@ class _JobCardSkeleton extends StatelessWidget {
             decoration: ShapeDecoration(
               color: Colors.white,
               shape: RoundedRectangleBorder(
-                side: const BorderSide(
-                  width: 1,
-                  color: Color(0xFFC7C7C7),
-                ),
+                side: const BorderSide(width: 1, color: Color(0xFFC7C7C7)),
                 borderRadius: BorderRadius.circular(35),
               ),
             ),

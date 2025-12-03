@@ -7,7 +7,9 @@ import 'package:jobfair/screens/detail_lamaran_jobfair.dart';
 import 'package:jobfair/api/api_service.dart';
 
 class HalamanLamaran extends StatefulWidget {
-  const HalamanLamaran({super.key});
+  final String? applyIdToOpen; // Parameter untuk auto open lamaran
+
+  const HalamanLamaran({super.key, this.applyIdToOpen});
 
   @override
   State<HalamanLamaran> createState() => _HalamanLamaranState();
@@ -28,6 +30,34 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
   void initState() {
     super.initState();
     _loadAllLamaran();
+
+    // Jika ada applyIdToOpen, tunggu data dimuat lalu buka detail
+    if (widget.applyIdToOpen != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _openLamaranDetailById(widget.applyIdToOpen!);
+      });
+    }
+  }
+
+  Future<void> _openLamaranDetailById(String applyId) async {
+    // Tunggu loading selesai
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    // Cari lamaran di semua data
+    final allLamaran = [..._allLamaranUmum, ..._allLamaranJobfair];
+    final lamaran = allLamaran
+      .where((lamaran) => lamaran.applyId == applyId)
+      .cast<LamaranSaya?>()
+      .firstOrNull;
+
+    if (lamaran != null && mounted) {
+      final isJobfair = lamaran.acara != null;
+      if (isJobfair) {
+        DetailLamaranJobfair.show(context, lamaran: lamaran);
+      } else {
+        DetailLamaran.show(context, lamaran: lamaran);
+      }
+    }
   }
 
   Future<void> _loadAllLamaran() async {

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; 
 import 'package:jobfair/screens/halaman_notifikasi.dart';
@@ -10,7 +11,8 @@ class HeaderWidget extends StatefulWidget {
   final VoidCallback? onNotificationTap;
   final VoidCallback? onFilterTap;
   final VoidCallback? onBookmarkTap;
-  final Function(String)? onSearch;
+  final Function(String)? onSearch; // Untuk real-time search
+  final TextEditingController? externalSearchController; // TAMBAH: Controller eksternal
 
   const HeaderWidget({
     super.key,
@@ -21,6 +23,7 @@ class HeaderWidget extends StatefulWidget {
     this.onFilterTap,
     this.onBookmarkTap,
     this.onSearch,
+    this.externalSearchController, // TAMBAH
   });
 
   @override
@@ -28,27 +31,43 @@ class HeaderWidget extends StatefulWidget {
 }
 
 class _HeaderWidgetState extends State<HeaderWidget> {
-  final TextEditingController _searchController = TextEditingController();
+  late TextEditingController _searchController;
   final FocusNode _searchFocusNode = FocusNode();
   bool _isSearching = false;
   List<String> _searchHistory = [];
-  final LayerLink _layerLink = LayerLink();
-
-  OverlayEntry? _overlayEntry;
+  Timer? _debounceTimer;
 
   @override
   void initState() {
     super.initState();
+    
+    // GUNAKAN controller eksternal jika ada, jika tidak buat baru
+    _searchController = widget.externalSearchController ?? TextEditingController();
+    
     _loadSearchHistory();
     _searchFocusNode.addListener(_onFocusChange);
   }
 
   @override
+  void didUpdateWidget(HeaderWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    
+    // Update controller jika ada perubahan
+    if (widget.externalSearchController != oldWidget.externalSearchController) {
+      _searchController.dispose();
+      _searchController = widget.externalSearchController ?? TextEditingController();
+    }
+  }
+
+  @override
   void dispose() {
-    _searchController.dispose();
+    // Hanya dispose controller jika kita yang membuatnya (bukan eksternal)
+    if (widget.externalSearchController == null) {
+      _searchController.dispose();
+    }
     _searchFocusNode.removeListener(_onFocusChange);
     _searchFocusNode.dispose();
-    _removeOverlay();
+    _debounceTimer?.cancel();
     super.dispose();
   }
 
@@ -57,22 +76,18 @@ class _HeaderWidgetState extends State<HeaderWidget> {
       setState(() {
         _isSearching = true;
       });
-      _showSearchOverlay();
     } else {
       Future.delayed(const Duration(milliseconds: 200), () {
         if (mounted) {
           setState(() {
             _isSearching = false;
           });
-          _removeOverlay();
         }
       });
     }
   }
 
   void _loadSearchHistory() {
-    // Untuk simulasi, kita mulai dengan list kosong
-    // Nanti akan terisi setelah user melakukan pencarian
     setState(() {
       _searchHistory = [];
     });
@@ -90,17 +105,17 @@ class _HeaderWidgetState extends State<HeaderWidget> {
     }
   }
 
-  void _handleSearch(String query) {
+  void _handleSearchSubmitted(String query) {
     if (query.trim().isNotEmpty) {
       _saveSearchHistory(query);
       if (widget.onSearch != null) {
-        widget.onSearch!(query);
+        widget.onSearch!(query.trim());
       }
+      
       _searchFocusNode.unfocus();
       setState(() {
         _isSearching = false;
       });
-      _removeOverlay();
     }
   }
 
@@ -109,106 +124,26 @@ class _HeaderWidgetState extends State<HeaderWidget> {
     if (widget.onSearch != null) {
       widget.onSearch!('');
     }
-    _removeOverlay();
+    _searchFocusNode.unfocus();
   }
 
-  // ✅ Method untuk menampilkan overlay
-  void _showSearchOverlay() {
-    // ✅ Jangan tampilkan overlay jika tidak ada riwayat pencarian
-    if (_searchHistory.isEmpty) {
-      return;
-    }
-
-    _removeOverlay(); // Hapus overlay sebelumnya jika ada
+  // Method untuk real-time search dengan debouncing
+  void _onSearchChanged(String value) {
+    // Cancel timer sebelumnya
+    _debounceTimer?.cancel();
     
-    final overlay = Overlay.of(context);
-    final renderBox = context.findRenderObject() as RenderBox;
-    final size = renderBox.size;
-    final offset = renderBox.localToGlobal(Offset.zero);
-
-    _overlayEntry = OverlayEntry(
-      builder: (context) => Positioned(
-        left: offset.dx + 20,
-        top: offset.dy + size.height - 12,
-        width: size.width - 40,
-        child: Material(
-          elevation: 4,
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text(
-                    'Pencarian Terakhir',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF666666),
-                    ),
-                  ),
-                ),
-                ..._searchHistory.map((history) => ListTile(
-                  leading: const Icon(Icons.history, color: Color(0xFF999999), size: 20),
-                  title: Text(
-                    history,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  onTap: () {
-                    _searchController.text = history;
-                    _handleSearch(history);
-                  },
-                  trailing: IconButton(
-                    icon: const Icon(Icons.close, size: 16, color: Color(0xFF999999)),
-                    onPressed: () {
-                      setState(() {
-                        _searchHistory.remove(history);
-                      });
-                      // Jika ini adalah item terakhir, hapus overlay
-                      if (_searchHistory.isEmpty) {
-                        _removeOverlay();
-                      }
-                    },
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                  minLeadingWidth: 0,
-                )).toList(),
-                const SizedBox(height: 8),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-
-    overlay.insert(_overlayEntry!);
+    // Set timer baru untuk debouncing
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      if (value.trim().isNotEmpty && widget.onSearch != null) {
+        widget.onSearch!(value.trim());
+      } else if (value.isEmpty && widget.onSearch != null) {
+        widget.onSearch!('');
+      }
+    });
   }
 
-  void _removeOverlay() {
-    _overlayEntry?.remove();
-    _overlayEntry = null;
-  }
-
-  // ✅ Method untuk handle bookmark tap
+  // Method untuk handle bookmark tap
   void _handleBookmarkTap() {
-    _removeOverlay();
     if (widget.onBookmarkTap != null) {
       widget.onBookmarkTap!();
     } else {
@@ -221,9 +156,8 @@ class _HeaderWidgetState extends State<HeaderWidget> {
     }
   }
 
-  // ✅ Method untuk handle notification tap
+  // Method untuk handle notification tap
   void _handleNotificationTap() {
-    _removeOverlay();
     if (widget.onNotificationTap != null) {
       widget.onNotificationTap!();
     } else {
@@ -236,9 +170,8 @@ class _HeaderWidgetState extends State<HeaderWidget> {
     }
   }
 
-  // ✅ Method untuk handle filter tap
+  // Method untuk handle filter tap
   void _handleFilterTap() {
-    _removeOverlay();
     widget.onFilterTap?.call();
   }
 
@@ -251,161 +184,151 @@ class _HeaderWidgetState extends State<HeaderWidget> {
       ),
     );
 
-    return CompositedTransformTarget(
-      link: _layerLink,
-      child: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF1B56FD), Color(0xFF0118D8)],
-          ),
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF1B56FD), Color(0xFF0118D8)],
         ),
-        child: SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: const EdgeInsets.only(
-              left: 20,
-              right: 20,
-              top: 12,
-              bottom: 16,
-            ),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    // Search bar
-                    Expanded(
-                      child: Container(
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(50),
-                          border: _searchFocusNode.hasFocus 
-                              ? Border.all(
-                                  color: Colors.white,
-                                  width: 1.0,
-                                )
-                              : null,
-                        ),
-                        child: Row(
-                          children: [
-                            const SizedBox(width: 20),
-                            const Icon(Icons.search, color: Colors.white, size: 20),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: TextField(
-                                controller: _searchController,
-                                focusNode: _searchFocusNode,
-                                cursorColor: Colors.white,
-                                decoration: const InputDecoration(
-                                  border: InputBorder.none,
-                                  enabledBorder: InputBorder.none,
-                                  focusedBorder: InputBorder.none,
-                                  disabledBorder: InputBorder.none,
-                                  errorBorder: InputBorder.none,
-                                  focusedErrorBorder: InputBorder.none,
-                                  contentPadding: EdgeInsets.zero,
-                                  isDense: true,
-                                  hintText: 'Cari lowongan kerja...',
-                                  hintStyle: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 14,
-                                    fontFamily: 'Poppins',
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                style: const TextStyle(
-                                  color: Colors.white,
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 12,
+            bottom: 16,
+          ),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  // Search bar
+                  Expanded(
+                    child: Container(
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(50),
+                        border: _searchFocusNode.hasFocus 
+                            ? Border.all(
+                                color: Colors.white,
+                                width: 1.0,
+                              )
+                            : null,
+                      ),
+                      child: Row(
+                        children: [
+                          const SizedBox(width: 20),
+                          const Icon(Icons.search, color: Colors.white, size: 20),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextField(
+                              controller: _searchController,
+                              focusNode: _searchFocusNode,
+                              cursorColor: Colors.white,
+                              decoration: const InputDecoration(
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                contentPadding: EdgeInsets.zero,
+                                isDense: true,
+                                hintText: 'Cari lowongan kerja...',
+                                hintStyle: TextStyle(
+                                  color: Colors.white70,
                                   fontSize: 14,
                                   fontFamily: 'Poppins',
                                   fontWeight: FontWeight.w500,
                                 ),
-                                onSubmitted: _handleSearch,
-                                onTap: () {
-                                  setState(() {
-                                    _isSearching = true;
-                                  });
-                                  _showSearchOverlay();
-                                },
                               ),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w500,
+                              ),
+                              onSubmitted: _handleSearchSubmitted,
+                              onChanged: _onSearchChanged,
                             ),
-                            if (_searchController.text.isNotEmpty)
-                              IconButton(
-                                icon: const Icon(Icons.close, color: Colors.white, size: 18),
-                                onPressed: _clearSearch,
-                              ),
-                            const SizedBox(width: 12),
-                          ],
+                          ),
+                          if (_searchController.text.isNotEmpty)
+                            IconButton(
+                              icon: const Icon(Icons.close, color: Colors.white, size: 18),
+                              onPressed: _clearSearch,
+                            ),
+                          const SizedBox(width: 12),
+                        ],
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(width: 12),
+                  
+                  // BOOKMARK ICON
+                  if (widget.showBookmark)
+                    GestureDetector(
+                      onTap: _handleBookmarkTap,
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.bookmark_border,
+                          color: Colors.white,
+                          size: 20,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    
-                    // BOOKMARK ICON
-                    if (widget.showBookmark)
-                      GestureDetector(
-                        onTap: _handleBookmarkTap,
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.bookmark_border,
-                            color: Colors.white,
-                            size: 20,
-                          ),
+                  
+                  if (widget.showBookmark && widget.showNotification) const SizedBox(width: 12),
+                  
+                  // Notification button
+                  if (widget.showNotification)
+                    GestureDetector(
+                      onTap: _handleNotificationTap,
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.notifications_outlined,
+                          color: Colors.white,
+                          size: 20,
                         ),
                       ),
-                    
-                    if (widget.showBookmark && widget.showNotification) const SizedBox(width: 12),
-                    
-                    // Notification button
-                    if (widget.showNotification)
-                      GestureDetector(
-                        onTap: _handleNotificationTap,
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.notifications_outlined,
-                            color: Colors.white,
-                            size: 20,
-                          ),
+                    ),
+                  
+                  if (widget.showNotification && widget.showFilter) const SizedBox(width: 12),
+                  
+                  // Filter button
+                  if (widget.showFilter)
+                    GestureDetector(
+                      onTap: _handleFilterTap,
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.tune,
+                          color: Colors.white,
+                          size: 20,
                         ),
                       ),
-                    
-                    if (widget.showNotification && widget.showFilter) const SizedBox(width: 12),
-                    
-                    // Filter button
-                    if (widget.showFilter)
-                      GestureDetector(
-                        onTap: _handleFilterTap,
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.tune,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-            ),
+                    ),
+                ],
+              ),
+            ],
           ),
         ),
       ),

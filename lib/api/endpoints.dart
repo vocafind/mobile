@@ -1,9 +1,9 @@
 class ApiConfig {
   // Ganti IP dengan IP komputer server kamu
-  // static const String baseUrl = "http://10.136.131.193:5035/api";
-  // static const String baseUrlFoto = "http://10.136.131.193:5035/";
-  static const String baseUrl = "https://trpl306-001-site1.ntempurl.com/api";
-  static const String baseUrlFoto = "https://trpl306-001-site1.ntempurl.com/";
+  static const String baseUrl = "http://10.136.130.98:5035/api";
+  static const String baseUrlFoto = "http://10.136.130.98:5035/";
+  // static const String baseUrl = "https://trpl306-001-site1.ntempurl.com/api";
+  // static const String baseUrlFoto = "https://trpl306-001-site1.ntempurl.com/";
 
   // ------------------------------------------------------------- TALENTS AUTH
 
@@ -12,6 +12,8 @@ class ApiConfig {
   static const String refreshToken = "$baseUrl/Auth/refresh-token";   // Refresh token
   static const String logout = "$baseUrl/Auth/logout";   // Logout
 
+  //Save fcm token
+  static const String saveFcmToken = "$baseUrl/fcmtoken/saveFcmToken";
 
 
 
@@ -136,7 +138,9 @@ class ApiConfig {
   static String lokerById(String id) => "$baseUrl/LokerUmum/$id";                   // Get Loker Umum by ID
 
 
-  // ------------------------------------------------------------- Filter
+  // ------------------------------------------------------------- Search Filter
+  static String searchLokerUmum = '$baseUrl/LokerUmum/search';
+
   static String filterLokerUmum = '$baseUrl/LokerUmum/filter';
   static String lokasi = '$baseUrl/LokerUmum/locations';
 
@@ -197,5 +201,12 @@ class ApiConfig {
   static String getSemuaLamaranAcara() => "$baseUrl/LamarJobfair/semua-lamaran-acara";
   static String batalkanLamaranAcara(String applyId) => "$baseUrl/LamarJobfair/batal/$applyId";
   static String getStatusRegistrasiAcara(int acaraId) => "$baseUrl/LamarJobfair/status-registrasi/$acaraId";
+
+
+
+  // Notifikasi
+  static String allNotifikasi = "$baseUrl/Notification";                                // Get All Notifikasi
+  static String readNotifikasi(String notificationId) => "$baseUrl/Notification/read/$notificationId";
+  static String deleteNotifikasi(String notificationId) => "$baseUrl/Notification/$notificationId";
 
 }

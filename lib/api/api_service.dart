@@ -6,6 +6,7 @@ import 'package:jobfair/models/jobfair_detail_model.dart';
 import 'package:jobfair/models/jobfair_model.dart';
 import 'package:jobfair/models/lamar_jobfair_model.dart';
 import 'package:jobfair/models/lamar_loker.dart';
+import 'package:jobfair/models/notification_model.dart';
 import 'package:jobfair/models/saved_job_model.dart';
 import 'package:jobfair/models/talent_award_model.dart';
 import 'package:jobfair/models/talent_certification_model.dart';
@@ -26,6 +27,9 @@ import 'dart:convert';
 import 'package:jobfair/models/talent_social_media_model.dart';
 import 'package:jobfair/models/talent_career_interest_model.dart';
 import 'package:jobfair/models/talent_reference_model.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+
+
 
 class ApiService {
   final Dio _dio = ApiClient().dio;
@@ -65,19 +69,117 @@ class ApiService {
   }
 
   // ================== LOGIN - VERSI SIMPLIFIED ==================
+  // Future<Map<String, dynamic>> loginTalent(
+  //   String email,
+  //   String password,
+  // ) async {
+  //   try {
+  //     final response = await _dio.post(
+  //       ApiConfig.loginTalent,
+  //       data: {"Email": email, "Password": password},
+  //       options: Options(contentType: Headers.formUrlEncodedContentType),
+  //     );
+
+  //     print("STATUS: ${response.statusCode}");
+  //     print("RESPONSE: ${response.data}");
+
+  //     // ✅ Simpan token + expiry
+  //     if (response.statusCode == 200 && response.data['accessToken'] != null) {
+  //       await _saveTokens(
+  //         response.data['accessToken'],
+  //         response.data['refreshToken'],
+  //         response.data['expiresIn'] ?? 900,
+  //       );
+  //     }
+
+  //     return response.data;
+  //   } on DioException catch (e) {
+  //     print("❌ Login error: ${e.message}");
+  //     print("❌ Error type: ${e.type}");
+  //     print("❌ Response: ${e.response?.data}");
+  //     print("❌ Status code: ${e.response?.statusCode}");
+
+  //     // ✅ Handle network errors
+  //     if (e.type == DioExceptionType.connectionTimeout ||
+  //         e.type == DioExceptionType.sendTimeout ||
+  //         e.type == DioExceptionType.receiveTimeout ||
+  //         e.type == DioExceptionType.connectionError) {
+  //       return {"message": "Periksa koneksi internet Anda"};
+  //     }
+
+  //     // ✅ Handle no internet connection
+  //     if (e.type == DioExceptionType.unknown &&
+  //         e.error?.toString().contains("SocketException") == true) {
+  //       return {"message": "Tidak ada koneksi internet"};
+  //     }
+
+  //     // ✅ Handle server response errors
+  //     if (e.response != null) {
+  //       final statusCode = e.response!.statusCode;
+  //       final responseData = e.response!.data;
+
+  //       switch (statusCode) {
+  //         case 400:
+  //         case 401:
+  //           // Try to get specific error message from server
+  //           final serverMessage =
+  //               responseData?['message'] ??
+  //               responseData?['error'] ??
+  //               "Email atau password salah";
+  //           return {"message": serverMessage};
+
+  //         case 500:
+  //         case 502:
+  //         case 503:
+  //           return {"message": "Server sedang gangguan. Coba lagi nanti"};
+
+  //         default:
+  //           final serverMessage =
+  //               responseData?['message'] ??
+  //               responseData?['error'] ??
+  //               "Terjadi kesalahan";
+  //           return {"message": serverMessage};
+  //       }
+  //     }
+
+  //     // ✅ Default error message
+  //     return {"message": "Gagal terhubung ke server"};
+  //   } catch (e) {
+  //     print("❌ Non-Dio error: $e");
+  //     return {"message": "Terjadi kesalahan sistem"};
+  //   }
+  // }
+
+
+
+
+
   Future<Map<String, dynamic>> loginTalent(
     String email,
     String password,
   ) async {
     try {
+      print('🔑 Attempting login...');
+
       final response = await _dio.post(
         ApiConfig.loginTalent,
-        data: {"Email": email, "Password": password},
-        options: Options(contentType: Headers.formUrlEncodedContentType),
+        data: {
+          "Email": email,
+          "Password": password,
+          // ❌ HAPUS SEMUA FCM FIELD DARI LOGIN
+          // "FcmToken": "",
+          // "DeviceId": "",
+          // "DeviceType": "",
+          // "DeviceName": "",
+          // "AppVersion": "",
+        },
+        options: Options(
+          contentType: Headers.formUrlEncodedContentType, // ✅ TETAP formUrlEncoded
+        ),
       );
 
-      print("STATUS: ${response.statusCode}");
-      print("RESPONSE: ${response.data}");
+      print("✅ Login response status: ${response.statusCode}");
+      print("📦 Response data: ${response.data}");
 
       // ✅ Simpan token + expiry
       if (response.statusCode == 200 && response.data['accessToken'] != null) {
@@ -86,14 +188,30 @@ class ApiService {
           response.data['refreshToken'],
           response.data['expiresIn'] ?? 900,
         );
+
+        // ✅ Simpan talentId dan nama
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', response.data['accessToken']);
+        await prefs.setString('refreshToken', response.data['refreshToken']);
+        await prefs.setString('talentId', response.data['talentId'] ?? '');
+        await prefs.setString('nama', response.data['nama'] ?? '');
+        
+        print("💾 Token saved to shared preferences");
+        print("👤 Talent ID: ${response.data['talentId']}");
+        
+        // ✅ TRY TO SEND FCM TOKEN IN BACKGROUND (jika berhasil login)
+        _trySendFcmTokenAfterLogin(response.data['accessToken']);
       }
 
       return response.data;
     } on DioException catch (e) {
       print("❌ Login error: ${e.message}");
       print("❌ Error type: ${e.type}");
-      print("❌ Response: ${e.response?.data}");
-      print("❌ Status code: ${e.response?.statusCode}");
+      
+      if (e.response != null) {
+        print("❌ Response: ${e.response?.data}");
+        print("❌ Status code: ${e.response?.statusCode}");
+      }
 
       // ✅ Handle network errors
       if (e.type == DioExceptionType.connectionTimeout ||
@@ -101,12 +219,6 @@ class ApiService {
           e.type == DioExceptionType.receiveTimeout ||
           e.type == DioExceptionType.connectionError) {
         return {"message": "Periksa koneksi internet Anda"};
-      }
-
-      // ✅ Handle no internet connection
-      if (e.type == DioExceptionType.unknown &&
-          e.error?.toString().contains("SocketException") == true) {
-        return {"message": "Tidak ada koneksi internet"};
       }
 
       // ✅ Handle server response errors
@@ -117,11 +229,16 @@ class ApiService {
         switch (statusCode) {
           case 400:
           case 401:
-            // Try to get specific error message from server
             final serverMessage =
                 responseData?['message'] ??
                 responseData?['error'] ??
                 "Email atau password salah";
+            return {"message": serverMessage};
+
+          case 429:
+            final serverMessage =
+                responseData?['message'] ??
+                "Terlalu banyak percobaan gagal. Coba lagi nanti.";
             return {"message": serverMessage};
 
           case 500:
@@ -138,13 +255,125 @@ class ApiService {
         }
       }
 
-      // ✅ Default error message
       return {"message": "Gagal terhubung ke server"};
     } catch (e) {
       print("❌ Non-Dio error: $e");
       return {"message": "Terjadi kesalahan sistem"};
     }
   }
+
+  // ✅ METHOD UNTUK KIRIM FCM TOKEN SETELAH LOGIN SUKSES
+  void _trySendFcmTokenAfterLogin(String accessToken) async {
+    try {
+      print('🚀 Trying to get and send FCM token after login...');
+      
+      String? fcmToken;
+      
+      // Coba get FCM token
+      try {
+        FirebaseMessaging messaging = FirebaseMessaging.instance;
+        
+        // Request permission
+        NotificationSettings settings = await messaging.requestPermission(
+          alert: true,
+          badge: true,
+          sound: true,
+          provisional: false,
+        );
+
+        print('🔔 Notification permission: ${settings.authorizationStatus}');
+
+        if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+          fcmToken = await messaging.getToken();
+          if (fcmToken != null) {
+            print('📱 FCM Token: ${fcmToken.substring(0, 30)}...');
+            
+            // Simpan ke shared preferences
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('fcm_token', fcmToken);
+            
+            // Kirim ke server
+            await _sendFcmTokenToServer(accessToken, fcmToken);
+          }
+        }
+      } catch (firebaseError) {
+        print('⚠️ Cannot get FCM token: $firebaseError');
+      }
+      
+    } catch (e) {
+      print('⚠️ Error in FCM background process: $e');
+    }
+  }
+
+  // ✅ METHOD UNTUK KIRIM TOKEN KE SERVER
+  Future<void> _sendFcmTokenToServer(String accessToken, String fcmToken) async {
+    try {
+      print('📤 Sending FCM token to server...');
+      
+      // Gunakan Dio instance baru
+      final dio = Dio(BaseOptions(
+        baseUrl: ApiConfig.baseUrl,
+        connectTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 10),
+      ));
+      
+      // Get device info
+      final deviceInfo = _getSimpleDeviceInfo();
+      
+      await dio.post(
+        '/fcmtoken/saveFcmToken',
+        data: {
+          "fcmToken": fcmToken,
+          "deviceId": deviceInfo['deviceId'],
+          "deviceType": deviceInfo['deviceType'],
+          "deviceName": deviceInfo['deviceName'],
+          "appVersion": deviceInfo['appVersion'],
+        },
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+            'Content-Type': 'application/json',
+          },
+        ),
+      ).timeout(const Duration(seconds: 5));
+      
+      print('✅ FCM token sent successfully');
+    } catch (e) {
+      print('⚠️ Failed to send FCM token: $e');
+    }
+  }
+
+  // ✅ METHOD SEDERHANA UNTUK DEVICE INFO
+  Map<String, dynamic> _getSimpleDeviceInfo() {
+    try {
+      String deviceType = 'android';
+      String deviceName = 'Android Device';
+      String deviceId = 'android_${DateTime.now().millisecondsSinceEpoch}';
+      
+      if (Platform.isIOS) {
+        deviceType = 'ios';
+        deviceName = 'iPhone';
+        deviceId = 'ios_${DateTime.now().millisecondsSinceEpoch}';
+      }
+      
+      return {
+        'deviceId': deviceId,
+        'deviceType': deviceType,
+        'deviceName': deviceName,
+        'appVersion': '1.0.0',
+      };
+    } catch (e) {
+      return {
+        'deviceId': 'simple_${DateTime.now().millisecondsSinceEpoch}',
+        'deviceType': 'android',
+        'deviceName': 'Simple Device',
+        'appVersion': '1.0.0',
+      };
+    }
+  }
+
+
+
 
   // ================== REFRESH TOKEN ==================
   Future<bool> refreshAccessToken() async {
@@ -242,6 +471,15 @@ class ApiService {
       return true; // Tetap return true karena data lokal sudah dihapus
     }
   }
+
+
+
+
+
+
+
+
+
 
   //  -----------------------------------------------------------------------Data Diri
   // ================== GET PROFIL / DATA DIRI ==================
@@ -351,6 +589,14 @@ class ApiService {
     }
   }
 
+
+
+
+
+
+
+
+
   //-----------------------------------------------------------------------SOSMED
   // ================== GET SOCIAL MEDIA ==================
   Future<List<SocialMediaModel>> getSocialMedia() async {
@@ -435,6 +681,13 @@ class ApiService {
       rethrow;
     }
   }
+
+
+
+
+
+
+
 
   //  -----------------------------------------------------------------------MINAT KARIR
 
@@ -525,6 +778,10 @@ class ApiService {
       rethrow;
     }
   }
+
+
+
+
 
   //  -----------------------------------------------------------------------REFERENSI
 
@@ -636,6 +893,11 @@ class ApiService {
     }
   }
 
+
+
+
+
+
   //  -----------------------------------------------------------------------PENDIDIKAN
 
   // ================== GET PENDIDIKAN ==================
@@ -746,6 +1008,13 @@ class ApiService {
     }
   }
 
+
+
+
+
+
+
+
   //  -----------------------------------------------------------------------BAHASA
 
   // ================== GET BAHASA ==================
@@ -854,6 +1123,13 @@ class ApiService {
     }
   }
 
+
+
+
+
+
+
+
   //  -----------------------------------------------------------------------PENGHARGAAN
 
   // ================== GET PENGHARGAAN ==================
@@ -961,6 +1237,14 @@ class ApiService {
       rethrow;
     }
   }
+
+
+
+
+
+
+
+
 
   //  -----------------------------------------------------------------------SERTIFIKASI
 
@@ -1078,6 +1362,13 @@ class ApiService {
     }
   }
 
+
+
+
+
+
+
+
   //  -----------------------------------------------------------------------PELATIHAN
 
   // ================== GET TRAINING ==================
@@ -1185,6 +1476,15 @@ class ApiService {
       rethrow;
     }
   }
+
+
+
+
+
+
+
+
+
 
   //  -----------------------------------------------------------------------SOFT SKILL
 
@@ -1295,6 +1595,14 @@ class ApiService {
       rethrow;
     }
   }
+
+
+
+
+
+
+
+
 
   //  -----------------------------------------------------------------------RIWAYAT PEKERJAAN
 
@@ -1410,6 +1718,12 @@ class ApiService {
     }
   }
 
+
+
+
+
+
+
   //  -----------------------------------------------------------------------PROYEK
 
   // ================== GET PROYEK ==================
@@ -1517,6 +1831,14 @@ class ApiService {
       rethrow;
     }
   }
+
+
+
+
+
+
+
+
 
   //  -----------------------------------------------------------------------PORTOFOLIO
 
@@ -1632,6 +1954,15 @@ class ApiService {
     }
   }
 
+
+
+
+
+
+
+
+
+
   // --------------------------------------------------------------------------LOKER UMUM-----------------------------------------------------------
 
   // ================== GET ALL LOKER UMUM ==================
@@ -1675,6 +2006,36 @@ class ApiService {
 
   // --------------------------------------------------------------------------SEARCH FILTER-----------------------------------------------------------
 
+  // ================== SEARCH LOKER UMUM ==================
+  Future<List<LokerUmum>> searchLokerUmum(String keyword) async {
+    final url = Uri.parse(ApiConfig.searchLokerUmum).replace(
+      queryParameters: {'keyword': keyword},
+    );
+
+    try {
+      final response = await http.get(url);
+
+      print("SEARCH STATUS: ${response.statusCode}");
+      print("SEARCH URL: $url");
+      print("SEARCH KEYWORD: $keyword");
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        final List<dynamic> results = data['data'] ?? [];
+
+        print("SEARCH RESULTS: ${results.length} lowongan found for '$keyword'");
+
+        return results.map((json) => LokerUmum.fromJson(json)).toList();
+      } else {
+        print("SEARCH ERROR: ${response.statusCode} - ${response.body}");
+        return [];
+      }
+    } catch (e) {
+      print("SEARCH EXCEPTION: $e");
+      return [];
+    }
+  }
+  
   // ================== GET LOKASI ==================
   Future<List<String>> getLocations() async {
     final url = Uri.parse(ApiConfig.lokasi);
@@ -1762,7 +2123,6 @@ class ApiService {
     }
   }
 
-
   // --------------------------------------------------------------------------LAMAR LOKER-----------------------------------------------------------
   // ================== LAMAR LOKER UMUM ==================
   Future<LamarLokerResponse> lamarLokerUmum(String lowonganId) async {
@@ -1832,12 +2192,16 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
-        
+
         // Langsung return, tidak perlu filter lagi
-        return data.map((json) => LamaranSaya.fromJson({
-          ...json,
-          'isJobfair': false, // Tandai sebagai lamaran umum
-        })).toList();
+        return data
+            .map(
+              (json) => LamaranSaya.fromJson({
+                ...json,
+                'isJobfair': false, // Tandai sebagai lamaran umum
+              }),
+            )
+            .toList();
       } else {
         throw Exception('Failed to load job applications');
       }
@@ -2171,32 +2535,32 @@ class ApiService {
     }
   }
 
-
-
-
-
   // ================== GET ALL JOBFAIR ==================
   Future<List<Jobfair>> getAllJobfair() async {
     var url = Uri.parse(ApiConfig.allJobfair);
     try {
       print("🔄 Fetching jobfair from: ${url.toString()}"); // Debug
-      
+
       final response = await http.get(url);
 
       print("📡 GET ALL JOBFAIR - Status: ${response.statusCode}");
-      print("📦 GET ALL JOBFAIR - Response body length: ${response.body.length}");
-      print("📦 GET ALL JOBFAIR - First 200 chars: ${response.body.substring(0, response.body.length > 200 ? 200 : response.body.length)}");
+      print(
+        "📦 GET ALL JOBFAIR - Response body length: ${response.body.length}",
+      );
+      print(
+        "📦 GET ALL JOBFAIR - First 200 chars: ${response.body.substring(0, response.body.length > 200 ? 200 : response.body.length)}",
+      );
 
       if (response.statusCode == 200) {
         // Parse JSON
         List<dynamic> data = jsonDecode(response.body);
         print("✅ Successfully parsed ${data.length} jobfairs");
-        
+
         // Debug each item
         for (int i = 0; i < data.length; i++) {
           print("📋 Jobfair $i: ${data[i]}");
         }
-        
+
         // Convert to Jobfair objects
         List<Jobfair> jobfairs = data.map((json) {
           try {
@@ -2207,7 +2571,7 @@ class ApiService {
             rethrow;
           }
         }).toList();
-        
+
         print("✅ Successfully created ${jobfairs.length} Jobfair objects");
         return jobfairs;
       } else {
@@ -2221,30 +2585,35 @@ class ApiService {
     }
   }
 
-  
   // ================== GET JOBFAIR DETAIL BY ID ==================
   Future<JobfairDetail?> getJobfairDetailById(int id) async {
     final url = Uri.parse(ApiConfig.jobfairById(id.toString()));
 
     try {
       print("🔄 Fetching jobfair detail from: ${url.toString()}");
-      
+
       final response = await http.get(url);
 
       print("📡 GET JOBFAIR DETAIL - Status: ${response.statusCode}");
-      print("📦 GET JOBFAIR DETAIL - Response body length: ${response.body.length}");
+      print(
+        "📦 GET JOBFAIR DETAIL - Response body length: ${response.body.length}",
+      );
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
         print("✅ Successfully parsed jobfair detail");
-        
+
         // Debug print untuk memastikan data sesuai
         print("📋 Jobfair ID: ${responseData['id']}");
         print("📋 Jobfair Name: ${responseData['namaAcara']}");
-        print("📋 Companies Count: ${(responseData['perusahaan'] as List).length}");
-        print("📋 Lowongan Count: ${(responseData['lowonganAcara'] as List).length}");
+        print(
+          "📋 Companies Count: ${(responseData['perusahaan'] as List).length}",
+        );
+        print(
+          "📋 Lowongan Count: ${(responseData['lowonganAcara'] as List).length}",
+        );
         print("📋 Flyer Count: ${(responseData['flyerAcara'] as List).length}");
-        
+
         return JobfairDetail.fromJson(responseData);
       } else {
         print("❌ HTTP Error: ${response.statusCode} - ${response.body}");
@@ -2257,15 +2626,13 @@ class ApiService {
     }
   }
 
-
-
-// ================== GET ALL LOKER BY JOBFAIR ==================
+  // ================== GET ALL LOKER BY JOBFAIR ==================
   Future<List<LokerUmum>> getAllLokerByJobfair(int jobfairId) async {
     final url = Uri.parse(ApiConfig.allLokerByJobfair(jobfairId.toString()));
-    
+
     try {
       final response = await http.get(url);
-      
+
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         return data.map((json) => LokerUmum.fromJson(json)).toList();
@@ -2280,15 +2647,17 @@ class ApiService {
   // ================== GET LOKER JOBFAIR DETAIL ==================
   Future<LokerUmumDetail> getLokerJobfairDetail(String id) async {
     final url = Uri.parse(ApiConfig.lokerJobfairDetail(id));
-    
+
     try {
       final response = await http.get(url);
-      
+
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
         return LokerUmumDetail.fromJson(data);
       } else {
-        throw Exception('Failed to load jobfair loker detail: ${response.statusCode}');
+        throw Exception(
+          'Failed to load jobfair loker detail: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('Error fetching jobfair loker detail: $e');
@@ -2303,9 +2672,11 @@ class ApiService {
 
 
 
+
+
   //LAMAR JOBFAIR
 
-// --------------------------------------------------------------------------LAMAR JOBFAIR-----------------------------------------------------------
+  // --------------------------------------------------------------------------LAMAR JOBFAIR-----------------------------------------------------------
 
   // ================== LAMAR JOBFAIR ==================
   Future<LamarJobfairResponse> lamarJobfair(String lowonganId) async {
@@ -2336,7 +2707,8 @@ class ApiService {
         return LamarJobfairResponse.fromJson(response.data);
       } else {
         final errorData = response.data;
-        final errorMessage = errorData['message'] ?? 'Gagal melamar pekerjaan di jobfair';
+        final errorMessage =
+            errorData['message'] ?? 'Gagal melamar pekerjaan di jobfair';
         print("❌ Error melamar jobfair: $errorMessage");
         throw Exception(errorMessage);
       }
@@ -2346,7 +2718,8 @@ class ApiService {
       // Handle specific error responses
       if (e.response != null) {
         final errorData = e.response!.data;
-        final errorMessage = errorData['message'] ?? 'Terjadi kesalahan saat melamar jobfair';
+        final errorMessage =
+            errorData['message'] ?? 'Terjadi kesalahan saat melamar jobfair';
         throw Exception(errorMessage);
       }
 
@@ -2380,11 +2753,12 @@ class ApiService {
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
         print("✅ Berhasil mengambil ${data.length} lamaran acara");
-        
+
         return data.map((json) => LamaranAcara.fromJson(json)).toList();
       } else {
         final errorData = response.data;
-        final errorMessage = errorData['message'] ?? 'Gagal mengambil lamaran acara';
+        final errorMessage =
+            errorData['message'] ?? 'Gagal mengambil lamaran acara';
         print("❌ Error mengambil lamaran acara: $errorMessage");
         throw Exception(errorMessage);
       }
@@ -2393,7 +2767,9 @@ class ApiService {
 
       if (e.response != null) {
         final errorData = e.response!.data;
-        final errorMessage = errorData['message'] ?? 'Terjadi kesalahan saat mengambil lamaran acara';
+        final errorMessage =
+            errorData['message'] ??
+            'Terjadi kesalahan saat mengambil lamaran acara';
         throw Exception(errorMessage);
       }
 
@@ -2427,11 +2803,12 @@ class ApiService {
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
         print("✅ Berhasil mengambil ${data.length} lamaran acara");
-        
+
         return data.map((json) => LamaranAcara.fromJson(json)).toList();
       } else {
         final errorData = response.data;
-        final errorMessage = errorData['message'] ?? 'Gagal mengambil semua lamaran acara';
+        final errorMessage =
+            errorData['message'] ?? 'Gagal mengambil semua lamaran acara';
         print("❌ Error mengambil semua lamaran acara: $errorMessage");
         throw Exception(errorMessage);
       }
@@ -2440,7 +2817,9 @@ class ApiService {
 
       if (e.response != null) {
         final errorData = e.response!.data;
-        final errorMessage = errorData['message'] ?? 'Terjadi kesalahan saat mengambil semua lamaran acara';
+        final errorMessage =
+            errorData['message'] ??
+            'Terjadi kesalahan saat mengambil semua lamaran acara';
         throw Exception(errorMessage);
       }
 
@@ -2466,7 +2845,9 @@ class ApiService {
         'Content-Type': 'application/json',
       };
 
-      final response = await _dio.delete(ApiConfig.batalkanLamaranAcara(applyId));
+      final response = await _dio.delete(
+        ApiConfig.batalkanLamaranAcara(applyId),
+      );
 
       print("🔄 BATAL LAMARAN ACARA - ApplyID: $applyId");
       print("📡 BATAL LAMARAN ACARA - Status: ${response.statusCode}");
@@ -2477,7 +2858,8 @@ class ApiService {
         return BatalLamaranAcaraResponse.fromJson(response.data);
       } else {
         final errorData = response.data;
-        final errorMessage = errorData['message'] ?? 'Gagal membatalkan lamaran acara';
+        final errorMessage =
+            errorData['message'] ?? 'Gagal membatalkan lamaran acara';
         print("❌ Error membatalkan lamaran acara: $errorMessage");
         throw Exception(errorMessage);
       }
@@ -2486,7 +2868,9 @@ class ApiService {
 
       if (e.response != null) {
         final errorData = e.response!.data;
-        final errorMessage = errorData['message'] ?? 'Terjadi kesalahan saat membatalkan lamaran acara';
+        final errorMessage =
+            errorData['message'] ??
+            'Terjadi kesalahan saat membatalkan lamaran acara';
         throw Exception(errorMessage);
       }
 
@@ -2509,7 +2893,9 @@ class ApiService {
         'Content-Type': 'application/json',
       };
 
-      final response = await _dio.get(ApiConfig.getStatusRegistrasiAcara(acaraId));
+      final response = await _dio.get(
+        ApiConfig.getStatusRegistrasiAcara(acaraId),
+      );
 
       if (response.statusCode == 200) {
         return StatusRegistrasiAcara.fromJson(response.data);
@@ -2520,8 +2906,6 @@ class ApiService {
       throw Exception('Terjadi kesalahan jaringan');
     }
   }
-
-
 
   // ================== GET LAMARAN JOBFAIR SAYA ==================
   Future<List<LamaranSaya>> getLamaranJobfairSaya() async {
@@ -2547,12 +2931,14 @@ class ApiService {
       if (response.data is List && response.data.isNotEmpty) {
         print("DEBUG - First item full data:");
         print(response.data[0]);
-        print("DEBUG - applicationCode: ${response.data[0]['applicationCode']}");
+        print(
+          "DEBUG - applicationCode: ${response.data[0]['applicationCode']}",
+        );
       }
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
-        
+
         return data.map((json) {
           // ✅ JANGAN timpa seluruh JSON, biarkan data asli dari API
           // Hanya tambah isJobfair jika belum ada
@@ -2560,7 +2946,7 @@ class ApiService {
           if (!processedJson.containsKey('isJobfair')) {
             processedJson['isJobfair'] = true;
           }
-          
+
           return LamaranSaya.fromJson(processedJson);
         }).toList();
       } else {
@@ -2571,5 +2957,139 @@ class ApiService {
       throw Exception('Terjadi kesalahan jaringan');
     }
   }
+
+
+
+
+
+
+  // ================== GET ALL NOTIFICATIONS ==================
+  Future<List<NotificationModel>> getAllNotifications() async {
+    try {
+      final response = await _dio.get(
+        ApiConfig.allNotifikasi,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      print("GET All Notifications - STATUS: ${response.statusCode}");
+      print("GET All Notifications - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        return data.map((json) => NotificationModel.fromJson(json)).toList();
+      } else {
+        throw Exception('Failed to load notifications');
+      }
+    } on DioException catch (e) {
+      print("❌ Error ambil notifikasi: ${e.message}");
+      if (e.response != null) {
+        print("❌ Response error: ${e.response!.data}");
+      }
+      rethrow;
+    }
+  }
+
+
+  // ================== MARK AS READ ==================
+  Future<Map<String, dynamic>> markAsRead(String notificationId) async {
+    print('=== DEBUG API: Mark as Read for: $notificationId');
+    
+    try {
+      // Ganti dari POST menjadi PUT
+      final response = await _dio.put(
+        ApiConfig.readNotifikasi(notificationId),
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      print("PUT Mark as Read - STATUS: ${response.statusCode}");
+      print("PUT Mark as Read - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        print('=== DEBUG API: Successfully marked as read');
+      } else {
+        print('=== DEBUG API: Failed with status ${response.statusCode}');
+      }
+      
+      return response.data;
+    } on DioException catch (e) {
+      print("❌ Error mark as read: ${e.message}");
+      if (e.response != null) {
+        print("❌ Response error: ${e.response!.data}");
+        print("❌ Allowed methods: ${e.response!.headers['allow']}");
+      }
+      rethrow;
+    }
+  }
+
+  // ================== DELETE NOTIFICATION ==================
+  Future<Map<String, dynamic>> deleteNotification(String notificationId) async {
+    try {
+      final response = await _dio.delete(
+        ApiConfig.deleteNotifikasi(notificationId),
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      print("DELETE Notification - STATUS: ${response.statusCode}");
+      print("DELETE Notification - BODY: ${response.data}");
+
+      return response.data;
+    } on DioException catch (e) {
+      print("❌ Error delete notification: ${e.message}");
+      rethrow;
+    }
+  }
+
+
+  // ================== GET LAMARAN BY APPLY ID ==================
+  Future<LamaranSaya?> getLamaranByApplyId(String applyId) async {
+    try {
+      // Cari di lamaran umum
+      final lamaranUmum = await getLamaranSaya();
+      
+      // Cara 1: Gunakan where + firstOrNull pattern
+      final lamaranUmumFound = lamaranUmum
+          .where((lamaran) => lamaran.applyId == applyId)
+          .cast<LamaranSaya?>()
+          .firstOrNull;
+
+      if (lamaranUmumFound != null) {
+        print('✅ Lamaran ditemukan di lamaran umum');
+        return lamaranUmumFound;
+      }
+
+      // Cari di lamaran jobfair
+      final lamaranJobfair = await getLamaranJobfairSaya();
+      
+      // Cara yang sama untuk jobfair
+      final lamaranJobfairFound = lamaranJobfair
+          .where((lamaran) => lamaran.applyId == applyId)
+          .cast<LamaranSaya?>()
+          .firstOrNull;
+
+      if (lamaranJobfairFound != null) {
+        print('✅ Lamaran ditemukan di lamaran jobfair');
+        return lamaranJobfairFound;
+      }
+
+      print('❌ Lamaran tidak ditemukan dengan applyId: $applyId');
+      return null;
+    } catch (e) {
+      print('❌ Error getLamaranByApplyId: $e');
+      return null;
+    }
+  }
+
 
 }

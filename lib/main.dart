@@ -1,12 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/date_symbol_data_local.dart'; // ✅ yang benar ini!
-import 'screens/halaman_1.dart'; // pastikan file ini benar
+import 'package:firebase_core/firebase_core.dart'; // ✅ UNCOMMENT INI
+import 'package:intl/date_symbol_data_local.dart';
+import 'screens/halaman_1.dart';
+import 'firebase_options.dart'; // ✅ IMPORT INI
 
-void main() async { // ✅ tambahkan async
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await initializeDateFormatting('id_ID', null); // ✅ sudah benar sekarang
+  // ✅ INITIALIZE FIREBASE DULU
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    print('✅ Firebase initialized successfully');
+  } catch (e) {
+    print('❌ Firebase initialization error: $e');
+    // Tetap lanjut meskipun Firebase error
+  }
+
+  await initializeDateFormatting('id_ID', null);
 
   // Warna status bar & navigation bar agar sesuai dengan tema light
   SystemChrome.setSystemUIOverlayStyle(
@@ -38,4 +51,7 @@ class JobFairApp extends StatelessWidget {
       home: const Halaman1(),
     );
   }
+
+  
 }
+

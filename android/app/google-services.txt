@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "654294454998",
+    "project_id": "vocafind-d0ad6",
+    "storage_bucket": "vocafind-d0ad6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:654294454998:android:679781a90abba5ca05ef77",
+        "android_client_info": {
+          "package_name": "com.example.jobfair"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDnJFvGmI3F3YmaX4ErWPayEBVpyqSIMRM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
