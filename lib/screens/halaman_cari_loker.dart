@@ -8,7 +8,12 @@ import 'package:jobfair/api/api_service.dart';
 import 'package:jobfair/models/loker_umum_model.dart';
 
 class HalamanCariLoker extends StatefulWidget {
-  const HalamanCariLoker({super.key});
+  final String? initialSearchQuery; // ✅ TAMBAHKAN PARAMETER INI
+
+  const HalamanCariLoker({
+    super.key,
+    this.initialSearchQuery, // ✅ TAMBAHKAN INI
+  });
 
   @override
   State<HalamanCariLoker> createState() => _HalamanCariLokerState();
@@ -58,6 +63,20 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
     _loadData();
     _setupScrollController();
     _setupSearchListener();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.initialSearchQuery != null) {
+        _searchController.text = widget.initialSearchQuery!;
+        _performSearch(widget.initialSearchQuery!);
+      }
+
+      // Fokus ke search bar setelah halaman dimuat
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted && _searchFocusNode.canRequestFocus) {
+          _searchFocusNode.requestFocus();
+        }
+      });
+    });
   }
 
   @override
@@ -538,7 +557,7 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
             HeaderWidget(
               showNotification: true,
               showFilter: false,
-              showBookmark: false,
+              showBookmark: true,
               externalSearchController:
                   _searchController, // PASS controller yang sama
               onSearch: _onSearchChanged, // Tambahkan callback untuk search
@@ -2136,17 +2155,17 @@ class __JobCardState extends State<_JobCard>
                         Text.rich(
                           TextSpan(
                             children: [
-                              const TextSpan(
-                                text: 'Rp',
-                                style: TextStyle(
-                                  color: Color(0xFF40403F),
-                                  fontSize: 14,
-                                  fontFamily: 'Poppins',
-                                  fontWeight: FontWeight.w600,
-                                  height: 1.43,
-                                  letterSpacing: -0.24,
-                                ),
-                              ),
+                              // const TextSpan(
+                              //   text: 'Rp',
+                              //   style: TextStyle(
+                              //     color: Color(0xFF40403F),
+                              //     fontSize: 14,
+                              //     fontFamily: 'Poppins',
+                              //     fontWeight: FontWeight.w600,
+                              //     height: 1.43,
+                              //     letterSpacing: -0.24,
+                              //   ),
+                              // ),
                               TextSpan(
                                 text:
                                     ' ${_formatSalaryValue(widget.lowongan.gaji)}',
@@ -2301,7 +2320,7 @@ class __JobCardState extends State<_JobCard>
     if (gaji.startsWith('Rp')) {
       return gaji;
     }
-    return 'Rp $gaji';
+    return '$gaji';
   }
 
   String _formatTimeAgo(DateTime tanggalPosting) {

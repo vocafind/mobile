@@ -362,32 +362,6 @@ class _HalamanJobfairState extends State<HalamanJobfair> {
     );
   }
 
-  Widget _buildBadge(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      height: 22,
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(45),
-        border: Border.all(
-          color: const Color(0xFFF1F5F9).withOpacity(0.4),
-          width: 1,
-        ),
-      ),
-      child: Center(
-        child: Text(
-          text,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 10,
-            fontFamily: 'Poppins',
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildLoadingState() {
     return Column(
       children: [

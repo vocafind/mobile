@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:jobfair/api/api_client.dart';
+import 'package:jobfair/models/company_model.dart';
 import 'package:jobfair/models/jobfair_detail_model.dart';
 import 'package:jobfair/models/jobfair_model.dart';
 import 'package:jobfair/models/lamar_jobfair_model.dart';
@@ -68,91 +69,11 @@ class ApiService {
     return await request.send();
   }
 
-  // ================== LOGIN - VERSI SIMPLIFIED ==================
-  // Future<Map<String, dynamic>> loginTalent(
-  //   String email,
-  //   String password,
-  // ) async {
-  //   try {
-  //     final response = await _dio.post(
-  //       ApiConfig.loginTalent,
-  //       data: {"Email": email, "Password": password},
-  //       options: Options(contentType: Headers.formUrlEncodedContentType),
-  //     );
-
-  //     print("STATUS: ${response.statusCode}");
-  //     print("RESPONSE: ${response.data}");
-
-  //     // ✅ Simpan token + expiry
-  //     if (response.statusCode == 200 && response.data['accessToken'] != null) {
-  //       await _saveTokens(
-  //         response.data['accessToken'],
-  //         response.data['refreshToken'],
-  //         response.data['expiresIn'] ?? 900,
-  //       );
-  //     }
-
-  //     return response.data;
-  //   } on DioException catch (e) {
-  //     print("❌ Login error: ${e.message}");
-  //     print("❌ Error type: ${e.type}");
-  //     print("❌ Response: ${e.response?.data}");
-  //     print("❌ Status code: ${e.response?.statusCode}");
-
-  //     // ✅ Handle network errors
-  //     if (e.type == DioExceptionType.connectionTimeout ||
-  //         e.type == DioExceptionType.sendTimeout ||
-  //         e.type == DioExceptionType.receiveTimeout ||
-  //         e.type == DioExceptionType.connectionError) {
-  //       return {"message": "Periksa koneksi internet Anda"};
-  //     }
-
-  //     // ✅ Handle no internet connection
-  //     if (e.type == DioExceptionType.unknown &&
-  //         e.error?.toString().contains("SocketException") == true) {
-  //       return {"message": "Tidak ada koneksi internet"};
-  //     }
-
-  //     // ✅ Handle server response errors
-  //     if (e.response != null) {
-  //       final statusCode = e.response!.statusCode;
-  //       final responseData = e.response!.data;
-
-  //       switch (statusCode) {
-  //         case 400:
-  //         case 401:
-  //           // Try to get specific error message from server
-  //           final serverMessage =
-  //               responseData?['message'] ??
-  //               responseData?['error'] ??
-  //               "Email atau password salah";
-  //           return {"message": serverMessage};
-
-  //         case 500:
-  //         case 502:
-  //         case 503:
-  //           return {"message": "Server sedang gangguan. Coba lagi nanti"};
-
-  //         default:
-  //           final serverMessage =
-  //               responseData?['message'] ??
-  //               responseData?['error'] ??
-  //               "Terjadi kesalahan";
-  //           return {"message": serverMessage};
-  //       }
-  //     }
-
-  //     // ✅ Default error message
-  //     return {"message": "Gagal terhubung ke server"};
-  //   } catch (e) {
-  //     print("❌ Non-Dio error: $e");
-  //     return {"message": "Terjadi kesalahan sistem"};
-  //   }
-  // }
 
 
 
 
+  // ================== LOGIN ==================
 
   Future<Map<String, dynamic>> loginTalent(
     String email,
@@ -375,6 +296,8 @@ class ApiService {
 
 
 
+
+
   // ================== REFRESH TOKEN ==================
   Future<bool> refreshAccessToken() async {
     final prefs = await SharedPreferences.getInstance();
@@ -474,6 +397,74 @@ class ApiService {
 
 
 
+
+
+
+
+
+ // ================== GET ALL COMPANY LOGOS ==================
+  Future<List<CompanyLogo>> getAllCompanyLogos() async {
+    try {
+      final response = await _dio.get(
+        ApiConfig.allLogoPerusahaan,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      print("GET All Company Logos - STATUS: ${response.statusCode}");
+      print("GET All Company Logos - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        return data.map((json) => CompanyLogo.fromJson(json)).toList();
+      } else {
+        throw Exception('Failed to load company logos');
+      }
+    } on DioException catch (e) {
+      print("❌ Error ambil logo perusahaan: ${e.message}");
+      if (e.response != null) {
+        print("❌ Response error: ${e.response!.data}");
+      }
+      rethrow;
+    }
+  }
+
+  // ================== GET RANDOM COMPANY LOGOS ==================
+  Future<List<CompanyLogo>> getRandomCompanyLogos({int count = 6}) async {
+    try {
+      final response = await _dio.get(
+        ApiConfig.allLogoPerusahaan,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      print("GET All Company Logos - STATUS: ${response.statusCode}");
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        final List<CompanyLogo> allLogos = 
+            data.map((json) => CompanyLogo.fromJson(json)).toList();
+        
+        // Shuffle and take specified count
+        allLogos.shuffle();
+        return allLogos.take(count).toList();
+      } else {
+        throw Exception('Failed to load company logos');
+      }
+    } on DioException catch (e) {
+      print("❌ Error ambil logo perusahaan: ${e.message}");
+      if (e.response != null) {
+        print("❌ Response error: ${e.response!.data}");
+      }
+      rethrow;
+    }
+  }
 
 
 
@@ -3093,3 +3084,101 @@ class ApiService {
 
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ================== LOGIN - VERSI SIMPLIFIED ==================
+    // Future<Map<String, dynamic>> loginTalent(
+    //   String email,
+    //   String password,
+    // ) async {
+    //   try {
+    //     final response = await _dio.post(
+    //       ApiConfig.loginTalent,
+    //       data: {"Email": email, "Password": password},
+    //       options: Options(contentType: Headers.formUrlEncodedContentType),
+    //     );
+
+    //     print("STATUS: ${response.statusCode}");
+    //     print("RESPONSE: ${response.data}");
+
+    //     // ✅ Simpan token + expiry
+    //     if (response.statusCode == 200 && response.data['accessToken'] != null) {
+    //       await _saveTokens(
+    //         response.data['accessToken'],
+    //         response.data['refreshToken'],
+    //         response.data['expiresIn'] ?? 900,
+    //       );
+    //     }
+
+    //     return response.data;
+    //   } on DioException catch (e) {
+    //     print("❌ Login error: ${e.message}");
+    //     print("❌ Error type: ${e.type}");
+    //     print("❌ Response: ${e.response?.data}");
+    //     print("❌ Status code: ${e.response?.statusCode}");
+
+    //     // ✅ Handle network errors
+    //     if (e.type == DioExceptionType.connectionTimeout ||
+    //         e.type == DioExceptionType.sendTimeout ||
+    //         e.type == DioExceptionType.receiveTimeout ||
+    //         e.type == DioExceptionType.connectionError) {
+    //       return {"message": "Periksa koneksi internet Anda"};
+    //     }
+
+    //     // ✅ Handle no internet connection
+    //     if (e.type == DioExceptionType.unknown &&
+    //         e.error?.toString().contains("SocketException") == true) {
+    //       return {"message": "Tidak ada koneksi internet"};
+    //     }
+
+    //     // ✅ Handle server response errors
+    //     if (e.response != null) {
+    //       final statusCode = e.response!.statusCode;
+    //       final responseData = e.response!.data;
+
+    //       switch (statusCode) {
+    //         case 400:
+    //         case 401:
+    //           // Try to get specific error message from server
+    //           final serverMessage =
+    //               responseData?['message'] ??
+    //               responseData?['error'] ??
+    //               "Email atau password salah";
+    //           return {"message": serverMessage};
+
+    //         case 500:
+    //         case 502:
+    //         case 503:
+    //           return {"message": "Server sedang gangguan. Coba lagi nanti"};
+
+    //         default:
+    //           final serverMessage =
+    //               responseData?['message'] ??
+    //               responseData?['error'] ??
+    //               "Terjadi kesalahan";
+    //           return {"message": serverMessage};
+    //       }
+    //     }
+
+    //     // ✅ Default error message
+    //     return {"message": "Gagal terhubung ke server"};
+    //   } catch (e) {
+    //     print("❌ Non-Dio error: $e");
+    //     return {"message": "Terjadi kesalahan sistem"};
+    //   }
+    // }
