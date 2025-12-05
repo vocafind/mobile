@@ -4,7 +4,7 @@ import 'package:jobfair/api/api_service.dart';
 import '/widget/header.dart';
 import 'package:jobfair/widget/bottom_navbar.dart';
 import 'package:jobfair/models/jobfair_model.dart';
-import 'halaman_jobfair_detail.dart';
+import 'package:jobfair/api/route.dart'; // Import route.dart
 
 class HalamanJobfair extends StatefulWidget {
   const HalamanJobfair({super.key});
@@ -116,11 +116,11 @@ class _HalamanJobfairState extends State<HalamanJobfair> {
       padding: const EdgeInsets.only(right: 16),
       child: GestureDetector(
         onTap: () {
-          Navigator.push(
+          // Navigasi menggunakan route.dart
+          goTo(
             context,
-            MaterialPageRoute(
-              builder: (context) => HalamanJobfairDetail(jobfairId: jobfair.id),
-            ),
+            AppRoutes.jobfairDetail,
+            arguments: jobfair.id,
           );
         },
         child: Container(
@@ -261,11 +261,9 @@ class _HalamanJobfairState extends State<HalamanJobfair> {
                       ],
                     ),
                   ),
-                  // HAPUS SizedBox yang di sini karena tidak efektif
                   Positioned(
                     left: 24,
-                    top:
-                        70, // UBAH dari bottom: 110 MENJADI top: 70 (atau nilai lain)
+                    top: 70,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

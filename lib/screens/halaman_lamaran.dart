@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:jobfair/models/lamar_loker.dart';
 import 'package:jobfair/widget/bottom_navbar.dart';
 import 'package:jobfair/widget/header.dart';
-import 'package:jobfair/screens/detail_lamaran.dart';
-import 'package:jobfair/screens/detail_lamaran_jobfair.dart';
 import 'package:jobfair/api/api_service.dart';
+import 'package:jobfair/api/route.dart'; // Import route.dart
 
 class HalamanLamaran extends StatefulWidget {
   final String? applyIdToOpen; // Parameter untuk auto open lamaran
@@ -52,10 +51,27 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
 
     if (lamaran != null && mounted) {
       final isJobfair = lamaran.acara != null;
+      
+      // Navigasi menggunakan route.dart
       if (isJobfair) {
-        DetailLamaranJobfair.show(context, lamaran: lamaran);
+        // Jika menggunakan halaman terpisah untuk detail lamaran jobfair
+        goTo(
+          context,
+          AppRoutes.lamaran, // Tetap ke halaman lamaran, tapi dengan argument
+          arguments: {
+            'applyId': applyId,
+            'isJobfair': true,
+          },
+        );
       } else {
-        DetailLamaran.show(context, lamaran: lamaran);
+        goTo(
+          context,
+          AppRoutes.lamaran,
+          arguments: {
+            'applyId': applyId,
+            'isJobfair': false,
+          },
+        );
       }
     }
   }
@@ -132,14 +148,42 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
     });
   }
 
-  // Method untuk handle tap card - BEDAKAN ANTARA UMUM DAN JOBFAIR
+  // Method untuk handle tap card
   void _handleCardTap(LamaranSaya lamaran) {
-    if (_selectedMainTab == 1) {
-      // Untuk tab Jobfair, buka DetailLamaranJobfair
-      DetailLamaranJobfair.show(context, lamaran: lamaran);
+    final isJobfair = _selectedMainTab == 1;
+    
+    // Jika Anda ingin menggunakan route.dart untuk navigasi ke halaman detail terpisah
+    // goTo(
+    //   context,
+    //   AppRoutes.lamaranDetail,
+    //   arguments: {
+    //     'lamaran': lamaran,
+    //     'isJobfair': isJobfair,
+    //   },
+    // );
+    
+    // Atau jika tetap menggunakan modal/bottom sheet
+    _showLamaranDetail(lamaran, isJobfair);
+  }
+
+  // Fungsi untuk menampilkan detail lamaran (modal/bottom sheet)
+  void _showLamaranDetail(LamaranSaya lamaran, bool isJobfair) {
+    // Import di sini untuk menghindari circular dependency
+    // Pastikan Anda punya detail_lamaran.dart dan detail_lamaran_jobfair.dart
+    if (isJobfair) {
+      // Untuk tab Jobfair
+      Navigator.pushNamed(
+        context,
+        '/lamaran-jobfair-detail',
+        arguments: lamaran,
+      );
     } else {
-      // Untuk tab Umum, buka DetailLamaran biasa
-      DetailLamaran.show(context, lamaran: lamaran);
+      // Untuk tab Umum
+      Navigator.pushNamed(
+        context,
+        '/lamaran-detail',
+        arguments: lamaran,
+      );
     }
   }
 
@@ -448,14 +492,13 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                   width: 130,
                   height: 28,
                   decoration: BoxDecoration(
-                    // <-- HAPUS const
                     color: const Color.fromARGB(255, 245, 245, 245),
                     borderRadius: const BorderRadius.only(
                       topRight: Radius.circular(34),
                       bottomLeft: Radius.circular(20),
                     ),
                     border: Border.all(
-                      color: Colors.black.withOpacity(0.06), // <-- OUTLINE
+                      color: Colors.black.withOpacity(0.06),
                       width: 1,
                     ),
                   ),
@@ -491,9 +534,7 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                   child: Padding(
                     padding: EdgeInsets.fromLTRB(
                       16,
-                      isJobfairWithEvent
-                          ? 35
-                          : 17, // ⬅️ TAMBAH JARAK DARI 25 KE 35
+                      isJobfairWithEvent ? 35 : 17,
                       16,
                       0,
                     ),
@@ -558,9 +599,7 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                                   Text(
                                     company.namaPerusahaan,
                                     style: TextStyle(
-                                      color: const Color(
-                                        0xFF3C3C43,
-                                      ).withOpacity(0.6),
+                                      color: const Color(0xFF3C3C43).withOpacity(0.6),
                                       fontSize: 14,
                                       fontFamily: 'Poppins',
                                       fontWeight: FontWeight.w400,

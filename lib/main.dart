@@ -3,8 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'screens/halaman_1.dart';
 import 'firebase_options.dart';
+import 'api/route.dart'; 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -120,7 +120,13 @@ class JobFairApp extends StatelessWidget {
         primaryColor: const Color(0xFF1747A2),
         fontFamily: 'Poppins',
       ),
-      home: const Halaman1(),
+      
+      // ✅ GANTI dari 'home' ke 'initialRoute' dan 'onGenerateRoute'
+      initialRoute: AppRoutes.halaman1, // Atau AppRoutes.beranda jika mau langsung ke beranda
+      onGenerateRoute: AppRoutes.generateRoute,
+      
+      // ❌ HAPUS atau COMMENT ini:
+      // home: const Halaman1(),
     );
   }
 }
