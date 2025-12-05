@@ -161,7 +161,7 @@ class _ProfileHeaderState extends State<ProfileHeader>
                       children: [
                         _buildMenuItem(
                           icon: Icons.security,
-                          title: 'pengaturan Akun',
+                          title: 'Kelola Sandi',
                           onTap: () {
                             _removeOverlay();
                             Navigator.push(

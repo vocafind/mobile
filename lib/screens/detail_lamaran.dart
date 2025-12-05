@@ -139,14 +139,14 @@ class _DetailLamaranState extends State<DetailLamaran> {
 
     return {
       'pending': {
-        'title': 'Pending',
+        'title': 'Menunggu',
         'icon': Icons.access_time_rounded,
         'isCompleted':
             currentStatus == 'pending' ||
             currentStatus == 'reviewed' ||
             currentStatus == 'interview' ||
             isFinalStatus,
-        'description': 'Lamaran Anda sedang dalam antrian',
+        'description': 'Lamaran Anda telah diterima dan menunggu untuk ditinjau',
         'details': [
           {
             'icon': Icons.schedule_rounded,
@@ -462,7 +462,7 @@ class _DetailLamaranState extends State<DetailLamaran> {
                         Padding(
                           padding: const EdgeInsets.only(left: 28),
                           child: Text(
-                            'Terima kasih telah melamar. Kami menghargai waktu dan usaha Anda. Jangan ragu untuk melamar posisi lainnya di perusahaan kami.',
+                            'Terima kasih telah melamar. Kami menghargai waktu dan usaha Anda.',
                             style: const TextStyle(
                               color: Color(0xFF515151),
                               fontSize: 13,

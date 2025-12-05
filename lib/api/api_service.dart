@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:jobfair/api/api_client.dart';
+import 'package:jobfair/models/change_password_model.dart';
 import 'package:jobfair/models/company_model.dart';
 import 'package:jobfair/models/jobfair_detail_model.dart';
 import 'package:jobfair/models/jobfair_model.dart';
@@ -87,12 +88,6 @@ class ApiService {
         data: {
           "Email": email,
           "Password": password,
-          // ❌ HAPUS SEMUA FCM FIELD DARI LOGIN
-          // "FcmToken": "",
-          // "DeviceId": "",
-          // "DeviceType": "",
-          // "DeviceName": "",
-          // "AppVersion": "",
         },
         options: Options(
           contentType: Headers.formUrlEncodedContentType, // ✅ TETAP formUrlEncoded
@@ -397,6 +392,76 @@ class ApiService {
 
 
 
+
+
+
+
+
+// ================== CHANGE PASSWORD ==================
+  Future<Map<String, dynamic>> changePassword({
+    required String oldPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    try {
+      print('🔑 [CHANGE_PASSWORD] Starting...');
+      print('📡 Endpoint: ${ApiConfig.changePW}');
+
+      final response = await _dio.post(
+        ApiConfig.changePW,
+        data: {
+          'oldPassword': oldPassword,
+          'newPassword': newPassword,
+          'confirmPassword': confirmPassword,
+        },
+        options: Options(
+          contentType: Headers.formUrlEncodedContentType,
+        ),
+      );
+
+      print('✅ [CHANGE_PASSWORD] Status: ${response.statusCode}');
+      
+      // Pastikan response.data adalah Map
+      if (response.data is Map<String, dynamic>) {
+        return response.data as Map<String, dynamic>;
+      } else {
+        // Jika response bukan Map, kembalikan dengan format yang konsisten
+        return {
+          'message': 'Password berhasil diubah',
+          'success': true,
+          'data': response.data,
+        };
+      }
+      
+    } on DioException catch (e) {
+      print('❌ [CHANGE_PASSWORD] DioError: ${e.message}');
+      
+      String errorMessage = 'Terjadi kesalahan';
+      
+      if (e.response != null) {
+        final statusCode = e.response!.statusCode;
+        final responseData = e.response!.data;
+        
+        print('❌ Status: $statusCode');
+        print('❌ Response: $responseData');
+        
+        // Handle 404 khusus untuk debug
+        if (statusCode == 404) {
+          errorMessage = 'Endpoint tidak ditemukan: ${ApiConfig.changePW}\n'
+                         'Periksa ApiConfig dan backend route';
+        } else if (responseData is Map<String, dynamic>) {
+          errorMessage = responseData['message'] ?? 
+                        responseData['error'] ?? 
+                        'Gagal mengubah password';
+        }
+      }
+      
+      throw Exception(errorMessage);
+    } catch (e) {
+      print('❌ [CHANGE_PASSWORD] General Error: $e');
+      throw Exception('Terjadi kesalahan sistem');
+    }
+  }
 
 
 

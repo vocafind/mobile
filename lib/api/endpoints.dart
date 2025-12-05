@@ -16,6 +16,11 @@ class ApiConfig {
   static const String saveFcmToken = "$baseUrl/fcmtoken/saveFcmToken";
 
 
+  //Change PW
+  static const String changePW = "$baseUrl/Auth/change-password";
+
+
+
 
 
 

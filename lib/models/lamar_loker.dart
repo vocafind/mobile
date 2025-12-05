@@ -146,7 +146,7 @@ class LamaranSaya {
   String get statusText {
     switch (status.toLowerCase()) {
       case 'pending':
-        return 'Pending';
+        return 'Menunggu';
       case 'reviewed':
         return 'Ditinjau';
       case 'interview':

@@ -206,7 +206,7 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                       ),
                       child: Center(
                         child: Text(
-                          'Job fair ${_allLamaranJobfair.isNotEmpty ? '(${_allLamaranJobfair.length})' : ''}',
+                          'Job Fair ${_allLamaranJobfair.isNotEmpty ? '(${_allLamaranJobfair.length})' : ''}',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 14,
@@ -234,7 +234,7 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                 children: [
                   _buildFilterTab('Semua', 0),
                   const SizedBox(width: 9),
-                  _buildFilterTab('Pending', 1),
+                  _buildFilterTab('Menunggu', 1),
                   const SizedBox(width: 9),
                   _buildFilterTab('Ditinjau', 2),
                   const SizedBox(width: 9),

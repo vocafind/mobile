@@ -1,6 +1,6 @@
 
-
 class TalentProfileModel {
+  final String? email;
   final String? fotoProfil;
   final String? nama;
   final String? nik;
@@ -18,6 +18,7 @@ class TalentProfileModel {
   final String? preferensiPerjalananDinas;
 
   TalentProfileModel({
+    this.email,
     this.fotoProfil,
     this.nama,
     this.nik,
@@ -37,6 +38,7 @@ class TalentProfileModel {
 
   factory TalentProfileModel.fromJson(Map<String, dynamic> json) {
     return TalentProfileModel(
+      email: json['email'],
       fotoProfil: json['fotoProfil'],
       nama: json['nama'],
       nik: json['nik'],

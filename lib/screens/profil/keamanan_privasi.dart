@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jobfair/api/api_service.dart';
 
 class SecurityPrivacyPage extends StatefulWidget {
   const SecurityPrivacyPage({super.key});
@@ -8,8 +9,46 @@ class SecurityPrivacyPage extends StatefulWidget {
 }
 
 class _SecurityPrivacyPageState extends State<SecurityPrivacyPage> {
-  // Sample user email - nanti ambil dari API/SharedPreferences
-  final String userEmail = 'user@example.com';
+  String _userEmail = '';
+  String? _userName;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserDataFromApi();
+  }
+
+  Future<void> _loadUserDataFromApi() async {
+    try {
+      final apiService = ApiService();
+      final profil = await apiService.getProfilDataDiri();
+      
+      if (profil != null) {
+        print('📊 Profil data from API:');
+        print('📧 Email: ${profil.email}');
+        print('👤 Nama: ${profil.nama}');
+        
+        setState(() {
+          _userEmail = profil.email ?? 'Email tidak tersedia';
+          _userName = profil.nama;
+          _isLoading = false;
+        });
+      } else {
+        print('❌ Profil data is null');
+        setState(() {
+          _userEmail = 'Email tidak tersedia';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('❌ Error fetching profile from API: $e');
+      setState(() {
+        _userEmail = 'Gagal memuat email';
+        _isLoading = false;
+      });
+    }
+  }
 
   void _showChangePasswordModal() {
     showModalBottomSheet(
@@ -31,105 +70,124 @@ class _SecurityPrivacyPageState extends State<SecurityPrivacyPage> {
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Title
-              const Text(
-                'Kata sandi dan keamanan',
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontSize: 28,
-                  fontFamily: 'SF Pro',
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 32),
-
-              // Login & Pemulihan Section
-              const Text(
-                'Login & pemulihan',
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontSize: 18,
-                  fontFamily: 'SF Pro',
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Kelola kata sandi, preferensi login, dan metode pemulihan Anda.',
-                style: TextStyle(
-                  color: Colors.black54,
-                  fontSize: 14,
-                  fontFamily: 'SF Pro',
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF5F5F5),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  children: [
-                    _buildMenuItem(
-                      title: 'Ubah kata sandi',
-                      showTopBorder: false,
-                      onTap: _showChangePasswordModal,
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              // Informasi Akun Section
-              const Text(
-                'Informasi akun',
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontSize: 18,
-                  fontFamily: 'SF Pro',
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Lihat informasi akun Anda seperti email yang terdaftar.',
-                style: TextStyle(
-                  color: Colors.black54,
-                  fontSize: 14,
-                  fontFamily: 'SF Pro',
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF5F5F5),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  children: [
-                    _buildInfoItem(
-                      title: 'Email',
-                      value: userEmail,
-                      showTopBorder: false,
-                    ),
-                  ],
-                ),
-              ),
-            ],
+        title: const Text(
+          'Kelola Sandi',
+          style: TextStyle(
+            color: Colors.black87,
+            fontSize: 18,
+            fontFamily: 'SF Pro',
+            fontWeight: FontWeight.w600,
           ),
         ),
+      ),
+      body: _isLoading
+          ? _buildLoadingState()
+          : SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Login & Pemulihan Section
+                    const Text(
+                      'Kata Sandi',
+                      style: TextStyle(
+                        color: Colors.black87,
+                        fontSize: 18,
+                        fontFamily: 'SF Pro',
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // const Text(
+                    //   'Ubah kata sandi.',
+                    //   style: TextStyle(
+                    //     color: Colors.black54,
+                    //     fontSize: 14,
+                    //     fontFamily: 'SF Pro',
+                    //     fontWeight: FontWeight.w400,
+                    //   ),
+                    // ),
+                    const SizedBox(height: 16),
+
+                    Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF5F5F5),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        children: [
+                          _buildMenuItem(
+                            title: 'Ubah kata sandi',
+                            showTopBorder: false,
+                            onTap: _showChangePasswordModal,
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // Informasi Akun Section
+                    const Text(
+                      'Email Terdaftar',
+                      style: TextStyle(
+                        color: Colors.black87,
+                        fontSize: 18,
+                        fontFamily: 'SF Pro',
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // const Text(
+                    //   'Lihat informasi akun Anda seperti email yang terdaftar.',
+                    //   style: TextStyle(
+                    //     color: Colors.black54,
+                    //     fontSize: 14,
+                    //     fontFamily: 'SF Pro',
+                    //     fontWeight: FontWeight.w400,
+                    //   ),
+                    // ),
+                    const SizedBox(height: 16),
+
+                    Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF5F5F5),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        children: [
+                          _buildInfoItem(
+                            title: 'Email',
+                            value: _userEmail,
+                            showTopBorder: false,
+                          )
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const CircularProgressIndicator(),
+          const SizedBox(height: 16),
+          Text(
+            'Memuat data profil...',
+            style: TextStyle(
+              color: Colors.grey.shade600,
+              fontSize: 16,
+              fontFamily: 'SF Pro',
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -209,7 +267,7 @@ class _SecurityPrivacyPageState extends State<SecurityPrivacyPage> {
                 fontFamily: 'SF Pro',
                 fontWeight: FontWeight.w400,
               ),
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -237,6 +295,10 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
+  String? _errorMessage;
+
+  // Buat instance ApiService
+  final ApiService _apiService = ApiService();
 
   @override
   void dispose() {
@@ -249,6 +311,9 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
   String? _validateOldPassword(String? value) {
     if (value == null || value.isEmpty) {
       return 'Password lama harus diisi';
+    }
+    if (value.length < 8) {
+      return 'Password minimal 8 karakter';
     }
     return null;
   }
@@ -278,88 +343,149 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
 
   Future<void> _handleChangePassword() async {
     if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-      
-      // TODO: Implement API call untuk ubah password
-      await Future.delayed(const Duration(seconds: 2));
-      
-      setState(() => _isLoading = false);
-      
-      if (mounted) {
-        Navigator.pop(context);
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1B56FD).withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.check_circle,
-                    color: Color(0xFF1B56FD),
-                    size: 40,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Berhasil!',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontFamily: 'SF Pro',
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Password Anda berhasil diubah',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontFamily: 'SF Pro',
-                    color: Colors.black54,
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1B56FD),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    'OK',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontFamily: 'SF Pro',
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+
+      try {
+        final response = await _apiService.changePassword(
+          oldPassword: _oldPasswordController.text,
+          newPassword: _newPasswordController.text,
+          confirmPassword: _confirmPasswordController.text,
         );
+
+        print('📦 Change password API response: $response');
+        
+        // Cek jika response memiliki message
+        final message = response['message'] ?? 'Password berhasil diubah';
+        final success = response['success'] ?? true;
+        
+        if (success) {
+          // Success - show success dialog
+          if (mounted) {
+            Navigator.pop(context);
+            await Future.delayed(const Duration(milliseconds: 300));
+            
+            if (mounted) {
+              _showSuccessDialog(message: message);
+            }
+          }
+        } else {
+          setState(() {
+            _errorMessage = message;
+            _isLoading = false;
+          });
+        }
+      } catch (e) {
+        print('❌ Error in handleChangePassword: $e');
+        
+        String errorMessage = 'Terjadi kesalahan';
+        
+        // Format pesan error yang lebih user-friendly
+        if (e.toString().contains('Exception:')) {
+          errorMessage = e.toString().replaceAll('Exception:', '').trim();
+        } else if (e.toString().contains('DioError')) {
+          errorMessage = 'Gagal terhubung ke server';
+        }
+        
+        setState(() {
+          _errorMessage = errorMessage;
+          _isLoading = false;
+        });
+        
+        if (mounted) {
+          _showErrorSnackbar(errorMessage);
+        }
       }
     }
+  }
+
+  void _showErrorSnackbar(String message) {
+    final cleanMessage = message.replaceAll('Exception:', '').trim();
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(cleanMessage),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  void _showSuccessDialog({String message = 'Password Anda berhasil diubah'}) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: const Color(0xFF1B56FD).withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.check_circle,
+                color: Color(0xFF1B56FD),
+                size: 40,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Berhasil!',
+              style: TextStyle(
+                fontSize: 20,
+                fontFamily: 'SF Pro',
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 14,
+                fontFamily: 'SF Pro',
+                color: Colors.black54,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1B56FD),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+              child: const Text(
+                'OK',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontFamily: 'SF Pro',
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -388,7 +514,7 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: _isLoading ? null : () => Navigator.pop(context),
                   ),
                   const Expanded(
                     child: Text(
@@ -413,6 +539,40 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Error message jika ada
+                      if (_errorMessage != null)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.red.shade100),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.error_outline,
+                                color: Colors.red,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _errorMessage!,
+                                  style: const TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 14,
+                                    fontFamily: 'SF Pro',
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      
+                      if (_errorMessage != null) const SizedBox(height: 16),
+                      
                       const Text(
                         'Password Lama',
                         style: TextStyle(
@@ -426,6 +586,7 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                       TextFormField(
                         controller: _oldPasswordController,
                         obscureText: _obscureOldPassword,
+                        enabled: !_isLoading,
                         validator: _validateOldPassword,
                         decoration: InputDecoration(
                           hintText: 'Masukkan password lama',
@@ -434,7 +595,9 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                             color: Colors.black38,
                           ),
                           filled: true,
-                          fillColor: const Color(0xFFF5F5F5),
+                          fillColor: _isLoading 
+                              ? Colors.grey.shade100 
+                              : const Color(0xFFF5F5F5),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
@@ -460,11 +623,13 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                                   : Icons.visibility,
                               color: Colors.black38,
                             ),
-                            onPressed: () {
-                              setState(() {
-                                _obscureOldPassword = !_obscureOldPassword;
-                              });
-                            },
+                            onPressed: _isLoading
+                                ? null
+                                : () {
+                                    setState(() {
+                                      _obscureOldPassword = !_obscureOldPassword;
+                                    });
+                                  },
                           ),
                         ),
                       ),
@@ -483,6 +648,7 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                       TextFormField(
                         controller: _newPasswordController,
                         obscureText: _obscureNewPassword,
+                        enabled: !_isLoading,
                         validator: _validateNewPassword,
                         decoration: InputDecoration(
                           hintText: 'Masukkan password baru',
@@ -491,7 +657,9 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                             color: Colors.black38,
                           ),
                           filled: true,
-                          fillColor: const Color(0xFFF5F5F5),
+                          fillColor: _isLoading 
+                              ? Colors.grey.shade100 
+                              : const Color(0xFFF5F5F5),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
@@ -517,11 +685,13 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                                   : Icons.visibility,
                               color: Colors.black38,
                             ),
-                            onPressed: () {
-                              setState(() {
-                                _obscureNewPassword = !_obscureNewPassword;
-                              });
-                            },
+                            onPressed: _isLoading
+                                ? null
+                                : () {
+                                    setState(() {
+                                      _obscureNewPassword = !_obscureNewPassword;
+                                    });
+                                  },
                           ),
                         ),
                       ),
@@ -529,7 +699,7 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1B56FD).withValues(alpha: 0.05),
+                          color: const Color(0xFF1B56FD).withOpacity(0.05),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Row(
@@ -543,7 +713,7 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                             SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'Password minimal 8 karakter',
+                                'Password minimal 8 karakter, mengandung huruf besar, huruf kecil, angka, dan simbol',
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontFamily: 'SF Pro',
@@ -569,6 +739,7 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                       TextFormField(
                         controller: _confirmPasswordController,
                         obscureText: _obscureConfirmPassword,
+                        enabled: !_isLoading,
                         validator: _validateConfirmPassword,
                         decoration: InputDecoration(
                           hintText: 'Masukkan ulang password baru',
@@ -577,7 +748,9 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                             color: Colors.black38,
                           ),
                           filled: true,
-                          fillColor: const Color(0xFFF5F5F5),
+                          fillColor: _isLoading 
+                              ? Colors.grey.shade100 
+                              : const Color(0xFFF5F5F5),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
@@ -603,11 +776,13 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                                   : Icons.visibility,
                               color: Colors.black38,
                             ),
-                            onPressed: () {
-                              setState(() {
-                                _obscureConfirmPassword = !_obscureConfirmPassword;
-                              });
-                            },
+                            onPressed: _isLoading
+                                ? null
+                                : () {
+                                    setState(() {
+                                      _obscureConfirmPassword = !_obscureConfirmPassword;
+                                    });
+                                  },
                           ),
                         ),
                       ),
@@ -620,7 +795,7 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                           onPressed: _isLoading ? null : _handleChangePassword,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF1B56FD),
-                            disabledBackgroundColor: const Color(0xFF1B56FD).withValues(alpha: 0.5),
+                            disabledBackgroundColor: const Color(0xFF1B56FD).withOpacity(0.5),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
