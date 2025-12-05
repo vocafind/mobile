@@ -1,9 +1,9 @@
 class ApiConfig {
   // Ganti IP dengan IP komputer server kamu
-  static const String baseUrl = "http://10.136.150.132:5035/api";
-  static const String baseUrlFoto = "http://10.136.150.132:5035/";
-  // static const String baseUrl = "https://trpl306-001-site1.ntempurl.com/api";
-  // static const String baseUrlFoto = "https://trpl306-001-site1.ntempurl.com/";
+  // static const String baseUrl = "http://10.136.155.234:5035/api";
+  // static const String baseUrlFoto = "http://10.136.155.234:5035/";
+  static const String baseUrl = "https://trpl306-001-site1.ntempurl.com/api";
+  static const String baseUrlFoto = "https://trpl306-001-site1.ntempurl.com/";
 
   // ------------------------------------------------------------- TALENTS AUTH
 
@@ -166,7 +166,7 @@ class ApiConfig {
 
   // ------------------------------------------------------------- Simpan Loker
   static String saveJob(String lowonganId) => "$baseUrl/SavedJobs/simpan/$lowonganId";                   // Lamar Loker UUmum
-  static String getSaveJob() => "$baseUrl/SavedJobs/saya";                                         // Get Lamaran Saya
+  static String getSaveJob() => "$baseUrl/SavedJobs/saya";                                         // Get saved Saya
   static String unsaveJob(String savedJobId) => "$baseUrl/SavedJobs/hapus/$savedJobId";     
 
   static String checkSavedJob(String lowonganId) => "$baseUrl/SavedJobs/cek/$lowonganId";

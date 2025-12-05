@@ -1,4 +1,6 @@
 // models/saved_job_model.dart
+import 'package:jobfair/models/loker_umum_model.dart';
+
 class SavedJob {
   final String savedJobId;
   final String lowonganId;
@@ -15,9 +17,34 @@ class SavedJob {
   factory SavedJob.fromJson(Map<String, dynamic> json) {
     return SavedJob(
       savedJobId: json['saved_job_ID'] ?? '',
-      lowonganId: json['lowonganId'] ?? '',
-      createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toString()),
-      lowongan: SavedJobLowongan.fromJson(json['Lowongan'] ?? {}),
+      lowonganId: json['lowonganId'] ?? json['LowonganId'] ?? '',
+      createdAt: DateTime.parse(json['createdAt'] ?? json['CreatedAt'] ?? DateTime.now().toString()),
+      lowongan: SavedJobLowongan.fromJson(json['lowongan'] ?? json['Lowongan'] ?? {}),
+    );
+  }
+
+  // Convert SavedJob to LokerUmum untuk kompatibilitas dengan card
+  LokerUmum toLokerUmum() {
+    return LokerUmum(
+      lowonganId: lowonganId,
+      posisi: lowongan.posisi,
+      deskripsiPekerjaan: lowongan.deskripsiPekerjaan,
+      lokasi: lowongan.lokasi,
+      gaji: lowongan.gaji,
+      minimalLulusan: lowongan.minimalLulusan,
+      jenisPekerjaan: lowongan.jenisPekerjaan,
+      tingkatPengalaman: lowongan.tingkatPengalaman,
+      status: lowongan.status,
+      tanggalPosting: lowongan.tanggalPosting,
+      batasLamaran: lowongan.batasLamaran,
+      batasPelamar: lowongan.batasPelamar,
+      jumlahPelamar: lowongan.jumlahPelamar,
+      opsiKerjaRemote: lowongan.opsiKerjaRemote,
+      namaPerusahaan: lowongan.company.namaPerusahaan,
+      logo: lowongan.company.logo,
+      // Default values untuk field yang tidak ada di SavedJob
+      kontrakDurasi: 'Full-time', // atau sesuai kebutuhan
+      peluangKarir: 'Kesempatan berkembang',
     );
   }
 }
@@ -70,7 +97,7 @@ class SavedJobLowongan {
       jumlahPelamar: json['jumlahPelamar'] ?? 0,
       batasPelamar: json['batasPelamar'] ?? 0,
       opsiKerjaRemote: json['opsiKerjaRemote'] ?? false,
-      company: SavedJobCompany.fromJson(json['Company'] ?? {}),
+      company: SavedJobCompany.fromJson(json['company'] ?? json['Company'] ?? {}),
     );
   }
 }
@@ -78,19 +105,16 @@ class SavedJobLowongan {
 class SavedJobCompany {
   final String namaPerusahaan;
   final String logo;
-  final String bidangUsaha;
 
   SavedJobCompany({
     required this.namaPerusahaan,
-    required this.logo,
-    required this.bidangUsaha,
+    required this.logo
   });
 
   factory SavedJobCompany.fromJson(Map<String, dynamic> json) {
     return SavedJobCompany(
       namaPerusahaan: json['namaPerusahaan'] ?? '',
-      logo: json['logo'] ?? '',
-      bidangUsaha: json['bidangUsaha'] ?? '',
+      logo: json['logo'] ?? ''
     );
   }
 }

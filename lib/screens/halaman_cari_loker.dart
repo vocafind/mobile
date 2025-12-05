@@ -2195,7 +2195,7 @@ class __JobCardState extends State<_JobCard>
                                 vertical: 4,
                               ),
                               decoration: ShapeDecoration(
-                                color: const Color(0xFFF0F4F9),
+                                color: const Color.fromARGB(255, 255, 255, 255),
                                 shape: RoundedRectangleBorder(
                                   side: const BorderSide(
                                     width: 1,
@@ -2224,7 +2224,7 @@ class __JobCardState extends State<_JobCard>
                                 vertical: 4,
                               ),
                               decoration: ShapeDecoration(
-                                color: const Color(0xFFF0F4F9),
+                                color: const Color.fromARGB(255, 255, 255, 255),
                                 shape: RoundedRectangleBorder(
                                   side: const BorderSide(
                                     width: 1,
@@ -2252,7 +2252,7 @@ class __JobCardState extends State<_JobCard>
                                   vertical: 4,
                                 ),
                                 decoration: ShapeDecoration(
-                                  color: const Color(0xFFF0F4F9),
+                                  color: const Color.fromARGB(255, 255, 255, 255),
                                   shape: RoundedRectangleBorder(
                                     side: const BorderSide(
                                       width: 1,

@@ -2437,7 +2437,7 @@ class ApiService {
     }
   }
 
-  // ================== GET SAVED JOBS ==================
+  // Di api_service.dart - method getSavedJobs()
   Future<List<SavedJob>> getSavedJobs() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
@@ -2458,30 +2458,45 @@ class ApiService {
       final response = await _dio.get(ApiConfig.getSaveJob());
 
       print("GET Saved Jobs - STATUS: ${response.statusCode}");
-      print("GET Saved Jobs - BODY: ${response.data}");
+      print("GET Saved Jobs - DATA TYPE: ${response.data.runtimeType}");
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = response.data;
-        return data.map((json) => SavedJob.fromJson(json)).toList();
+        // Handle different response formats
+        if (response.data is List) {
+          final List<dynamic> data = response.data;
+          print("GET Saved Jobs - DATA COUNT: ${data.length}");
+          
+          if (data.isNotEmpty) {
+            print("GET Saved Jobs - FIRST ITEM: ${data[0]}");
+          }
+          
+          return data.map((json) => SavedJob.fromJson(json)).toList();
+        } else {
+          print("⚠️ Response format tidak valid: ${response.data}");
+          throw Exception('Format response tidak valid');
+        }
       } else {
         print("⚠️ Gagal ambil data saved jobs: ${response.data}");
         throw Exception('Failed to load saved jobs');
       }
     } on DioException catch (e) {
       print("❌ Error ambil saved jobs: ${e.message}");
-
+      print("❌ Error type: ${e.type}");
+      
       if (e.response != null) {
+        print("❌ Error status: ${e.response?.statusCode}");
+        print("❌ Error data: ${e.response?.data}");
+        
         final errorData = e.response!.data;
-        final errorMessage =
-            errorData['message'] ??
+        final errorMessage = errorData['message'] ?? 
             'Terjadi kesalahan saat mengambil data lowongan tersimpan';
         throw Exception(errorMessage);
       }
 
-      throw Exception('Terjadi kesalahan jaringan');
+      throw Exception('Terjadi kesalahan jaringan: ${e.message}');
     }
   }
-
+  
   // ================== CHECK IF JOB IS SAVED ==================
   Future<bool> checkIfJobIsSaved(String lowonganId) async {
     final prefs = await SharedPreferences.getInstance();

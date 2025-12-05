@@ -23,9 +23,15 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
   final ScrollController _scrollController = ScrollController();
   final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
   final ApiService _apiService = ApiService();
-  late Future<List<Jobfair>> _jobfairsFuture;
-  late Future<List<CompanyLogo>> _companyLogosFuture;
-  late Future<List<LokerUmum>> _urgentJobsFuture;
+  
+  // PERBAIKAN: Inisialisasi langsung dengan Future.value([]) untuk menghindari late error
+  Future<List<CompanyLogo>> _companyLogosFuture = Future.value([]);
+  Future<List<LokerUmum>> _urgentJobsFuture = Future.value([]);
+  
+  // List untuk menyimpan ID job yang sudah disimpan
+  List<String> _savedJobIds = [];
+  bool _isLoadingUrgentJobs = true;
+  bool _isLoadingSavedJobs = true;
 
   final List<String> backgroundImages = const [
     'assets/images/kuning.png',
@@ -40,9 +46,7 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    _jobfairsFuture = _apiService.getAllJobfair();
-    _companyLogosFuture = _apiService.getRandomCompanyLogos(count: 6);
-    _urgentJobsFuture = _getUrgentJobs();
+    _loadInitialData();
   }
 
   void _onScroll() {
@@ -59,22 +63,34 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
     super.dispose();
   }
 
-  void _handleSearchSubmitted(String query) {
-    if (query.trim().isNotEmpty) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) =>
-              HalamanCariLoker(initialSearchQuery: query.trim()),
-        ),
-      );
-      _searchController.clear();
-      _searchFocusNode.unfocus();
+  // Method untuk load data awal
+  Future<void> _loadInitialData() async {
+    try {
+      // Inisialisasi company logos
+      _companyLogosFuture = _apiService.getRandomCompanyLogos(count: 6);
+      
+      // Load urgent jobs dan saved jobs secara parallel
+      await Future.wait([
+        _loadUrgentJobs(),
+        _loadSavedJobs(),
+      ]);
+    } catch (e) {
+      print("❌ Error loading initial data: $e");
+      setState(() {
+        _isLoadingUrgentJobs = false;
+        _isLoadingSavedJobs = false;
+        _urgentJobsFuture = Future.value([]);
+        _savedJobIds = [];
+      });
     }
   }
 
-  Future<List<LokerUmum>> _getUrgentJobs() async {
+  Future<void> _loadUrgentJobs() async {
     try {
+      setState(() {
+        _isLoadingUrgentJobs = true;
+      });
+
       final allJobs = await _apiService.getAllLokerUmum();
 
       // Filter jobs yang batas lamaran kurang dari 10 hari
@@ -83,10 +99,39 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
         return daysLeft <= 10 && daysLeft >= 0;
       }).toList();
 
-      return urgentJobs.take(3).toList();
+      final result = urgentJobs.take(3).toList();
+      
+      setState(() {
+        _urgentJobsFuture = Future.value(result);
+        _isLoadingUrgentJobs = false;
+      });
     } catch (e) {
       print("❌ Error getting urgent jobs: $e");
-      return [];
+      setState(() {
+        _urgentJobsFuture = Future.value([]);
+        _isLoadingUrgentJobs = false;
+      });
+    }
+  }
+
+  Future<void> _loadSavedJobs() async {
+    try {
+      setState(() {
+        _isLoadingSavedJobs = true;
+      });
+
+      final savedJobs = await _apiService.getSavedJobs();
+      
+      setState(() {
+        _savedJobIds = savedJobs.map((job) => job.lowonganId).toList();
+        _isLoadingSavedJobs = false;
+      });
+    } catch (e) {
+      print("❌ Error loading saved jobs: $e");
+      setState(() {
+        _savedJobIds = [];
+        _isLoadingSavedJobs = false;
+      });
     }
   }
 
@@ -118,9 +163,7 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
           builder: (context) => JobDetailSheet(loker: detailLowongan),
         ).then((shouldRefresh) {
           if (shouldRefresh == true) {
-            setState(() {
-              _urgentJobsFuture = _getUrgentJobs();
-            });
+            _refreshSavedJobs(); // Refresh saved jobs status
           }
         });
       }
@@ -138,22 +181,50 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
     }
   }
 
+  // Method untuk refresh saved jobs status
+  Future<void> _refreshSavedJobs() async {
+    try {
+      final savedJobs = await _apiService.getSavedJobs();
+      setState(() {
+        _savedJobIds = savedJobs.map((job) => job.lowonganId).toList();
+      });
+    } catch (e) {
+      print("❌ Error refreshing saved jobs: $e");
+    }
+  }
+
   Future<void> _toggleSaveJob(String lowonganId, bool currentlySaved) async {
     try {
       if (currentlySaved) {
         await _apiService.unsaveJobByLowonganId(lowonganId);
+        setState(() {
+          _savedJobIds.remove(lowonganId);
+        });
         print("✅ Job unsaved: $lowonganId");
       } else {
         await _apiService.saveJob(lowonganId);
+        setState(() {
+          _savedJobIds.add(lowonganId);
+        });
         print("✅ Job saved: $lowonganId");
       }
-      
-      // Refresh urgent jobs to update bookmark status
-      setState(() {
-        _urgentJobsFuture = _getUrgentJobs();
-      });
     } catch (e) {
       print("❌ Error toggling save job: $e");
+      // Tidak perlu menampilkan snackbar error
+    }
+  }
+
+  void _handleSearchSubmitted(String query) {
+    if (query.trim().isNotEmpty) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              HalamanCariLoker(initialSearchQuery: query.trim()),
+        ),
+      );
+      _searchController.clear();
+      _searchFocusNode.unfocus();
     }
   }
 
@@ -205,8 +276,11 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
                   _TemuiMerekaDanKesempatanSegeraSection(
                     companyLogosFuture: _companyLogosFuture,
                     urgentJobsFuture: _urgentJobsFuture,
+                    savedJobIds: _savedJobIds, // Pass saved job IDs
                     onJobTap: _showJobDetail,
                     onBookmarkToggle: _toggleSaveJob,
+                    isLoadingUrgentJobs: _isLoadingUrgentJobs,
+                    isLoadingSavedJobs: _isLoadingSavedJobs,
                   ),
                   const SizedBox(height: 120),
                 ],
@@ -950,14 +1024,20 @@ class _JobfairCard extends StatelessWidget {
 class _TemuiMerekaDanKesempatanSegeraSection extends StatelessWidget {
   final Future<List<CompanyLogo>> companyLogosFuture;
   final Future<List<LokerUmum>> urgentJobsFuture;
+  final List<String> savedJobIds;
   final Function(LokerUmum) onJobTap;
   final Function(String, bool) onBookmarkToggle;
+  final bool isLoadingUrgentJobs;
+  final bool isLoadingSavedJobs;
 
   const _TemuiMerekaDanKesempatanSegeraSection({
     required this.companyLogosFuture,
     required this.urgentJobsFuture,
+    required this.savedJobIds,
     required this.onJobTap,
     required this.onBookmarkToggle,
+    required this.isLoadingUrgentJobs,
+    required this.isLoadingSavedJobs,
   });
 
   @override
@@ -1021,7 +1101,7 @@ class _TemuiMerekaDanKesempatanSegeraSection extends StatelessWidget {
               FutureBuilder<List<LokerUmum>>(
                 future: urgentJobsFuture,
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
+                  if (isLoadingUrgentJobs) {
                     return _buildUrgentJobsLoading();
                   } else if (snapshot.hasError) {
                     return _buildUrgentJobsError();
@@ -1093,6 +1173,7 @@ class _TemuiMerekaDanKesempatanSegeraSection extends StatelessWidget {
       children: urgentJobs.map((job) {
         final daysLeft = _calculateDaysLeft(job.batasLamaran);
         final isUrgent = daysLeft <= 10 && daysLeft >= 0;
+        final isSaved = savedJobIds.contains(job.lowonganId);
 
         return Padding(
           padding: EdgeInsets.only(bottom: urgentJobs.last == job ? 0 : 15),
@@ -1100,6 +1181,7 @@ class _TemuiMerekaDanKesempatanSegeraSection extends StatelessWidget {
             lowongan: job,
             daysLeft: daysLeft,
             isUrgent: isUrgent,
+            isSaved: isSaved,
             onTap: () => onJobTap(job),
             onBookmarkToggle: onBookmarkToggle,
           ),
@@ -1230,6 +1312,7 @@ class _UrgentJobCard extends StatefulWidget {
   final LokerUmum lowongan;
   final int daysLeft;
   final bool isUrgent;
+  final bool isSaved;
   final VoidCallback onTap;
   final Function(String, bool) onBookmarkToggle;
 
@@ -1237,6 +1320,7 @@ class _UrgentJobCard extends StatefulWidget {
     required this.lowongan,
     required this.daysLeft,
     required this.isUrgent,
+    required this.isSaved,
     required this.onTap,
     required this.onBookmarkToggle,
   });
@@ -1247,15 +1331,14 @@ class _UrgentJobCard extends StatefulWidget {
 
 class _UrgentJobCardState extends State<_UrgentJobCard>
     with SingleTickerProviderStateMixin {
-  bool isSaved = false;
+  late bool isSaved;
   late AnimationController _bookmarkController;
   late Animation<double> _bookmarkScale;
 
   @override
   void initState() {
     super.initState();
-    // TODO: Load saved status from API
-    isSaved = false;
+    isSaved = widget.isSaved;
     _bookmarkController = AnimationController(
       duration: const Duration(milliseconds: 200),
       vsync: this,
@@ -1487,7 +1570,7 @@ class _UrgentJobCardState extends State<_UrgentJobCard>
                                 vertical: 4,
                               ),
                               decoration: ShapeDecoration(
-                                color: const Color(0xFFF0F4F9),
+                                color: const Color.fromARGB(255, 255, 255, 255),
                                 shape: RoundedRectangleBorder(
                                   side: const BorderSide(
                                     width: 1,
@@ -1516,7 +1599,7 @@ class _UrgentJobCardState extends State<_UrgentJobCard>
                                 vertical: 4,
                               ),
                               decoration: ShapeDecoration(
-                                color: const Color(0xFFF0F4F9),
+                                color: const Color.fromARGB(255, 255, 255, 255),
                                 shape: RoundedRectangleBorder(
                                   side: const BorderSide(
                                     width: 1,
@@ -1544,7 +1627,7 @@ class _UrgentJobCardState extends State<_UrgentJobCard>
                                   vertical: 4,
                                 ),
                                 decoration: ShapeDecoration(
-                                  color: const Color(0xFFF0F4F9),
+                                  color: const Color.fromARGB(255, 255, 255, 255),
                                   shape: RoundedRectangleBorder(
                                     side: const BorderSide(
                                       width: 1,
