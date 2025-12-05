@@ -6,11 +6,8 @@ import 'package:jobfair/models/jobfair_model.dart';
 import 'package:jobfair/models/loker_umum_model.dart';
 import 'package:jobfair/models/saved_job_model.dart';
 import 'package:jobfair/screens/detail_job_sheet.dart';
-import 'package:jobfair/screens/halaman_jobfair_detail.dart';
 import '/widget/bottom_navbar.dart';
-import 'halaman_cari_loker.dart';
-import 'halaman_notifikasi.dart';
-import 'halaman_bookmark.dart';
+import 'package:jobfair/api/route.dart'; 
 
 class HalamanBeranda extends StatefulWidget {
   const HalamanBeranda({super.key});
@@ -216,12 +213,10 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
 
   void _handleSearchSubmitted(String query) {
     if (query.trim().isNotEmpty) {
-      Navigator.push(
+      goTo(
         context,
-        MaterialPageRoute(
-          builder: (context) =>
-              HalamanCariLoker(initialSearchQuery: query.trim()),
-        ),
+        AppRoutes.cariLoker,
+        arguments: {'initialSearchQuery': query.trim()},
       );
       _searchController.clear();
       _searchFocusNode.unfocus();
@@ -483,12 +478,7 @@ class __AnimatedHeaderState extends State<_AnimatedHeader> {
                     children: [
                       GestureDetector(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const HalamanBookmark(),
-                            ),
-                          );
+                          goTo(context, AppRoutes.bookmark);
                         },
                         child: Container(
                           width: 44,
@@ -507,12 +497,7 @@ class __AnimatedHeaderState extends State<_AnimatedHeader> {
                       const SizedBox(width: 12),
                       GestureDetector(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const NotificationPage(),
-                            ),
-                          );
+                          goTo(context, AppRoutes.notifikasi);
                         },
                         child: Container(
                           width: 44,
@@ -732,11 +717,10 @@ class _JobfairCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        Navigator.push(
+        goTo<int>(
           context,
-          MaterialPageRoute(
-            builder: (context) => HalamanJobfairDetail(jobfairId: jobfair.id),
-          ),
+          AppRoutes.jobfairDetail,
+          arguments: jobfair.id,
         );
       },
       child: SizedBox(

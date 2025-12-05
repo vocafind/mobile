@@ -1,5 +1,6 @@
 // halaman_jobfair_detail.dart
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:jobfair/api/endpoints.dart';
 import 'package:jobfair/models/lamar_jobfair_model.dart';
 import 'package:jobfair/models/loker_umum_model.dart';
@@ -7,11 +8,26 @@ import 'package:jobfair/screens/detail_job_sheet_jobfair.dart';
 import 'package:jobfair/widget/bottom_navbar.dart';
 import 'package:jobfair/api/api_service.dart';
 import 'package:jobfair/models/jobfair_detail_model.dart';
+import 'package:jobfair/api/route.dart'; // Import route.dart
 
 class HalamanJobfairDetail extends StatefulWidget {
   final int jobfairId;
 
   const HalamanJobfairDetail({super.key, required this.jobfairId});
+
+  // Factory method untuk membuat instance dari route arguments
+  factory HalamanJobfairDetail.fromRoute(RouteSettings settings) {
+    final args = settings.arguments;
+    
+    if (args is int) {
+      return HalamanJobfairDetail(jobfairId: args);
+    } else if (args is Map<String, dynamic>) {
+      final jobfairId = args['jobfairId'] as int;
+      return HalamanJobfairDetail(jobfairId: jobfairId);
+    } else {
+      throw ArgumentError('jobfairId harus diisi');
+    }
+  }
 
   @override
   State<HalamanJobfairDetail> createState() => _HalamanJobfairDetailState();
@@ -147,7 +163,7 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
               Row(
                 children: [
                   GestureDetector(
-                    onTap: () => Navigator.pop(context),
+                    onTap: () => goBack(context), // Menggunakan goBack dari route.dart
                     child: Container(
                       width: 44,
                       height: 44,
@@ -189,17 +205,23 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEEEEEE).withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.notifications_outlined,
-                      color: Colors.white,
-                      size: 24,
+                  GestureDetector(
+                    onTap: () {
+                      // Navigasi ke halaman notifikasi menggunakan route.dart
+                      goTo(context, AppRoutes.notifikasi);
+                    },
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEEEEEE).withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.notifications_outlined,
+                        color: Colors.white,
+                        size: 24,
+                      ),
                     ),
                   ),
                 ],
@@ -695,7 +717,7 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
           const SizedBox(height: 10),
         ],
       ),
-    );
+      );
   }
 
   Widget _buildCompanyLogo(CompanyJobfair company) {
@@ -1230,9 +1252,7 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
           const Text('Silakan coba lagi nanti.', textAlign: TextAlign.center),
           const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
+            onPressed: () => goBack(context), // Menggunakan goBack dari route.dart
             child: const Text('Kembali'),
           ),
         ],

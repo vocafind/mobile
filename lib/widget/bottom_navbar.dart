@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:jobfair/screens/halaman_beranda.dart';  
-import 'package:jobfair/screens/halaman_cari_loker.dart';
-import 'package:jobfair/screens/halaman_jobfair.dart';
-import 'package:jobfair/screens/profil/halaman_profil.dart';
-import 'package:jobfair/screens/halaman_lamaran.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:ui';
+import 'package:jobfair/api/route.dart'; // ✅ Import route.dart
 
 class BottomNavBar extends StatefulWidget {
   final int currentIndex;
@@ -54,49 +50,47 @@ class _BottomNavBarState extends State<BottomNavBar>
     super.dispose();
   }
 
+  // ✅ UPDATED: Gunakan route.dart untuk navigasi
   void _handleNavigation(int index) {
     if (index == widget.currentIndex) return;
 
+    // Jika ada custom onTap handler
     if (widget.onTap != null) {
       widget.onTap!(index);
       return;
     }
 
-    Widget page;
+    // ✅ Gunakan route name dari AppRoutes
+    String routeName;
     switch (index) {
       case 0:
-        page = const HalamanBeranda();
+        routeName = AppRoutes.beranda;
         break;
       case 1:
-        page = const HalamanCariLoker();
+        routeName = AppRoutes.cariLoker;
         break;
       case 2:
-        page = const HalamanJobfair();
+        routeName = AppRoutes.jobfair;
         break;
       case 3:
-        page = const HalamanLamaran();
+        routeName = AppRoutes.lamaran;
         break;
       case 4:
-        page = const HalamanProfil();
+        routeName = AppRoutes.profil;
         break;
       default:
         return;
     }
 
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => page,
-        transitionDuration: Duration.zero,
-        reverseTransitionDuration: Duration.zero,
-      ),
-    );
+    
+    goReplace(context, routeName);
   }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     
-    // ✅ Simple adjustment untuk device kecil
+    
     final isSmallDevice = screenWidth < 360;
     
     return Container(
@@ -112,10 +106,10 @@ class _BottomNavBarState extends State<BottomNavBar>
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.3), // ✅ Fix: withOpacity bukan withValues
+              color: Colors.black.withOpacity(0.3),
               borderRadius: BorderRadius.circular(60),
               border: Border.all(
-                color: Colors.white.withOpacity(0.1), // ✅ Fix: withOpacity
+                color: Colors.white.withOpacity(0.1),
                 width: 1,
               ),
             ),
@@ -133,7 +127,7 @@ class _BottomNavBarState extends State<BottomNavBar>
                   _buildNavButton(
                     index: 1,
                     svgPath: 'assets/icons/search.svg',
-                    label: isSmallDevice ? 'Cari' : 'Cari Loker', // ✅ Shorten label di device kecil
+                    label: isSmallDevice ? 'Cari' : 'Cari Loker',
                     isSmallDevice: isSmallDevice,
                   ),
                   _buildNavButton(
@@ -151,7 +145,7 @@ class _BottomNavBarState extends State<BottomNavBar>
                   _buildNavButton(
                     index: 4,
                     svgPath: 'assets/icons/profile.svg',
-                    label: 'Profil', // ✅ Fix: 'Profile' jadi 'Profil'
+                    label: 'Profil',
                     isSmallDevice: isSmallDevice,
                   ),
                 ],
@@ -191,7 +185,7 @@ class _BottomNavBarState extends State<BottomNavBar>
           children: [
             SvgPicture.asset(
               svgPath,
-              width: isSmallDevice ? 26 : 30, // ✅ Icon lebih kecil di device kecil
+              width: isSmallDevice ? 26 : 30,
               height: isSmallDevice ? 26 : 30,
               colorFilter: ColorFilter.mode(
                 isActive ? Colors.black : Colors.white,
@@ -206,7 +200,7 @@ class _BottomNavBarState extends State<BottomNavBar>
                   label,
                   style: TextStyle(
                     color: Colors.black,
-                    fontSize: isSmallDevice ? 10 : 12, // ✅ Font lebih kecil di device kecil
+                    fontSize: isSmallDevice ? 10 : 12,
                     fontFamily: 'Poppins',
                     fontWeight: FontWeight.w500,
                   ),
