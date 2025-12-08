@@ -1,4 +1,4 @@
-// route.dart
+// route.dart - SIMPLIFIED VERSION
 import 'package:flutter/material.dart';
 
 import 'package:jobfair/screens/halaman_1.dart';
@@ -12,6 +12,9 @@ import 'package:jobfair/screens/halaman_login.dart';
 import 'package:jobfair/screens/halaman_notifikasi.dart';
 import 'package:jobfair/screens/halaman_register.dart';
 import 'package:jobfair/screens/profil/halaman_profil.dart';
+// Import untuk bottom sheet (optional, hanya untuk reference)
+import 'package:jobfair/screens/detail_lamaran.dart';
+import 'package:jobfair/screens/detail_lamaran_jobfair.dart';
 
 class AppRoutes {
   // ==================== ROUTE NAMES CONSTANTS ====================
@@ -26,9 +29,12 @@ class AppRoutes {
   static const String notifikasi = '/notifikasi';
   static const String register = '/register';
   static const String profil = '/profil';
+  // HAPUS: detailLamaran dan detailLamaranJobfair dari route constants
 
   // ==================== ARGUMENT KEYS ====================
   static const String argJobfairId = 'jobfairId';
+  static const String argApplyId = 'applyId';
+  // HAPUS: argLamaran dan argIsJobfair karena tidak butuh route khusus
 
   // ==================== GENERATE ROUTE ====================
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -67,18 +73,15 @@ class AppRoutes {
         );
       
       case jobfairDetail:
-        // PENTING: Validasi argument jobfairId
         if (args != null) {
           int jobfairId;
           
-          // Handle berbagai tipe argument
           if (args is int) {
             jobfairId = args;
           } else if (args is Map<String, dynamic>) {
             jobfairId = args[argJobfairId] as int;
           } else {
-            // Fallback jika argument tidak valid
-            return _errorRoute(
+            return _buildErrorRoute(
               'Parameter jobfairId tidak valid',
               settings.name,
             );
@@ -90,13 +93,30 @@ class AppRoutes {
           );
         }
         
-        // Jika tidak ada argument, tampilkan error
-        return _errorRoute(
+        return _buildErrorRoute(
           'Parameter jobfairId wajib diisi',
           settings.name,
         );
       
       case lamaran:
+        // Handle parameter untuk auto-open lamaran
+        if (args != null) {
+          if (args is String) {
+            // Jika args langsung applyId
+            return MaterialPageRoute(
+              builder: (_) => HalamanLamaran(applyIdToOpen: args),
+              settings: settings,
+            );
+          } else if (args is Map<String, dynamic>) {
+            final applyId = args[argApplyId] as String?;
+            if (applyId != null) {
+              return MaterialPageRoute(
+                builder: (_) => HalamanLamaran(applyIdToOpen: applyId),
+                settings: settings,
+              );
+            }
+          }
+        }
         return MaterialPageRoute(
           builder: (_) => const HalamanLamaran(),
           settings: settings,
@@ -125,16 +145,16 @@ class AppRoutes {
           builder: (_) => const HalamanProfil(),
           settings: settings,
         );
-
+      
       default:
-        return _errorRoute('Halaman tidak ditemukan', settings.name);
+        return _buildErrorRoute('Halaman tidak ditemukan', settings.name);
     }
   }
 
   // ==================== ERROR ROUTE ====================
-  static Route<dynamic> _errorRoute(String message, String? routeName) {
+  static Route<dynamic> _buildErrorRoute(String message, String? routeName) {
     return MaterialPageRoute(
-      builder: (_) => Scaffold(
+      builder: (context) => Scaffold(
         appBar: AppBar(
           title: const Text('Error'),
           backgroundColor: Colors.red,
@@ -169,7 +189,13 @@ class AppRoutes {
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton.icon(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.pushNamedAndRemoveUntil(
+                      context, 
+                      AppRoutes.beranda, 
+                      (route) => false,
+                    );
+                  },
                   icon: const Icon(Icons.home),
                   label: const Text('Kembali ke Beranda'),
                   style: ElevatedButton.styleFrom(
@@ -332,4 +358,26 @@ void goBack(BuildContext context, [Object? result]) {
 /// Pop to root (shorthand)
 void goHome(BuildContext context) {
   AppRoutes.popToRoot(context);
+}
+
+// ==================== BOTTOM SHEET HELPER ====================
+/// Helper untuk menampilkan bottom sheet (TIDAK ADA NAVIGASI DI SINI)
+void showDetailLamaranBottomSheet(
+  BuildContext context,
+  dynamic lamaran, {
+  bool isJobfair = false,
+}) {
+  if (isJobfair) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => DetailLamaranJobfair(lamaran: lamaran),
+    );
+  } else {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => DetailLamaran(lamaran: lamaran),
+    );
+  }
 }
