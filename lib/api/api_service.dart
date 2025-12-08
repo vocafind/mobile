@@ -23,6 +23,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:jobfair/models/loker_umum_detail_model.dart';
 import 'package:jobfair/models/loker_umum_model.dart';
+import 'package:jobfair/models/loker_rekomendasi_model.dart';
 import 'package:jobfair/models/talent_profile_model.dart';
 import 'endpoints.dart';
 import 'dart:convert';
@@ -2013,6 +2014,49 @@ class ApiService {
 
 
 
+
+
+
+  // --------------------------------------------------------------------------LOKER REKOMENDASI-----------------------------------------------------------
+  // ================== GET ALL LOKER REKOMENDASI ==================
+  Future<List<LokerRekomendasi>> getAllLokerRekomendasi() async {
+    final prefs = await SharedPreferences.getInstance();
+    final talentId = prefs.getString('talentId');
+
+    if (talentId == null) {
+      print("❌ TalentId tidak ditemukan");
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      // Gunakan Dio dengan talentId di header
+      final response = await _dio.get(
+        ApiConfig.allLokerRekomendasi,
+        options: Options(
+          headers: {
+            'talentId': talentId,
+          },
+        ),
+      );
+
+      print("GET LokerRekomendasi - STATUS: ${response.statusCode}");
+      print("GET LokerRekomendasi - BODY: ${response.data}");
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        return data.map((json) => LokerRekomendasi.fromJson(json)).toList();
+      } else {
+        print("⚠️ Gagal ambil data rekomendasi: ${response.data}");
+        throw Exception('Failed to load recommendations');
+      }
+    } on DioException catch (e) {
+      print("❌ Error ambil rekomendasi: ${e.message}");
+      if (e.response?.statusCode == 401) {
+        print("⚠️ Unauthorized - talentId mungkin tidak valid");
+      }
+      rethrow;
+    }
+  }
 
 
 

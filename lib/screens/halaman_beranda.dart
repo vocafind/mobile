@@ -3,11 +3,13 @@ import 'package:intl/intl.dart';
 import 'package:jobfair/api/api_service.dart';
 import 'package:jobfair/models/company_model.dart';
 import 'package:jobfair/models/jobfair_model.dart';
+import 'package:jobfair/models/loker_umum_detail_model.dart';
 import 'package:jobfair/models/loker_umum_model.dart';
+import 'package:jobfair/models/loker_rekomendasi_model.dart'; // Model baru untuk LokerRekomendasi
 import 'package:jobfair/models/saved_job_model.dart';
 import 'package:jobfair/screens/detail_job_sheet.dart';
 import '/widget/bottom_navbar.dart';
-import 'package:jobfair/api/route.dart'; 
+import 'package:jobfair/api/route.dart';
 
 class HalamanBeranda extends StatefulWidget {
   const HalamanBeranda({super.key});
@@ -20,15 +22,20 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
   final ScrollController _scrollController = ScrollController();
   final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
   final ApiService _apiService = ApiService();
-  
-  // PERBAIKAN: Inisialisasi langsung dengan Future.value([]) untuk menghindari late error
+
+  // Inisialisasi langsung dengan Future.value([]) untuk menghindari late error
   Future<List<CompanyLogo>> _companyLogosFuture = Future.value([]);
   Future<List<LokerUmum>> _urgentJobsFuture = Future.value([]);
-  
+  Future<List<LokerRekomendasi>> _recommendedJobsFuture = Future.value(
+    [],
+  ); // Tambahan: Future untuk Loker Rekomendasi
+
   // List untuk menyimpan ID job yang sudah disimpan
   List<String> _savedJobIds = [];
   bool _isLoadingUrgentJobs = true;
   bool _isLoadingSavedJobs = true;
+  bool _isLoadingRecommendedJobs =
+      true; // Tambahan: Loading state untuk rekomendasi
 
   final List<String> backgroundImages = const [
     'assets/images/kuning.png',
@@ -65,10 +72,11 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
     try {
       // Inisialisasi company logos
       _companyLogosFuture = _apiService.getRandomCompanyLogos(count: 6);
-      
-      // Load urgent jobs dan saved jobs secara parallel
+
+      // Load semua data secara parallel
       await Future.wait([
         _loadUrgentJobs(),
+        _loadRecommendedJobs(), // Tambahan: Load data rekomendasi
         _loadSavedJobs(),
       ]);
     } catch (e) {
@@ -76,7 +84,9 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
       setState(() {
         _isLoadingUrgentJobs = false;
         _isLoadingSavedJobs = false;
+        _isLoadingRecommendedJobs = false; // Tambahan
         _urgentJobsFuture = Future.value([]);
+        _recommendedJobsFuture = Future.value([]); // Tambahan
         _savedJobIds = [];
       });
     }
@@ -97,7 +107,7 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
       }).toList();
 
       final result = urgentJobs.take(3).toList();
-      
+
       setState(() {
         _urgentJobsFuture = Future.value(result);
         _isLoadingUrgentJobs = false;
@@ -111,6 +121,31 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
     }
   }
 
+  // Method untuk load recommended jobs
+  Future<void> _loadRecommendedJobs() async {
+    try {
+      setState(() {
+        _isLoadingRecommendedJobs = true;
+      });
+
+      final allRecommendedJobs = await _apiService.getAllLokerRekomendasi();
+
+      // Ambil maksimal 3 rekomendasi
+      final recommendedJobs = allRecommendedJobs.take(3).toList();
+
+      setState(() {
+        _recommendedJobsFuture = Future.value(recommendedJobs);
+        _isLoadingRecommendedJobs = false;
+      });
+    } catch (e) {
+      print("❌ Error getting recommended jobs: $e");
+      setState(() {
+        _recommendedJobsFuture = Future.value([]);
+        _isLoadingRecommendedJobs = false;
+      });
+    }
+  }
+
   Future<void> _loadSavedJobs() async {
     try {
       setState(() {
@@ -118,7 +153,7 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
       });
 
       final savedJobs = await _apiService.getSavedJobs();
-      
+
       setState(() {
         _savedJobIds = savedJobs.map((job) => job.lowonganId).toList();
         _isLoadingSavedJobs = false;
@@ -138,6 +173,7 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
     return difference.inDays;
   }
 
+  // Method untuk show job detail dari LokerUmum
   Future<void> _showJobDetail(LokerUmum lowongan) async {
     try {
       showDialog(
@@ -146,6 +182,49 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
         builder: (context) => const Center(child: CircularProgressIndicator()),
       );
 
+      final detailLowongan = await _apiService.getLokerUmumDetailById(
+        lowongan.lowonganId,
+      );
+
+      if (mounted) Navigator.of(context).pop();
+
+      if (mounted) {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => JobDetailSheet(loker: detailLowongan),
+        ).then((shouldRefresh) {
+          if (shouldRefresh == true) {
+            _refreshSavedJobs(); // Refresh saved jobs status
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) Navigator.of(context).pop();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal memuat detail lowongan: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  // Method untuk show job detail dari LokerRekomendasi
+  // Method untuk show job detail dari LokerRekomendasi
+  Future<void> _showRecommendedJobDetail(LokerRekomendasi lowongan) async {
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
+      // Gunakan method yang sama dengan LokerUmum karena datanya sama
       final detailLowongan = await _apiService.getLokerUmumDetailById(
         lowongan.lowonganId,
       );
@@ -240,7 +319,14 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
               child: Column(
                 children: [
                   SizedBox(height: maxHeaderHeight + 20),
-                  const _CocokUntukKamuSection(),
+                  // Ganti _CocokUntukKamuSection dengan yang baru yang menerima data
+                  _CocokUntukKamuSection(
+                    recommendedJobsFuture: _recommendedJobsFuture,
+                    savedJobIds: _savedJobIds,
+                    isLoadingRecommendedJobs: _isLoadingRecommendedJobs,
+                    onJobTap: _showRecommendedJobDetail,
+                    onBookmarkToggle: _toggleSaveJob,
+                  ),
                   const SizedBox(height: 40),
 
                   // Divider
@@ -271,7 +357,7 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
                   _TemuiMerekaDanKesempatanSegeraSection(
                     companyLogosFuture: _companyLogosFuture,
                     urgentJobsFuture: _urgentJobsFuture,
-                    savedJobIds: _savedJobIds, // Pass saved job IDs
+                    savedJobIds: _savedJobIds,
                     onJobTap: _showJobDetail,
                     onBookmarkToggle: _toggleSaveJob,
                     isLoadingUrgentJobs: _isLoadingUrgentJobs,
@@ -526,7 +612,19 @@ class __AnimatedHeaderState extends State<_AnimatedHeader> {
 }
 
 class _CocokUntukKamuSection extends StatelessWidget {
-  const _CocokUntukKamuSection();
+  final Future<List<LokerRekomendasi>> recommendedJobsFuture;
+  final List<String> savedJobIds;
+  final bool isLoadingRecommendedJobs;
+  final Function(LokerRekomendasi) onJobTap;
+  final Function(String, bool) onBookmarkToggle;
+
+  const _CocokUntukKamuSection({
+    required this.recommendedJobsFuture,
+    required this.savedJobIds,
+    required this.isLoadingRecommendedJobs,
+    required this.onJobTap,
+    required this.onBookmarkToggle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -554,29 +652,741 @@ class _CocokUntukKamuSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        SizedBox(
-          height: cardHeight + 30,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.only(
-              left: screenWidth * 0.05,
-              top: 5,
-              bottom: 5,
-            ),
-            clipBehavior: Clip.none,
-            itemCount: 3,
-            itemBuilder: (context, index) {
-              return Padding(
-                padding: EdgeInsets.only(right: screenWidth * 0.04),
-                child: const _CocokUntukKamuCard(),
+
+        FutureBuilder<List<LokerRekomendasi>>(
+          future: recommendedJobsFuture,
+          builder: (context, snapshot) {
+            if (isLoadingRecommendedJobs) {
+              return SizedBox(
+                height: cardHeight + 30,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.only(
+                    left: screenWidth * 0.05,
+                    top: 5,
+                    bottom: 5,
+                  ),
+                  clipBehavior: Clip.none,
+                  itemCount: 3,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: EdgeInsets.only(right: screenWidth * 0.04),
+                      child: _CocokUntukKamuCardSkeleton(
+                        cardWidth: cardWidth,
+                        cardHeight: cardHeight,
+                        screenWidth: screenWidth,
+                      ),
+                    );
+                  },
+                ),
               );
-            },
-          ),
+            } else if (snapshot.hasError) {
+              return Container(
+                height: cardHeight,
+                margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
+                child: Center(
+                  child: Text(
+                    'Gagal memuat rekomendasi',
+                    style: TextStyle(color: Colors.red, fontSize: 14),
+                  ),
+                ),
+              );
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return Container(
+                height: cardHeight,
+                margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
+                child: Center(
+                  child: Text(
+                    'Tidak ada rekomendasi tersedia',
+                    style: TextStyle(color: Colors.grey, fontSize: 14),
+                  ),
+                ),
+              );
+            } else {
+              final recommendedJobs = snapshot.data!;
+              return SizedBox(
+                height: cardHeight + 30,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.only(
+                    left: screenWidth * 0.05,
+                    top: 5,
+                    bottom: 5,
+                  ),
+                  clipBehavior: Clip.none,
+                  itemCount: recommendedJobs.length,
+                  itemBuilder: (context, index) {
+                    final job = recommendedJobs[index];
+                    final daysLeft = _calculateDaysLeft(job.batasLamaran);
+                    final isSaved = savedJobIds.contains(job.lowonganId);
+
+                    return Padding(
+                      padding: EdgeInsets.only(right: screenWidth * 0.04),
+                      child: _CocokUntukKamuCard(
+                        lowongan: job,
+                        daysLeft: daysLeft,
+                        isSaved: isSaved,
+                        cardWidth: cardWidth,
+                        cardHeight: cardHeight,
+                        screenWidth: screenWidth,
+                        onTap: () => onJobTap(job),
+                        onBookmarkToggle: onBookmarkToggle,
+                      ),
+                    );
+                  },
+                ),
+              );
+            }
+          },
         ),
       ],
     );
   }
+
+  int _calculateDaysLeft(DateTime batasLamaran) {
+    final now = DateTime.now();
+    final difference = batasLamaran.difference(now);
+    return difference.inDays;
+  }
 }
+
+class _CocokUntukKamuCard extends StatefulWidget {
+  final LokerRekomendasi lowongan;
+  final int daysLeft;
+  final bool isSaved;
+  final double cardWidth;
+  final double cardHeight;
+  final double screenWidth;
+  final VoidCallback onTap;
+  final Function(String, bool) onBookmarkToggle;
+
+  const _CocokUntukKamuCard({
+    required this.lowongan,
+    required this.daysLeft,
+    required this.isSaved,
+    required this.cardWidth,
+    required this.cardHeight,
+    required this.screenWidth,
+    required this.onTap,
+    required this.onBookmarkToggle,
+  });
+
+  @override
+  State<_CocokUntukKamuCard> createState() => _CocokUntukKamuCardState();
+}
+
+class _CocokUntukKamuCardState extends State<_CocokUntukKamuCard>
+    with SingleTickerProviderStateMixin {
+  late bool isSaved;
+  late AnimationController _bookmarkController;
+  late Animation<double> _bookmarkScale;
+
+  @override
+  void initState() {
+    super.initState();
+    isSaved = widget.isSaved;
+    _bookmarkController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+    _bookmarkScale = Tween<double>(begin: 1.0, end: 1.3).animate(
+      CurvedAnimation(parent: _bookmarkController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _bookmarkController.dispose();
+    super.dispose();
+  }
+
+  void _toggleBookmark() {
+    setState(() {
+      isSaved = !isSaved;
+    });
+    _bookmarkController.forward().then((_) {
+      _bookmarkController.reverse();
+    });
+    widget.onBookmarkToggle(widget.lowongan.lowonganId, !isSaved);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: SizedBox(
+        width: widget.cardWidth,
+        height: widget.cardHeight,
+        child: Stack(
+          children: [
+            // Background
+            Container(
+              width: widget.cardWidth,
+              height: widget.cardHeight,
+              decoration: ShapeDecoration(
+                color: const Color(0xFFF0F4F9),
+                shape: RoundedRectangleBorder(
+                  side: const BorderSide(width: 1, color: Color(0xFFC7C7C7)),
+                  borderRadius: BorderRadius.circular(widget.cardWidth * 0.102),
+                ),
+              ),
+            ),
+
+            // Main card
+            Container(
+              width: widget.cardWidth,
+              height: widget.cardHeight,
+              decoration: ShapeDecoration(
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  side: const BorderSide(width: 3, color: Color(0xFF0118D8)),
+                  borderRadius: BorderRadius.circular(widget.cardWidth * 0.102),
+                ),
+                shadows: const [
+                  BoxShadow(
+                    color: Color(0xFF9FAAFF),
+                    blurRadius: 20,
+                    offset: Offset(0, 0),
+                    spreadRadius: 0,
+                  ),
+                ],
+              ),
+              child: Stack(
+                children: [
+                  // Badge kecocokan
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    child: Container(
+                      width: widget.cardWidth * 0.45,
+                      height: widget.cardHeight * 0.119,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0E37EB),
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(widget.cardWidth * 0.102),
+                          bottomRight: Radius.circular(
+                            widget.cardWidth * 0.058,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.star,
+                            color: Color(0xFFFFCC00),
+                            size: 14,
+                          ),
+                          SizedBox(width: widget.cardWidth * 0.012),
+                          Text(
+                            '${widget.lowongan.kecocokan}% cocok',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: widget.screenWidth * 0.029,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Badge hari tersisa (jika kurang dari 10 hari)
+                  // if (widget.daysLeft <= 10 && widget.daysLeft >= 0)
+                  //   Positioned(
+                  //     right: 0,
+                  //     top: 0,
+                  //     child: Container(
+                  //       width: widget.cardWidth * 0.35,
+                  //       height: widget.cardHeight * 0.119,
+                  //       decoration: BoxDecoration(
+                  //         color: const Color(0xFFFF6B6B),
+                  //         borderRadius: BorderRadius.only(
+                  //           topRight: Radius.circular(widget.cardWidth * 0.102),
+                  //           bottomLeft: Radius.circular(
+                  //             widget.cardWidth * 0.058,
+                  //           ),
+                  //         ),
+                  //       ),
+                  //       child: Row(
+                  //         mainAxisAlignment: MainAxisAlignment.center,
+                  //         children: [
+                  //           const Icon(
+                  //             Icons.bolt,
+                  //             color: Colors.white,
+                  //             size: 14,
+                  //           ),
+                  //           SizedBox(width: widget.cardWidth * 0.012),
+                  //           Text(
+                  //             widget.daysLeft == 0
+                  //                 ? 'Hari terakhir!'
+                  //                 : '${widget.daysLeft} hari',
+                  //             style: TextStyle(
+                  //               color: Colors.white,
+                  //               fontSize: widget.screenWidth * 0.029,
+                  //               fontFamily: 'Poppins',
+                  //               fontWeight: FontWeight.w600,
+                  //             ),
+                  //           ),
+                  //         ],
+                  //       ),
+                  //     ),
+                  //   ),
+
+                  Padding(
+                    padding: EdgeInsets.all(widget.cardWidth * 0.058),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(height: widget.cardHeight * 0.119),
+
+                        // Company logo and info
+                        Row(
+                          children: [
+                            Container(
+                              width: widget.cardWidth * 0.117,
+                              height: widget.cardWidth * 0.105,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                image: widget.lowongan.logo.isNotEmpty
+                                    ? DecorationImage(
+                                        image: NetworkImage(
+                                          widget.lowongan.logo,
+                                        ),
+                                        fit: BoxFit.contain,
+                                      )
+                                    : const DecorationImage(
+                                        image: AssetImage("images/poltek.png"),
+                                        fit: BoxFit.cover,
+                                      ),
+                              ),
+                            ),
+                            SizedBox(width: widget.cardWidth * 0.058),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    widget.lowongan.posisi,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontSize: widget.screenWidth * 0.042,
+                                      fontFamily: 'Poppins',
+                                      fontWeight: FontWeight.w500,
+                                      height: 1.25,
+                                      letterSpacing: -0.24,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    widget.lowongan.namaPerusahaan,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: const Color(0x993C3C43),
+                                      fontSize: widget.screenWidth * 0.037,
+                                      fontFamily: 'Poppins',
+                                      fontWeight: FontWeight.w400,
+                                      height: 1.29,
+                                      letterSpacing: -0.08,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: _toggleBookmark,
+                              child: ScaleTransition(
+                                scale: _bookmarkScale,
+                                child: SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 200),
+                                    child: isSaved
+                                        ? const Icon(
+                                            Icons.bookmark,
+                                            key: ValueKey('saved'),
+                                            color: Color(0xFF0118D8),
+                                            size: 20,
+                                          )
+                                        : Icon(
+                                            Icons.bookmark_border,
+                                            key: const ValueKey('unsaved'),
+                                            color: Colors.black.withOpacity(
+                                              0.3,
+                                            ),
+                                            size: 20,
+                                          ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        SizedBox(height: widget.cardHeight * 0.085),
+
+                        // Salary
+                        Text(
+                          widget.lowongan.gaji,
+                          style: TextStyle(
+                            color: const Color(0xFF40403F),
+                            fontSize: widget.screenWidth * 0.047,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w600,
+                            height: 1.11,
+                            letterSpacing: -0.24,
+                          ),
+                        ),
+
+                        SizedBox(height: widget.cardHeight * 0.068),
+
+                        // Tags
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: widget.cardWidth * 0.035,
+                                vertical: widget.cardHeight * 0.017,
+                              ),
+                              decoration: ShapeDecoration(
+                                color: const Color(0xFFF0F4F9),
+                                shape: RoundedRectangleBorder(
+                                  side: const BorderSide(
+                                    width: 1,
+                                    color: Color(0xFFC7C7C7),
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              child: Text(
+                                widget.lowongan.lokasi.length > 20
+                                    ? '${widget.lowongan.lokasi.substring(0, 20)}...'
+                                    : widget.lowongan.lokasi,
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: widget.screenWidth * 0.032,
+                                  fontFamily: 'SF Pro',
+                                  fontWeight: FontWeight.w400,
+                                  height: 1.43,
+                                  letterSpacing: -0.50,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: widget.cardWidth * 0.035,
+                                vertical: widget.cardHeight * 0.017,
+                              ),
+                              decoration: ShapeDecoration(
+                                color: const Color(0xFFF0F4F9),
+                                shape: RoundedRectangleBorder(
+                                  side: const BorderSide(
+                                    width: 1,
+                                    color: Color(0xFFC7C7C7),
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              child: Text(
+                                widget.lowongan.jenisPekerjaan,
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: widget.screenWidth * 0.032,
+                                  fontFamily: 'SF Pro',
+                                  fontWeight: FontWeight.w400,
+                                  height: 1.43,
+                                  letterSpacing: -0.50,
+                                ),
+                              ),
+                            ),
+                            if (widget.lowongan.opsiKerjaRemote)
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: widget.cardWidth * 0.035,
+                                  vertical: widget.cardHeight * 0.017,
+                                ),
+                                decoration: ShapeDecoration(
+                                  color: const Color(0xFFF0F4F9),
+                                  shape: RoundedRectangleBorder(
+                                    side: const BorderSide(
+                                      width: 1,
+                                      color: Color(0xFFC7C7C7),
+                                    ),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Remote',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 12,
+                                    fontFamily: 'SF Pro',
+                                    fontWeight: FontWeight.w400,
+                                    height: 1.43,
+                                    letterSpacing: -0.50,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+
+                        const Spacer(),
+
+                        // Posted time and number of applicants
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              _formatTimeAgo(widget.lowongan.tanggalPosting),
+                              style: TextStyle(
+                                color: const Color(0xFF464E5E),
+                                fontSize: widget.screenWidth * 0.032,
+                                fontFamily: 'SF Pro',
+                                fontWeight: FontWeight.w400,
+                                height: 2,
+                              ),
+                            ),
+                            Text(
+                              '${widget.lowongan.jumlahPelamar} pelamar',
+                              style: TextStyle(
+                                color: const Color(0xFF464E5E),
+                                fontSize: widget.screenWidth * 0.032,
+                                fontFamily: 'SF Pro',
+                                fontWeight: FontWeight.w400,
+                                height: 2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatTimeAgo(DateTime tanggalPosting) {
+    final now = DateTime.now();
+    final difference = now.difference(tanggalPosting);
+
+    if (difference.inDays == 0) {
+      return 'Hari ini';
+    } else if (difference.inDays == 1) {
+      return '1 hari lalu';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} hari lalu';
+    } else if (difference.inDays < 30) {
+      final weeks = (difference.inDays / 7).floor();
+      return '$weeks minggu lalu';
+    } else {
+      final months = (difference.inDays / 30).floor();
+      return '$months bulan lalu';
+    }
+  }
+}
+
+class _CocokUntukKamuCardSkeleton extends StatelessWidget {
+  final double cardWidth;
+  final double cardHeight;
+  final double screenWidth;
+
+  const _CocokUntukKamuCardSkeleton({
+    required this.cardWidth,
+    required this.cardHeight,
+    required this.screenWidth,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: cardWidth,
+      height: cardHeight,
+      child: Stack(
+        children: [
+          Container(
+            width: cardWidth,
+            height: cardHeight,
+            decoration: ShapeDecoration(
+              color: const Color(0xFFF0F4F9),
+              shape: RoundedRectangleBorder(
+                side: const BorderSide(width: 1, color: Color(0xFFC7C7C7)),
+                borderRadius: BorderRadius.circular(cardWidth * 0.102),
+              ),
+            ),
+          ),
+
+          Container(
+            width: cardWidth,
+            height: cardHeight,
+            decoration: ShapeDecoration(
+              color: Colors.white,
+              shape: RoundedRectangleBorder(
+                side: const BorderSide(width: 3, color: Color(0xFF0118D8)),
+                borderRadius: BorderRadius.circular(cardWidth * 0.102),
+              ),
+              shadows: const [
+                BoxShadow(
+                  color: Color(0xFF9FAAFF),
+                  blurRadius: 20,
+                  offset: Offset(0, 0),
+                  spreadRadius: 0,
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(cardWidth * 0.058),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: cardHeight * 0.119),
+
+                  // Badge skeleton
+                  Container(
+                    width: cardWidth * 0.4,
+                    height: cardHeight * 0.119,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(cardWidth * 0.102),
+                        bottomRight: Radius.circular(cardWidth * 0.058),
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: cardHeight * 0.085),
+
+                  // Company info skeleton
+                  Row(
+                    children: [
+                      Container(
+                        width: cardWidth * 0.117,
+                        height: cardWidth * 0.105,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      SizedBox(width: cardWidth * 0.058),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 120,
+                              height: 16,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade200,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Container(
+                              width: 80,
+                              height: 12,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade200,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: cardHeight * 0.085),
+
+                  // Salary skeleton
+                  Container(
+                    width: 100,
+                    height: 18,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+
+                  SizedBox(height: cardHeight * 0.068),
+
+                  // Tags skeleton
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      Container(
+                        width: 80,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      Container(
+                        width: 50,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const Spacer(),
+
+                  // Footer skeleton
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        width: 60,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      Container(
+                        width: 50,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ================== BAGIAN LAIN TETAP SAMA ==================
 
 class _JelajahiKesempatanKarierSection extends StatefulWidget {
   final ApiService apiService;
@@ -717,11 +1527,7 @@ class _JobfairCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        goTo<int>(
-          context,
-          AppRoutes.jobfairDetail,
-          arguments: jobfair.id,
-        );
+        goTo<int>(context, AppRoutes.jobfairDetail, arguments: jobfair.id);
       },
       child: SizedBox(
         width: cardWidth,
@@ -1611,7 +2417,12 @@ class _UrgentJobCardState extends State<_UrgentJobCard>
                                   vertical: 4,
                                 ),
                                 decoration: ShapeDecoration(
-                                  color: const Color.fromARGB(255, 255, 255, 255),
+                                  color: const Color.fromARGB(
+                                    255,
+                                    255,
+                                    255,
+                                    255,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     side: const BorderSide(
                                       width: 1,
@@ -1654,7 +2465,7 @@ class _UrgentJobCardState extends State<_UrgentJobCard>
                             Text(
                               '${widget.lowongan.jumlahPelamar} pelamar',
                               style: const TextStyle(
-                                color: Color(0xFF464E5E),
+                                color: const Color(0xFF464E5E),
                                 fontSize: 12,
                                 fontFamily: 'SF Pro',
                                 fontWeight: FontWeight.w400,
@@ -1836,286 +2647,6 @@ class _UrgentJobCardSkeleton extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CocokUntukKamuCard extends StatelessWidget {
-  const _CocokUntukKamuCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final cardWidth = (screenWidth * 0.9).clamp(300.0, 380.0);
-    final cardHeight = cardWidth * 0.685;
-
-    return SizedBox(
-      width: cardWidth,
-      height: cardHeight,
-      child: Stack(
-        children: [
-          Container(
-            width: cardWidth,
-            height: cardHeight,
-            decoration: ShapeDecoration(
-              color: const Color(0xFFF0F4F9),
-              shape: RoundedRectangleBorder(
-                side: const BorderSide(width: 1, color: Color(0xFFC7C7C7)),
-                borderRadius: BorderRadius.circular(cardWidth * 0.102),
-              ),
-            ),
-          ),
-
-          Container(
-            width: cardWidth,
-            height: cardHeight,
-            decoration: ShapeDecoration(
-              color: Colors.white,
-              shape: RoundedRectangleBorder(
-                side: const BorderSide(width: 3, color: Color(0xFF0118D8)),
-                borderRadius: BorderRadius.circular(cardWidth * 0.102),
-              ),
-              shadows: const [
-                BoxShadow(
-                  color: Color(0xFF9FAAFF),
-                  blurRadius: 20,
-                  offset: Offset(0, 0),
-                  spreadRadius: 0,
-                ),
-              ],
-            ),
-            child: Stack(
-              children: [
-                Positioned(
-                  left: 0,
-                  top: 0,
-                  child: Container(
-                    width: cardWidth * 0.379,
-                    height: cardHeight * 0.119,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0E37EB),
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(cardWidth * 0.102),
-                        bottomRight: Radius.circular(cardWidth * 0.058),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.bolt,
-                          color: const Color(0xFFFFCC00),
-                          size: screenWidth * 0.037,
-                        ),
-                        SizedBox(width: cardWidth * 0.012),
-                        Text(
-                          '3 hari lagi',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: screenWidth * 0.029,
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                Padding(
-                  padding: EdgeInsets.all(cardWidth * 0.058),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(height: cardHeight * 0.119),
-
-                      Row(
-                        children: [
-                          Container(
-                            width: cardWidth * 0.117,
-                            height: cardWidth * 0.105,
-                            decoration: const BoxDecoration(
-                              image: DecorationImage(
-                                image: AssetImage("images/poltek.png"),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: cardWidth * 0.058),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Fulltime Backend Developer',
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: screenWidth * 0.042,
-                                    fontFamily: 'Poppins',
-                                    fontWeight: FontWeight.w500,
-                                    height: 1.25,
-                                    letterSpacing: -0.24,
-                                  ),
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  'Inforsys Indonesia',
-                                  style: TextStyle(
-                                    color: const Color(0x993C3C43),
-                                    fontSize: screenWidth * 0.037,
-                                    fontFamily: 'Poppins',
-                                    fontWeight: FontWeight.w400,
-                                    height: 1.29,
-                                    letterSpacing: -0.08,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      SizedBox(height: cardHeight * 0.085),
-
-                      Text.rich(
-                        TextSpan(
-                          children: [
-                            TextSpan(
-                              text: 'Rp',
-                              style: TextStyle(
-                                color: const Color(0xFF40403F),
-                                fontSize: screenWidth * 0.037,
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w600,
-                                height: 1.43,
-                                letterSpacing: -0.24,
-                              ),
-                            ),
-                            TextSpan(
-                              text: ' 9.000.000 - ',
-                              style: TextStyle(
-                                color: const Color(0xFF40403F),
-                                fontSize: screenWidth * 0.047,
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w600,
-                                height: 1.11,
-                                letterSpacing: -0.24,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'Rp',
-                              style: TextStyle(
-                                color: const Color(0xFF40403F),
-                                fontSize: screenWidth * 0.037,
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w600,
-                                height: 1.43,
-                                letterSpacing: -0.24,
-                              ),
-                            ),
-                            TextSpan(
-                              text: ' 12.000.000',
-                              style: TextStyle(
-                                color: const Color(0xFF40403F),
-                                fontSize: screenWidth * 0.047,
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w600,
-                                height: 1.11,
-                                letterSpacing: -0.24,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      SizedBox(height: cardHeight * 0.068),
-
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: cardWidth * 0.035,
-                              vertical: cardHeight * 0.017,
-                            ),
-                            decoration: ShapeDecoration(
-                              color: const Color(0xFFF0F4F9),
-                              shape: RoundedRectangleBorder(
-                                side: const BorderSide(
-                                  width: 1,
-                                  color: Color(0xFFC7C7C7),
-                                ),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            child: Text(
-                              'Batam Kota, Kepulauan Riau',
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: screenWidth * 0.032,
-                                fontFamily: 'SF Pro',
-                                fontWeight: FontWeight.w400,
-                                height: 1.43,
-                                letterSpacing: -0.50,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: cardWidth * 0.035,
-                              vertical: cardHeight * 0.017,
-                            ),
-                            decoration: ShapeDecoration(
-                              color: const Color(0xFFF0F4F9),
-                              shape: RoundedRectangleBorder(
-                                side: const BorderSide(
-                                  width: 1,
-                                  color: Color(0xFFC7C7C7),
-                                ),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            child: Text(
-                              'Remote',
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: screenWidth * 0.032,
-                                fontFamily: 'SF Pro',
-                                fontWeight: FontWeight.w400,
-                                height: 1.43,
-                                letterSpacing: -0.50,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const Spacer(),
-
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          '1 hari lalu',
-                          style: TextStyle(
-                            color: const Color(0xFF464E5E),
-                            fontSize: screenWidth * 0.032,
-                            fontFamily: 'SF Pro',
-                            fontWeight: FontWeight.w400,
-                            height: 2,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
             ),
           ),
         ],
