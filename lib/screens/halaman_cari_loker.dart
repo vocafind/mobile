@@ -1135,7 +1135,6 @@ class _TabButton extends StatelessWidget {
 }
 
 // Job Card untuk tab Semua
-// Job Card untuk tab Semua - Design konsisten dengan Rekomendasi AI
 class _JobCard extends StatefulWidget {
   final LokerUmum lowongan;
   final bool isUrgent;
@@ -1260,7 +1259,7 @@ class __JobCardState extends State<_JobCard>
                             Text(
                               widget.daysLeft == 0
                                   ? 'Hari terakhir!'
-                                  : '${widget.daysLeft} hari',
+                                  : '${widget.daysLeft} hari lagi',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: screenWidth * 0.029,

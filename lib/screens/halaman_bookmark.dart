@@ -31,12 +31,12 @@ class _HalamanBookmarkState extends State<HalamanBookmark> {
 
     try {
       final savedJobs = await _apiService.getSavedJobs();
-      
+
       setState(() {
         _savedJobs = savedJobs;
         _isLoading = false;
       });
-      
+
       print("✅ Loaded ${savedJobs.length} saved jobs");
     } catch (e) {
       print("❌ Error loading saved jobs: $e");
@@ -50,14 +50,14 @@ class _HalamanBookmarkState extends State<HalamanBookmark> {
   Future<void> _unsaveJob(String savedJobId) async {
     try {
       await _apiService.unsaveJob(savedJobId);
-      
+
       // Hapus dari list lokal
       setState(() {
         _savedJobs.removeWhere((job) => job.savedJobId == savedJobId);
       });
-      
+
       print("✅ Job unsaved: $savedJobId");
-      
+
       // Tampilkan snackbar feedback
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -345,6 +345,7 @@ class _HalamanBookmarkState extends State<HalamanBookmark> {
   }
 }
 
+// Job Card untuk halaman bookmark - design konsisten dengan halaman cari loker
 class _JobCard extends StatefulWidget {
   final LokerUmum lowongan;
   final String savedJobId;
@@ -397,12 +398,12 @@ class __JobCardState extends State<_JobCard>
     // Animasi scale
     _bookmarkController.forward().then((_) {
       _bookmarkController.reverse();
-      
+
       // Ubah state untuk animasi icon
       setState(() {
         _isSaved = false;
       });
-      
+
       // Tunggu sebelum menghapus dari UI (sama seperti di beranda)
       Future.delayed(const Duration(milliseconds: 300), () {
         widget.onBookmarkTap();
@@ -412,51 +413,56 @@ class __JobCardState extends State<_JobCard>
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: GestureDetector(
-        onTap: widget.onTap,
+    final screenWidth = MediaQuery.of(context).size.width;
+    final cardWidth = screenWidth - 32; // 16 padding kiri + 16 padding kanan
+    final cardHeight = 235.0; // Tinggi sama dengan card di halaman cari loker
+
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: SizedBox(
+        width: cardWidth,
+        height: cardHeight,
         child: Stack(
           children: [
-            // Background shadow
+            // Background - sama dengan halaman cari loker
             Container(
-              width: double.infinity,
-              height: 235,
+              width: cardWidth,
+              height: cardHeight,
               decoration: ShapeDecoration(
                 color: const Color(0xFFF0F4F9),
                 shape: RoundedRectangleBorder(
                   side: const BorderSide(width: 1, color: Color(0xFFC7C7C7)),
-                  borderRadius: BorderRadius.circular(35),
+                  borderRadius: BorderRadius.circular(cardWidth * 0.102),
                 ),
               ),
             ),
 
-            // Main card
+            // Main card - tanpa border biru dan shadow khusus
             Container(
-              width: double.infinity,
-              height: 235,
+              width: cardWidth,
+              height: cardHeight,
               decoration: ShapeDecoration(
                 color: Colors.white,
                 shape: RoundedRectangleBorder(
                   side: const BorderSide(width: 1, color: Color(0xFFC7C7C7)),
-                  borderRadius: BorderRadius.circular(35),
+                  borderRadius: BorderRadius.circular(cardWidth * 0.102),
                 ),
               ),
               child: Stack(
                 children: [
-                  // Badge urgent
-                  if (widget.isUrgent)
+                  // Badge urgent (kiri atas) - hanya jika urgent
+                  if (widget.isUrgent && !widget.isApplied)
                     Positioned(
                       left: 0,
                       top: 0,
                       child: Container(
-                        width: 130,
-                        height: 28,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF0E37EB),
+                        width: cardWidth * 0.45,
+                        height: cardHeight * 0.119,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0E37EB),
                           borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(35),
-                            bottomRight: Radius.circular(20),
+                            topLeft: Radius.circular(cardWidth * 0.102),
+                            bottomRight: Radius.circular(cardWidth * 0.058),
                           ),
                         ),
                         child: Row(
@@ -467,12 +473,50 @@ class __JobCardState extends State<_JobCard>
                               color: Color(0xFFFFCC00),
                               size: 14,
                             ),
-                            const SizedBox(width: 4),
+                            SizedBox(width: cardWidth * 0.012),
                             Text(
                               widget.daysLeft == 0
                                   ? 'Hari terakhir!'
                                   : '${widget.daysLeft} hari lagi',
-                              style: const TextStyle(
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: screenWidth * 0.029,
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                  // Badge sudah dilamar (kanan atas) - hanya jika sudah dilamar
+                  if (widget.isApplied)
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Container(
+                        width: cardWidth * 0.45,
+                        height: cardHeight * 0.119,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF4CAF50),
+                          borderRadius: BorderRadius.only(
+                            topRight: Radius.circular(cardWidth * 0.102),
+                            bottomLeft: Radius.circular(cardWidth * 0.058),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.check_circle,
+                              color: Colors.white,
+                              size: 14,
+                            ),
+                            SizedBox(width: cardWidth * 0.012),
+                            const Text(
+                              'Sudah dilamar',
+                              style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 11,
                                 fontFamily: 'Poppins',
@@ -485,20 +529,19 @@ class __JobCardState extends State<_JobCard>
                     ),
 
                   Padding(
-                    padding: const EdgeInsets.all(20),
+                    padding: EdgeInsets.all(cardWidth * 0.058),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 28),
+                        SizedBox(height: cardHeight * 0.119),
 
-                        // Company logo and info
+                        // Company logo and info - ukuran font sama dengan halaman cari loker
                         Row(
                           children: [
                             Container(
-                              width: 40,
-                              height: 36,
+                              width: cardWidth * 0.117,
+                              height: cardWidth * 0.105,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF8FAFC),
                                 borderRadius: BorderRadius.circular(8),
                                 image: widget.lowongan.logo.isNotEmpty
                                     ? DecorationImage(
@@ -513,58 +556,49 @@ class __JobCardState extends State<_JobCard>
                                       ),
                               ),
                             ),
-                            const SizedBox(width: 20),
+                            SizedBox(width: cardWidth * 0.058),
                             Expanded(
-                              child: SizedBox(
-                                height: 48,
-                                child: Stack(
-                                  children: [
-                                    Positioned(
-                                      left: 0,
-                                      top: 0,
-                                      child: Text(
-                                        widget.lowongan.posisi,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 16,
-                                          fontFamily: 'Poppins',
-                                          fontWeight: FontWeight.w500,
-                                          height: 1.25,
-                                          letterSpacing: -0.24,
-                                        ),
-                                      ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    widget.lowongan.posisi,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontSize: screenWidth * 0.042,
+                                      fontFamily: 'Poppins',
+                                      fontWeight: FontWeight.w500,
+                                      height: 1.25,
+                                      letterSpacing: -0.24,
                                     ),
-                                    Positioned(
-                                      left: 0,
-                                      top: 24,
-                                      child: Text(
-                                        widget.lowongan.namaPerusahaan,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          color: const Color(0x993C3C43),
-                                          fontSize: 14,
-                                          fontFamily: 'Poppins',
-                                          fontWeight: FontWeight.w400,
-                                          height: 1.29,
-                                          letterSpacing: -0.08,
-                                        ),
-                                      ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    widget.lowongan.namaPerusahaan,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: const Color(0x993C3C43),
+                                      fontSize: screenWidth * 0.037,
+                                      fontFamily: 'Poppins',
+                                      fontWeight: FontWeight.w400,
+                                      height: 1.29,
+                                      letterSpacing: -0.08,
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
-                            // Bookmark button dengan animasi yang sama seperti di beranda
+                            // Bookmark button dengan animasi yang sama seperti di halaman cari loker
                             GestureDetector(
                               onTap: _toggleBookmark,
                               child: ScaleTransition(
                                 scale: _bookmarkScale,
                                 child: SizedBox(
-                                  width: 32,
-                                  height: 32,
+                                  width: 24,
+                                  height: 24,
                                   child: AnimatedSwitcher(
                                     duration: const Duration(milliseconds: 200),
                                     child: _isSaved
@@ -572,13 +606,15 @@ class __JobCardState extends State<_JobCard>
                                             Icons.bookmark,
                                             key: ValueKey('saved'),
                                             color: Color(0xFF0118D8),
-                                            size: 24,
+                                            size: 20,
                                           )
                                         : Icon(
                                             Icons.bookmark_border,
                                             key: const ValueKey('unsaved'),
-                                            color: Colors.black.withOpacity(0.3),
-                                            size: 24,
+                                            color: Colors.black.withOpacity(
+                                              0.3,
+                                            ),
+                                            size: 20,
                                           ),
                                   ),
                                 ),
@@ -587,14 +623,14 @@ class __JobCardState extends State<_JobCard>
                           ],
                         ),
 
-                        const SizedBox(height: 20),
+                        SizedBox(height: cardHeight * 0.085),
 
-                        // Salary
+                        // Salary - ukuran font sama dengan halaman cari loker
                         Text(
-                          widget.lowongan.gaji,
-                          style: const TextStyle(
-                            color: Color(0xFF40403F),
-                            fontSize: 18,
+                          _formatSalaryValue(widget.lowongan.gaji),
+                          style: TextStyle(
+                            color: const Color(0xFF40403F),
+                            fontSize: screenWidth * 0.047,
                             fontFamily: 'Poppins',
                             fontWeight: FontWeight.w600,
                             height: 1.11,
@@ -602,17 +638,17 @@ class __JobCardState extends State<_JobCard>
                           ),
                         ),
 
-                        const SizedBox(height: 16),
+                        SizedBox(height: cardHeight * 0.068),
 
-                        // Location and job type tags
+                        // Tags - ukuran font sama dengan halaman cari loker
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 4,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: cardWidth * 0.035,
+                                vertical: cardHeight * 0.017,
                               ),
                               decoration: ShapeDecoration(
                                 color: const Color.fromARGB(255, 255, 255, 255),
@@ -628,9 +664,9 @@ class __JobCardState extends State<_JobCard>
                                 widget.lowongan.lokasi.length > 20
                                     ? '${widget.lowongan.lokasi.substring(0, 20)}...'
                                     : widget.lowongan.lokasi,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: Colors.black,
-                                  fontSize: 12,
+                                  fontSize: screenWidth * 0.032,
                                   fontFamily: 'SF Pro',
                                   fontWeight: FontWeight.w400,
                                   height: 1.43,
@@ -639,9 +675,9 @@ class __JobCardState extends State<_JobCard>
                               ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 4,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: cardWidth * 0.035,
+                                vertical: cardHeight * 0.017,
                               ),
                               decoration: ShapeDecoration(
                                 color: const Color.fromARGB(255, 255, 255, 255),
@@ -655,9 +691,9 @@ class __JobCardState extends State<_JobCard>
                               ),
                               child: Text(
                                 widget.lowongan.jenisPekerjaan,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: Colors.black,
-                                  fontSize: 12,
+                                  fontSize: screenWidth * 0.032,
                                   fontFamily: 'SF Pro',
                                   fontWeight: FontWeight.w400,
                                   height: 1.43,
@@ -667,12 +703,17 @@ class __JobCardState extends State<_JobCard>
                             ),
                             if (widget.lowongan.opsiKerjaRemote)
                               Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 4,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: cardWidth * 0.035,
+                                  vertical: cardHeight * 0.017,
                                 ),
                                 decoration: ShapeDecoration(
-                                  color: const Color.fromARGB(255, 255, 255, 255),
+                                  color: const Color.fromARGB(
+                                    255,
+                                    255,
+                                    255,
+                                    255,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     side: const BorderSide(
                                       width: 1,
@@ -696,17 +737,17 @@ class __JobCardState extends State<_JobCard>
                           ],
                         ),
 
-                        const SizedBox(height: 8),
+                        const Spacer(),
 
-                        // Posted time and number of applicants
+                        // Posted time and number of applicants - ukuran font sama dengan halaman cari loker
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
                               _formatTimeAgo(widget.lowongan.tanggalPosting),
-                              style: const TextStyle(
-                                color: Color(0xFF464E5E),
-                                fontSize: 12,
+                              style: TextStyle(
+                                color: const Color(0xFF464E5E),
+                                fontSize: screenWidth * 0.032,
                                 fontFamily: 'SF Pro',
                                 fontWeight: FontWeight.w400,
                                 height: 2,
@@ -714,9 +755,9 @@ class __JobCardState extends State<_JobCard>
                             ),
                             Text(
                               '${widget.lowongan.jumlahPelamar} pelamar',
-                              style: const TextStyle(
-                                color: Color(0xFF464E5E),
-                                fontSize: 12,
+                              style: TextStyle(
+                                color: const Color(0xFF464E5E),
+                                fontSize: screenWidth * 0.032,
                                 fontFamily: 'SF Pro',
                                 fontWeight: FontWeight.w400,
                                 height: 2,
@@ -736,7 +777,13 @@ class __JobCardState extends State<_JobCard>
     );
   }
 
-  // Method untuk format time ago
+  String _formatSalaryValue(String gaji) {
+    if (gaji.startsWith('Rp')) {
+      return gaji;
+    }
+    return 'Rp $gaji';
+  }
+
   String _formatTimeAgo(DateTime tanggalPosting) {
     final now = DateTime.now();
     final difference = now.difference(tanggalPosting);
