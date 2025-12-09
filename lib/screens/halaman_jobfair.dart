@@ -4,7 +4,7 @@ import 'package:jobfair/api/api_service.dart';
 import '/widget/header.dart';
 import 'package:jobfair/widget/bottom_navbar.dart';
 import 'package:jobfair/models/jobfair_model.dart';
-import 'package:jobfair/api/route.dart'; // Import route.dart
+import 'package:jobfair/api/route.dart';
 
 class HalamanJobfair extends StatefulWidget {
   const HalamanJobfair({super.key});
@@ -17,7 +17,6 @@ class _HalamanJobfairState extends State<HalamanJobfair> {
   final ApiService _apiService = ApiService();
   late Future<List<Jobfair>> _jobfairsFuture;
 
-  // Daftar background colors yang akan digunakan secara berurutan
   final List<String> backgroundImages = const [
     'assets/images/kuning.png',
     'assets/images/biru.png',
@@ -38,9 +37,7 @@ class _HalamanJobfairState extends State<HalamanJobfair> {
         children: [
           Column(
             children: [
-              // Fixed Header
               const HeaderWidget(showNotification: true, showFilter: false),
-              // Content area dengan scroll
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(
@@ -65,7 +62,6 @@ class _HalamanJobfairState extends State<HalamanJobfair> {
               ),
             ],
           ),
-          // Bottom Navigation Bar positioned at bottom
           const Positioned(
             left: 0,
             right: 0,
@@ -78,24 +74,29 @@ class _HalamanJobfairState extends State<HalamanJobfair> {
   }
 
   Widget _buildJobfairList(List<Jobfair> jobfairs) {
-    return Column(
-      children: [
-        ...jobfairs.asMap().entries.map((entry) {
-          final index = entry.key;
-          final jobfair = entry.value;
-          return Column(
-            children: [
-              _buildJobFairCard(
-                context: context,
-                jobfair: jobfair,
-                imagePath: backgroundImages[index % backgroundImages.length],
-              ),
-              if (index < jobfairs.length - 1) const SizedBox(height: 15),
-            ],
-          );
-        }),
-        const SizedBox(height: 100), // Extra space untuk bottom navbar
-      ],
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 500),
+        child: Column(
+          children: [
+            ...jobfairs.asMap().entries.map((entry) {
+              final index = entry.key;
+              final jobfair = entry.value;
+              return Column(
+                children: [
+                  _buildJobFairCard(
+                    context: context,
+                    jobfair: jobfair,
+                    imagePath: backgroundImages[index % backgroundImages.length],
+                  ),
+                  if (index < jobfairs.length - 1) const SizedBox(height: 15),
+                ],
+              );
+            }),
+            const SizedBox(height: 100),
+          ],
+        ),
+      ),
     );
   }
 
@@ -104,7 +105,13 @@ class _HalamanJobfairState extends State<HalamanJobfair> {
     required Jobfair jobfair,
     required String imagePath,
   }) {
-    // Convert days until event start
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallDevice = screenWidth < 360;
+    // Maksimal width 500px, atau full width - padding jika layar kecil
+    final maxCardWidth = screenWidth > 536 ? 500.0 : screenWidth - 36;
+    final cardWidth = maxCardWidth;
+    final cardHeight = isSmallDevice ? 280.0 : 300.0;
+    
     final now = DateTime.now();
     final diff = jobfair.tanggalMulaiAcara.difference(
       DateTime(now.year, now.month, now.day),
@@ -112,249 +119,255 @@ class _HalamanJobfairState extends State<HalamanJobfair> {
     final daysLeft = diff.inDays;
     final daysText = daysLeft > 0 ? '$daysLeft hari lagi' : 'Berlangsung';
 
-    return Padding(
-      padding: const EdgeInsets.only(right: 16),
-      child: GestureDetector(
-        onTap: () {
-          // Navigasi menggunakan route.dart
-          goTo(
-            context,
-            AppRoutes.jobfairDetail,
-            arguments: jobfair.id,
-          );
-        },
-        child: Container(
-          width: 338,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(34),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            jobfair.namaAcara,
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontSize: 16,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w500,
-                            ),
-                            overflow: TextOverflow.ellipsis,
+    return GestureDetector(
+      onTap: () {
+        goTo(
+          context,
+          AppRoutes.jobfairDetail,
+          arguments: jobfair.id,
+        );
+      },
+      child: Container(
+        width: cardWidth,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(isSmallDevice ? 28 : 34),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.all(isSmallDevice ? 18 : 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          jobfair.namaAcara,
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: isSmallDevice ? 14 : 16,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        daysText,
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: isSmallDevice ? 11 : 12,
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    jobfair.acaraBkk ?? 'Politeknik Negeri Batam',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: isSmallDevice ? 12 : 13,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w400,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(isSmallDevice ? 28 : 34),
+                    bottomRight: Radius.circular(isSmallDevice ? 28 : 34),
+                  ),
+                  child: Container(
+                    width: cardWidth,
+                    height: isSmallDevice ? 200 : 236,
+                    color: const Color(0xFFE8F0FE),
+                    child: Image.asset(
+                      imagePath,
+                      fit: BoxFit.cover,
+                      cacheWidth: 676,
+                      cacheHeight: 472,
+                    ),
+                  ),
+                ),
+                Container(
+                  width: cardWidth,
+                  height: isSmallDevice ? 200 : 236,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.1),
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(isSmallDevice ? 28 : 34),
+                      bottomRight: Radius.circular(isSmallDevice ? 28 : 34),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: isSmallDevice ? 16 : 24,
+                  top: isSmallDevice ? 16 : 24,
+                  right: isSmallDevice ? 16 : 24,
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isSmallDevice ? 12 : 16,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(45),
+                          border: Border.all(
+                            color: const Color(0xFFF3F6F9).withOpacity(0.4),
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          daysText,
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontSize: 12,
+                        child: Text(
+                          jobfair.jobsText,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: isSmallDevice ? 12 : 14,
                             fontFamily: 'Poppins',
                             fontWeight: FontWeight.w400,
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      jobfair.acaraBkk ?? 'Politeknik Negeri Batam',
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 13,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w400,
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(34),
-                      bottomRight: Radius.circular(34),
-                    ),
-                    child: Container(
-                      width: 338,
-                      height: 236,
-                      color: const Color(0xFFE8F0FE),
-                      child: Image.asset(
-                        imagePath,
-                        fit: BoxFit.cover,
-                        cacheWidth: 676,
-                        cacheHeight: 472,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    width: 338,
-                    height: 236,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.1),
-                      borderRadius: const BorderRadius.only(
-                        bottomLeft: Radius.circular(34),
-                        bottomRight: Radius.circular(34),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    left: 24,
-                    top: 24,
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(45),
-                            border: Border.all(
-                              color: const Color(0xFFF3F6F9).withOpacity(0.4),
-                            ),
-                          ),
-                          child: Text(
-                            jobfair.jobsText,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w400,
-                            ),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isSmallDevice ? 12 : 16,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(45),
+                          border: Border.all(
+                            color: const Color(0xFFF3F6F9).withOpacity(0.4),
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(45),
-                            border: Border.all(
-                              color: const Color(0xFFF3F6F9).withOpacity(0.4),
-                            ),
-                          ),
-                          child: Text(
-                            jobfair.companiesText,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Positioned(
-                    left: 24,
-                    top: 70,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Baris Lokasi
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.location_on,
-                              color: Colors.white,
-                              size: 14,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              jobfair.acaraBkk ?? 'Lokasi tidak tersedia',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-
-                        // Baris Tanggal Acara
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.calendar_today,
-                              color: Colors.white,
-                              size: 12,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              jobfair.formattedDateRange,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-
-                        // Baris Periode Pendaftaran
-                        Text(
-                          'Pendaftaran : ${DateFormat('dd MMM yyyy').format(jobfair.tanggalAwalPendaftaranAcara)} - ${DateFormat('dd MMM yyyy').format(jobfair.tanggalAkhirPendaftaranAcara)}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  Positioned(
-                    left: 24,
-                    right: 24,
-                    bottom: 14,
-                    child: Container(
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(45),
-                        border: Border.all(
-                          color: const Color(0xFFF3F6F9).withOpacity(0.4),
-                        ),
-                      ),
-                      child: const Center(
                         child: Text(
-                          'Lihat Detail',
+                          jobfair.companiesText,
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 13,
+                            fontSize: isSmallDevice ? 12 : 14,
                             fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.w400,
                           ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  left: isSmallDevice ? 16 : 24,
+                  top: isSmallDevice ? 58 : 70,
+                  right: isSmallDevice ? 16 : 24,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on,
+                            color: Colors.white,
+                            size: isSmallDevice ? 12 : 14,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              jobfair.acaraBkk ?? 'Lokasi tidak tersedia',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: isSmallDevice ? 12 : 14,
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w400,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: isSmallDevice ? 6 : 8),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_today,
+                            color: Colors.white,
+                            size: isSmallDevice ? 10 : 12,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              jobfair.formattedDateRange,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: isSmallDevice ? 12 : 14,
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w400,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: isSmallDevice ? 6 : 8),
+                      Text(
+                        'Pendaftaran : ${DateFormat('dd MMM yyyy').format(jobfair.tanggalAwalPendaftaranAcara)} - ${DateFormat('dd MMM yyyy').format(jobfair.tanggalAkhirPendaftaranAcara)}',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: isSmallDevice ? 11 : 14,
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  left: isSmallDevice ? 16 : 24,
+                  right: isSmallDevice ? 16 : 24,
+                  bottom: 14,
+                  child: Container(
+                    height: isSmallDevice ? 36 : 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(45),
+                      border: Border.all(
+                        color: const Color(0xFFF3F6F9).withOpacity(0.4),
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'Lihat Detail',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: isSmallDevice ? 12 : 13,
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
                   ),
-                ],
-              ),
-            ],
-          ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

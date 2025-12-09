@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui' as ui;
 import 'package:intl/intl.dart';
 import 'package:jobfair/api/api_service.dart';
 import 'package:jobfair/models/company_model.dart';
@@ -214,7 +215,6 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
     }
   }
 
-  // Method untuk show job detail dari LokerRekomendasi
   // Method untuk show job detail dari LokerRekomendasi
   Future<void> _showRecommendedJobDetail(LokerRekomendasi lowongan) async {
     try {
@@ -444,7 +444,16 @@ class __AnimatedHeaderState extends State<_AnimatedHeader> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final isSmallDevice = screenWidth < 360;
+    final isVerySmallDevice = screenWidth < 320;
+    
     return Container(
+      // Tambahkan height constraint agar tidak overflow
+      constraints: BoxConstraints(
+        minHeight: widget.showSearchOnly ? 80 : 180,
+      ),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment(1.00, 0.30),
@@ -466,145 +475,165 @@ class __AnimatedHeaderState extends State<_AnimatedHeader> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: widget.showSearchOnly ? 12 : 16,
-            bottom: 16,
+            left: isVerySmallDevice ? 12 : (isSmallDevice ? 14 : 16),
+            right: isVerySmallDevice ? 12 : (isSmallDevice ? 14 : 16),
+            top: widget.showSearchOnly 
+                ? (isVerySmallDevice ? 10 : (isSmallDevice ? 12 : 14))
+                : (isVerySmallDevice ? 16 : (isSmallDevice ? 18 : 24)),
+            bottom: isVerySmallDevice ? 12 : (isSmallDevice ? 14 : 20),
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Visibility(
-                visible: !widget.showSearchOnly,
-                child: const Padding(
-                  padding: EdgeInsets.only(bottom: 24),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
+              if (!widget.showSearchOnly) ...[
+                Flexible(
+                  child: Container(
+                    margin: EdgeInsets.only(
+                      bottom: isVerySmallDevice ? 12 : (isSmallDevice ? 16 : 20),
+                    ),
                     child: Text(
                       'Hai Muhammad! Aku siap bantu cari pekerjaan terbaik buat kamu.',
                       style: TextStyle(
-                        color: Color(0xFFFFF8F8),
-                        fontSize: 26,
+                        color: const Color(0xFFFFF8F8),
+                        fontSize: isVerySmallDevice ? 16 : (isSmallDevice ? 18 : 22),
                         fontFamily: 'Poppins',
                         fontWeight: FontWeight.w600,
-                        height: 1.15,
+                        height: 1.3,
                       ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ),
-              ),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(50),
-                        border: _isSearchFocused
-                            ? Border.all(color: Colors.white, width: 1.0)
-                            : null,
-                      ),
-                      child: Row(
-                        children: [
-                          const SizedBox(width: 20),
-                          const Icon(
-                            Icons.search,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: TextField(
-                              controller: widget.searchController,
-                              focusNode: widget.searchFocusNode,
-                              cursorColor: Colors.white,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w500,
-                              ),
-                              decoration: const InputDecoration(
-                                border: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                contentPadding: EdgeInsets.zero,
-                                isDense: true,
-                                hintText: 'Cari lowongan kerja...',
-                                hintStyle: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 14,
-                                  fontFamily: 'Poppins',
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              onSubmitted: widget.onSearchSubmitted,
-                            ),
-                          ),
-                          if (widget.searchController.text.isNotEmpty)
-                            IconButton(
-                              icon: const Icon(
-                                Icons.close,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                              onPressed: _clearSearch,
-                            ),
-                          const SizedBox(width: 12),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-
-                  Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          goTo(context, AppRoutes.bookmark);
-                        },
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.bookmark_border,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      GestureDetector(
-                        onTap: () {
-                          goTo(context, AppRoutes.notifikasi);
-                        },
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.notifications_outlined,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+              ],
+              
+              // Search bar dan icons
+              _buildSearchRow(
+                isVerySmallDevice: isVerySmallDevice,
+                isSmallDevice: isSmallDevice,
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchRow({
+    required bool isVerySmallDevice,
+    required bool isSmallDevice,
+  }) {
+    final iconButtonSize = isVerySmallDevice ? 36.0 : (isSmallDevice ? 38.0 : 42.0);
+    final iconSize = isVerySmallDevice ? 18.0 : (isSmallDevice ? 19.0 : 20.0);
+    final spacing = isVerySmallDevice ? 6.0 : (isSmallDevice ? 8.0 : 10.0);
+    
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            height: isVerySmallDevice ? 38 : (isSmallDevice ? 40 : 44),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(50),
+              border: _isSearchFocused
+                  ? Border.all(color: Colors.white, width: 1.0)
+                  : null,
+            ),
+            child: Row(
+              children: [
+                SizedBox(width: isVerySmallDevice ? 10 : (isSmallDevice ? 12 : 14)),
+                Icon(
+                  Icons.search,
+                  color: Colors.white,
+                  size: iconSize,
+                ),
+                SizedBox(width: isVerySmallDevice ? 6 : (isSmallDevice ? 8 : 10)),
+                Expanded(
+                  child: TextField(
+                    controller: widget.searchController,
+                    focusNode: widget.searchFocusNode,
+                    cursorColor: Colors.white,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: isVerySmallDevice ? 12 : (isSmallDevice ? 13 : 14),
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w500,
+                    ),
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      contentPadding: EdgeInsets.zero,
+                      isDense: true,
+                      hintText: 'Cari lowongan kerja...',
+                      hintStyle: TextStyle(
+                        color: Colors.white70,
+                        fontSize: isVerySmallDevice ? 12 : (isSmallDevice ? 13 : 14),
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    onSubmitted: widget.onSearchSubmitted,
+                  ),
+                ),
+                if (widget.searchController.text.isNotEmpty)
+                  IconButton(
+                    icon: Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: isVerySmallDevice ? 16 : (isSmallDevice ? 17 : 18),
+                    ),
+                    onPressed: _clearSearch,
+                    padding: EdgeInsets.zero,
+                    constraints: BoxConstraints(
+                      minWidth: 32,
+                      minHeight: 32,
+                    ),
+                  )
+                else
+                  SizedBox(width: isVerySmallDevice ? 6 : (isSmallDevice ? 8 : 10)),
+              ],
+            ),
+          ),
+        ),
+        SizedBox(width: spacing),
+        _buildIconButton(
+          icon: Icons.bookmark_border,
+          size: iconButtonSize,
+          iconSize: iconSize,
+          onTap: () => goTo(context, AppRoutes.bookmark),
+        ),
+        SizedBox(width: spacing),
+        _buildIconButton(
+          icon: Icons.notifications_outlined,
+          size: iconButtonSize,
+          iconSize: iconSize,
+          onTap: () => goTo(context, AppRoutes.notifikasi),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIconButton({
+    required IconData icon,
+    required double size,
+    required double iconSize,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.1),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          icon,
+          color: Colors.white,
+          size: iconSize,
         ),
       ),
     );
@@ -1245,138 +1274,143 @@ class _CocokUntukKamuCardSkeleton extends StatelessWidget {
                 ),
               ],
             ),
-            child: Padding(
-              padding: EdgeInsets.all(cardWidth * 0.058),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: cardHeight * 0.119),
+            child: SingleChildScrollView(
+              physics: const NeverScrollableScrollPhysics(),
+              child: Padding(
+                padding: EdgeInsets.all(cardWidth * 0.058),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: cardHeight * 0.05),
 
-                  // Badge skeleton
-                  Container(
-                    width: cardWidth * 0.4,
-                    height: cardHeight * 0.119,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(cardWidth * 0.102),
-                        bottomRight: Radius.circular(cardWidth * 0.058),
+                    // Badge skeleton
+                    Container(
+                      width: cardWidth * 0.4,
+                      height: cardHeight * 0.08,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(cardWidth * 0.102),
+                          bottomRight: Radius.circular(cardWidth * 0.058),
+                        ),
                       ),
                     ),
-                  ),
 
-                  SizedBox(height: cardHeight * 0.085),
+                    SizedBox(height: cardHeight * 0.045),
 
-                  // Company info skeleton
-                  Row(
-                    children: [
-                      Container(
-                        width: cardWidth * 0.117,
-                        height: cardWidth * 0.105,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(8),
+                    // Company info skeleton
+                    Row(
+                      children: [
+                        Container(
+                          width: cardWidth * 0.117,
+                          height: cardWidth * 0.105,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
-                      ),
-                      SizedBox(width: cardWidth * 0.058),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              width: 120,
-                              height: 16,
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade200,
-                                borderRadius: BorderRadius.circular(4),
+                        SizedBox(width: cardWidth * 0.058),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: cardWidth * 0.45,
+                                height: 13,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade200,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
                               ),
-                            ),
-                            SizedBox(height: 4),
-                            Container(
-                              width: 80,
-                              height: 12,
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade200,
-                                borderRadius: BorderRadius.circular(4),
+                              const SizedBox(height: 4),
+                              Container(
+                                width: cardWidth * 0.3,
+                                height: 11,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade200,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      Container(
-                        width: 24,
-                        height: 24,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          shape: BoxShape.circle,
+                        Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            shape: BoxShape.circle,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: cardHeight * 0.085),
-
-                  // Salary skeleton
-                  Container(
-                    width: 100,
-                    height: 18,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(4),
+                      ],
                     ),
-                  ),
 
-                  SizedBox(height: cardHeight * 0.068),
+                    SizedBox(height: cardHeight * 0.045),
 
-                  // Tags skeleton
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      Container(
-                        width: 80,
-                        height: 24,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+                    // Salary skeleton
+                    Container(
+                      width: cardWidth * 0.35,
+                      height: 14,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(4),
                       ),
-                      Container(
-                        width: 50,
-                        height: 24,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
 
-                  const Spacer(),
+                    SizedBox(height: cardHeight * 0.04),
 
-                  // Footer skeleton
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        width: 60,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(4),
+                    // Tags skeleton
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        Container(
+                          width: cardWidth * 0.25,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
-                      ),
-                      Container(
-                        width: 50,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(4),
+                        Container(
+                          width: cardWidth * 0.18,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+
+                    SizedBox(height: cardHeight * 0.06),
+
+                    // Footer skeleton
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          width: cardWidth * 0.23,
+                          height: 11,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        Container(
+                          width: cardWidth * 0.18,
+                          height: 11,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -1709,71 +1743,77 @@ class _JobfairCard extends StatelessWidget {
             Positioned(
               left: contentPadding,
               right: contentPadding,
-              top: headerHeight + 114,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.location_on,
-                        color: Colors.white,
-                        size: screenWidth * 0.04,
-                      ),
-                      SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          jobfair.acaraBkk ?? 'Lokasi tidak tersedia',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: screenWidth * 0.036,
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w400,
-                            height: 1.29,
+              top: headerHeight + 100,
+              bottom: 66,
+              child: SingleChildScrollView(
+                physics: const NeverScrollableScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on,
+                          color: Colors.white,
+                          size: screenWidth * 0.04,
+                        ),
+                        SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            jobfair.acaraBkk ?? 'Lokasi tidak tersedia',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: screenWidth * 0.036,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w400,
+                              height: 1.29,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.calendar_today,
-                        color: Colors.white,
-                        size: screenWidth * 0.035,
-                      ),
-                      SizedBox(width: 6),
-                      Text(
-                        jobfair.formattedDateRange,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: screenWidth * 0.036,
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w400,
-                          height: 1.29,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Pendaftaran : ${DateFormat('dd MMM yyyy').format(jobfair.tanggalAwalPendaftaranAcara)} - ${DateFormat('dd MMM yyyy').format(jobfair.tanggalAkhirPendaftaranAcara)}',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: screenWidth * 0.036,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w500,
-                      height: 1.71,
+                      ],
                     ),
-                  ),
-                ],
+                    SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today,
+                          color: Colors.white,
+                          size: screenWidth * 0.035,
+                        ),
+                        SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            jobfair.formattedDateRange,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: screenWidth * 0.036,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w400,
+                              height: 1.29,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 6),
+                    Text(
+                      'Pendaftaran : ${DateFormat('dd MMM yyyy').format(jobfair.tanggalAwalPendaftaranAcara)} - ${DateFormat('dd MMM yyyy').format(jobfair.tanggalAkhirPendaftaranAcara)}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: screenWidth * 0.034,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w500,
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
 
