@@ -2,13 +2,13 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:jobfair/api/api_client.dart';
-import 'package:jobfair/models/change_password_model.dart';
 import 'package:jobfair/models/company_model.dart';
 import 'package:jobfair/models/jobfair_detail_model.dart';
 import 'package:jobfair/models/jobfair_model.dart';
 import 'package:jobfair/models/lamar_jobfair_model.dart';
 import 'package:jobfair/models/lamar_loker.dart';
 import 'package:jobfair/models/notification_model.dart';
+import 'package:jobfair/models/profile_completion_model.dart';
 import 'package:jobfair/models/saved_job_model.dart';
 import 'package:jobfair/models/talent_award_model.dart';
 import 'package:jobfair/models/talent_certification_model.dart';
@@ -534,6 +534,69 @@ class ApiService {
 
 
 
+
+
+
+
+  // api_service.dart - tambahkan method ini di class ApiService
+  Future<ProfileCompletionModel?> getProfileCompletion() async {
+    final prefs = await SharedPreferences.getInstance();
+    final talentId = prefs.getString('talentId');
+
+    if (talentId == null) {
+      print("❌ TalentId tidak ditemukan untuk profile completion");
+      return null;
+    }
+
+    try {
+      final response = await _dio.get(
+        ApiConfig.completeProfil(talentId),
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      print("✅ Profile Completion Status: ${response.statusCode}");
+      print("📊 Profile Completion Data: ${response.data}");
+
+      if (response.statusCode == 200) {
+        // Debug print untuk melihat tipe data
+        print("📋 Percentage type: ${response.data['percentage'].runtimeType}");
+        print("📋 Percentage value: ${response.data['percentage']}");
+        
+        // Cache data untuk digunakan nanti
+        prefs.setString(
+          'cachedProfileCompletion',
+          jsonEncode(response.data),
+        );
+        
+        // Simpan sebagai double
+        final percentage = response.data['percentage'];
+        if (percentage is int) {
+          prefs.setDouble('profilePercentage', percentage.toDouble());
+        } else {
+          prefs.setDouble('profilePercentage', (percentage as num).toDouble());
+        }
+        
+        return ProfileCompletionModel.fromJson(response.data);
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        print("❌ Error response: ${e.response?.statusCode}");
+        print("❌ Error data: ${e.response?.data}");
+      } else {
+        print("❌ Error message: ${e.message}");
+      }
+    } catch (e) {
+      print("❌ Unexpected error in profile completion: $e");
+      print("❌ Error type: ${e.runtimeType}");
+      print("❌ Stack trace: ${e.toString()}");
+    }
+
+    return null;
+  }
 
 
 

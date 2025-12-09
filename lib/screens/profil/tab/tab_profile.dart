@@ -27,11 +27,64 @@ class _TabProfilState extends State<TabProfil> {
   bool _isLoading = true;
   String? _editingField;
   bool _isSaving = false;
+  
+  // Data profile completion
+  double _profilePercentage = 0.0;
+  bool _isLoadingPercentage = false;
+
+  // Refresh controller untuk data diri
+  final RefreshController _refreshController = RefreshController();
 
   @override
   void initState() {
     super.initState();
     _loadProfil();
+    _loadProfileCompletion();
+  }
+
+  // Method untuk load profile completion dari API
+  Future<void> _loadProfileCompletion() async {
+    if (!mounted) return;
+    
+    setState(() {
+      _isLoadingPercentage = true;
+    });
+
+    try {
+      final completion = await ApiService().getProfileCompletion();
+      
+      if (mounted) {
+        setState(() {
+          if (completion != null) {
+            _profilePercentage = completion.percentage;
+          } else {
+            // Fallback ke data dari shared preferences jika API gagal
+            _loadCachedPercentage();
+          }
+          _isLoadingPercentage = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _loadCachedPercentage();
+          _isLoadingPercentage = false;
+        });
+      }
+      debugPrint('Gagal memuat profile completion: $e');
+    }
+  }
+
+  // Method untuk load cached percentage dari SharedPreferences
+  Future<void> _loadCachedPercentage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final cachedPercentage = prefs.getDouble('profilePercentage');
+    
+    if (mounted) {
+      setState(() {
+        _profilePercentage = cachedPercentage ?? 0.0;
+      });
+    }
   }
 
   Future<void> _pickAndUploadImage() async {
@@ -46,7 +99,7 @@ class _TabProfilState extends State<TabProfil> {
 
       if (image == null) return;
 
-      if (!mounted) return; // ✅ TAMBAHKAN INI
+      if (!mounted) return;
 
       setState(() {
         _selectedImage = File(image.path);
@@ -58,7 +111,6 @@ class _TabProfilState extends State<TabProfil> {
 
       if (talentId == null) {
         if (mounted) {
-          // ✅ TAMBAHKAN INI
           _showSnackBar('Error: ID talent tidak ditemukan', isError: true);
           setState(() {
             _isUploadingImage = false;
@@ -83,7 +135,6 @@ class _TabProfilState extends State<TabProfil> {
       );
 
       if (mounted) {
-        // ✅ TAMBAHKAN INI
         setState(() {
           _isUploadingImage = false;
         });
@@ -91,6 +142,7 @@ class _TabProfilState extends State<TabProfil> {
         if (result['success'] == true) {
           _showSnackBar('Foto profil berhasil diperbarui');
           await _loadProfil();
+          await _loadProfileCompletion(); // Refresh percentage setelah upload
         } else {
           _showSnackBar(
             result['message'] ?? 'Gagal memperbarui foto profil',
@@ -100,7 +152,6 @@ class _TabProfilState extends State<TabProfil> {
       }
     } catch (e) {
       if (mounted) {
-        // ✅ TAMBAHKAN INI
         setState(() {
           _isUploadingImage = false;
         });
@@ -114,7 +165,6 @@ class _TabProfilState extends State<TabProfil> {
     try {
       final profil = await ApiService().getProfilDataDiri();
       if (mounted) {
-        // ✅ SUDAH BENAR
         setState(() {
           _profil = profil;
           _isLoading = false;
@@ -122,7 +172,6 @@ class _TabProfilState extends State<TabProfil> {
       }
     } catch (e) {
       if (mounted) {
-        // ✅ SUDAH BENAR
         setState(() {
           _isLoading = false;
         });
@@ -131,10 +180,22 @@ class _TabProfilState extends State<TabProfil> {
     }
   }
 
+  // Method untuk refresh data diri
+  Future<void> _refreshDataDiri() async {
+    try {
+      await Future.wait([
+        _loadProfil(),
+        _loadProfileCompletion(),
+      ]);
+    } catch (e) {
+      debugPrint('Error refreshing data diri: $e');
+    }
+  }
+
   Future<void> _saveField() async {
     if (_profil == null || _isSaving) return;
 
-    if (!mounted) return; // ✅ TAMBAHKAN INI
+    if (!mounted) return;
 
     setState(() {
       _isSaving = true;
@@ -145,7 +206,6 @@ class _TabProfilState extends State<TabProfil> {
 
     if (talentId == null) {
       if (mounted) {
-        // ✅ TAMBAHKAN INI
         _showSnackBar('Error: ID talent tidak ditemukan', isError: true);
         setState(() {
           _isSaving = false;
@@ -179,7 +239,6 @@ class _TabProfilState extends State<TabProfil> {
     );
 
     if (mounted) {
-      // ✅ TAMBAHKAN INI
       setState(() {
         _isSaving = false;
       });
@@ -187,6 +246,7 @@ class _TabProfilState extends State<TabProfil> {
       if (result['success'] == true) {
         _showSnackBar('Profil berhasil diperbarui');
         await _loadProfil();
+        await _loadProfileCompletion(); // Refresh percentage setelah update
       } else {
         _showSnackBar(
           result['message'] ?? 'Gagal memperbarui profil',
@@ -197,7 +257,7 @@ class _TabProfilState extends State<TabProfil> {
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
-    if (!mounted) return; // ✅ SUDAH BENAR
+    if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -283,7 +343,7 @@ class _TabProfilState extends State<TabProfil> {
 
     switch (_selectedSubTab) {
       case 0:
-        return _buildDataDiriContent();
+        return _buildDataDiriContentWithRefresh();
       case 1:
         return const TabMediaSosial();
       case 2:
@@ -291,48 +351,25 @@ class _TabProfilState extends State<TabProfil> {
       case 3:
         return const TabReferensi();
       default:
-        return _buildDataDiriContent();
+        return _buildDataDiriContentWithRefresh();
     }
   }
 
-  Widget _buildSubTab(String text, int index) {
-    final isSelected = _selectedSubTab == index;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedSubTab = index;
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.black : const Color(0xFFB8B8B8),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          text,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontFamily: 'SF Pro',
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-          ),
-        ),
-      ),
+  // Data Diri dengan Refresh Indicator
+  Widget _buildDataDiriContentWithRefresh() {
+    return RefreshIndicator(
+      onRefresh: _refreshDataDiri,
+      color: const Color(0xFF1B56FD),
+      child: _buildDataDiriScrollContent(),
     );
   }
 
-  String _formatCurrency(int amount) {
-    return amount.toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]}.',
-    );
-  }
-
-  Widget _buildDataDiriContent() {
+  // Konten scrollable untuk Data Diri
+  Widget _buildDataDiriScrollContent() {
     final profil = _profil!;
 
     return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 21, vertical: 20),
       child: Column(
         children: [
@@ -354,8 +391,8 @@ class _TabProfilState extends State<TabProfil> {
                         children: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: const [
-                              Text(
+                            children: [
+                              const Text(
                                 'Kelengkapan Profil',
                                 style: TextStyle(
                                   color: Color(0xFF515151),
@@ -364,37 +401,55 @@ class _TabProfilState extends State<TabProfil> {
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
-                              Text(
-                                '24 %',
-                                style: TextStyle(
-                                  color: Color(0xFF515151),
-                                  fontSize: 12,
-                                  fontFamily: 'Poppins',
-                                  fontWeight: FontWeight.w300,
-                                ),
-                              ),
+                              _isLoadingPercentage
+                                  ? SizedBox(
+                                      width: 40,
+                                      height: 20,
+                                      child: Center(
+                                        child: SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: const Color(0xFF515151),
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                  : Text(
+                                      '${_profilePercentage.toStringAsFixed(0)} %',
+                                      style: const TextStyle(
+                                        color: Color(0xFF515151),
+                                        fontSize: 12,
+                                        fontFamily: 'Poppins',
+                                        fontWeight: FontWeight.w300,
+                                      ),
+                                    ),
                             ],
                           ),
                           const SizedBox(height: 8),
-                          Container(
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF5F5F5),
-                              borderRadius: BorderRadius.circular(50),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 71,
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [Colors.white, Color(0xFF0727E1)],
-                                    ),
-                                    borderRadius: BorderRadius.circular(50),
-                                  ),
+                          Stack(
+                            children: [
+                              Container(
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF5F5F5),
+                                  borderRadius: BorderRadius.circular(50),
                                 ),
-                              ],
-                            ),
+                              ),
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 500),
+                                curve: Curves.easeInOut,
+                                height: 8,
+                                width: (MediaQuery.of(context).size.width - 86) * (_profilePercentage / 100),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [Colors.white, Color(0xFF0727E1)],
+                                  ),
+                                  borderRadius: BorderRadius.circular(50),
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 8),
                           Row(
@@ -477,9 +532,8 @@ class _TabProfilState extends State<TabProfil> {
               });
               _saveField();
             },
-            maxLines: 1, // ← ubah ini
+            maxLines: 1,
           ),
-
           _buildInlineEditableField(
             Icons.phone_outlined,
             'Nomor Whatsapp',
@@ -547,9 +601,44 @@ class _TabProfilState extends State<TabProfil> {
             profil.preferensiPerjalananDinas ?? 'Tidak',
             isLast: true,
           ),
-          const SizedBox(height: 100),
+          // Tambahkan SizedBox untuk memberikan ruang agar refresh indicator bisa ditarik
+          const SizedBox(height: 80),
         ],
       ),
+    );
+  }
+
+  Widget _buildSubTab(String text, int index) {
+    final isSelected = _selectedSubTab == index;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedSubTab = index;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.black : const Color(0xFFB8B8B8),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontFamily: 'SF Pro',
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatCurrency(int amount) {
+    return amount.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]}.',
     );
   }
 
@@ -591,11 +680,11 @@ class _TabProfilState extends State<TabProfil> {
                   topRight: Radius.circular(20),
                 )
               : isLast
-              ? const BorderRadius.only(
-                  bottomLeft: Radius.circular(20),
-                  bottomRight: Radius.circular(20),
-                )
-              : BorderRadius.zero,
+                  ? const BorderRadius.only(
+                      bottomLeft: Radius.circular(20),
+                      bottomRight: Radius.circular(20),
+                    )
+                  : BorderRadius.zero,
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -623,24 +712,22 @@ class _TabProfilState extends State<TabProfil> {
                     TextField(
                       autofocus: true,
                       maxLines: maxLines,
-                      controller:
-                          TextEditingController(
-                              text: isNumeric
-                                  ? currentValue.replaceAll(
-                                      RegExp(r'[^0-9]'),
-                                      '',
-                                    )
-                                  : currentValue,
-                            )
-                            ..selection = TextSelection.fromPosition(
-                              TextPosition(
-                                offset: isNumeric
-                                    ? currentValue
-                                          .replaceAll(RegExp(r'[^0-9]'), '')
-                                          .length
-                                    : currentValue.length,
-                              ),
-                            ),
+                      controller: TextEditingController(
+                          text: isNumeric
+                              ? currentValue.replaceAll(
+                                  RegExp(r'[^0-9]'),
+                                  '',
+                                )
+                              : currentValue)
+                        ..selection = TextSelection.fromPosition(
+                          TextPosition(
+                            offset: isNumeric
+                                ? currentValue
+                                    .replaceAll(RegExp(r'[^0-9]'), '')
+                                    .length
+                                : currentValue.length,
+                          ),
+                        ),
                       style: const TextStyle(
                         color: Color(0xFF515151),
                         fontSize: 14,
@@ -655,10 +742,10 @@ class _TabProfilState extends State<TabProfil> {
                       keyboardType: isPhoneNumber
                           ? TextInputType.phone
                           : isNumeric
-                          ? TextInputType.number
-                          : maxLines > 1
-                          ? TextInputType.multiline
-                          : TextInputType.text,
+                              ? TextInputType.number
+                              : maxLines > 1
+                                  ? TextInputType.multiline
+                                  : TextInputType.text,
                       inputFormatters: isPhoneNumber
                           ? [
                               FilteringTextInputFormatter.digitsOnly,
@@ -666,11 +753,11 @@ class _TabProfilState extends State<TabProfil> {
                               _PhoneNumberFormatter(),
                             ]
                           : isNumeric
-                          ? [
-                              FilteringTextInputFormatter.digitsOnly,
-                              _CurrencyInputFormatter(),
-                            ]
-                          : null,
+                              ? [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                  _CurrencyInputFormatter(),
+                                ]
+                              : null,
                       onSubmitted: (value) {
                         onSave(value);
                         setState(() {
@@ -723,19 +810,15 @@ class _TabProfilState extends State<TabProfil> {
     final isEditing = _editingField == 'jamKerja';
 
     // Format tampilan (hapus :00 di belakang kalau ada)
-    String displayJamMulai = jamMulai.length > 5
-        ? jamMulai.substring(0, 5)
-        : jamMulai;
-    String displayJamSelesai = jamSelesai.length > 5
-        ? jamSelesai.substring(0, 5)
-        : jamSelesai;
+    String displayJamMulai =
+        jamMulai.length > 5 ? jamMulai.substring(0, 5) : jamMulai;
+    String displayJamSelesai =
+        jamSelesai.length > 5 ? jamSelesai.substring(0, 5) : jamSelesai;
 
-    final TextEditingController controllerMulai = TextEditingController(
-      text: displayJamMulai,
-    );
-    final TextEditingController controllerSelesai = TextEditingController(
-      text: displayJamSelesai,
-    );
+    final TextEditingController controllerMulai =
+        TextEditingController(text: displayJamMulai);
+    final TextEditingController controllerSelesai =
+        TextEditingController(text: displayJamSelesai);
 
     return GestureDetector(
       onTap: () {
@@ -1087,16 +1170,15 @@ class _TabProfilState extends State<TabProfil> {
                             fit: BoxFit.cover,
                           )
                         : (avatarUrl != null && avatarUrl.isNotEmpty
-                              ? DecorationImage(
-                                  image: NetworkImage(
-                                    '${ApiConfig.baseUrlFoto}/$avatarUrl',
-                                  ),
-                                  fit: BoxFit.cover,
-                                )
-                              : null),
+                            ? DecorationImage(
+                                image: NetworkImage(
+                                  '${ApiConfig.baseUrlFoto}/$avatarUrl',
+                                ),
+                                fit: BoxFit.cover,
+                              )
+                            : null),
                   ),
-                  child:
-                      (avatarUrl == null || avatarUrl.isEmpty) &&
+                  child: (avatarUrl == null || avatarUrl.isEmpty) &&
                           _selectedImage == null
                       ? const Icon(
                           Icons.person,
@@ -1157,11 +1239,11 @@ class _TabProfilState extends State<TabProfil> {
                 topRight: Radius.circular(20),
               )
             : isLast
-            ? const BorderRadius.only(
-                bottomLeft: Radius.circular(20),
-                bottomRight: Radius.circular(20),
-              )
-            : BorderRadius.zero,
+                ? const BorderRadius.only(
+                    bottomLeft: Radius.circular(20),
+                    bottomRight: Radius.circular(20),
+                  )
+                : BorderRadius.zero,
       ),
       child: Row(
         children: [
@@ -1310,4 +1392,10 @@ class _TimeInputFormatter extends TextInputFormatter {
       selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
+}
+
+// Tambahkan kelas RefreshController untuk simulasi (jika tidak menggunakan package)
+class RefreshController {
+  void refreshCompleted() {}
+  void refreshFailed() {}
 }

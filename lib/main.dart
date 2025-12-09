@@ -121,12 +121,9 @@ class JobFairApp extends StatelessWidget {
         fontFamily: 'Poppins',
       ),
       
-      // ✅ GANTI dari 'home' ke 'initialRoute' dan 'onGenerateRoute'
-      initialRoute: AppRoutes.halaman1, // Atau AppRoutes.beranda jika mau langsung ke beranda
+      initialRoute: AppRoutes.halaman1, 
       onGenerateRoute: AppRoutes.generateRoute,
       
-      // ❌ HAPUS atau COMMENT ini:
-      // home: const Halaman1(),
     );
   }
 }

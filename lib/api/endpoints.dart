@@ -1,7 +1,7 @@
 class ApiConfig {
   // Ganti IP dengan IP komputer server kamu
-  // static const String baseUrl = "http://10.136.136.147:5035/api";
-  // static const String baseUrlFoto = "http://10.136.136.147:5035/";
+  // static const String baseUrl = "http://10.136.152.74:5035/api";
+  // static const String baseUrlFoto = "http://10.136.152.74:5035/";
   static const String baseUrl = "https://trpl306-001-site1.ntempurl.com/api";
   static const String baseUrlFoto = "https://trpl306-001-site1.ntempurl.com/";
 
@@ -36,6 +36,11 @@ class ApiConfig {
 
   // ---------------------------TALENTS PROFIL---------------------------TALENTS PROFIL---------------------------TALENTS PROFIL 
   
+  static String completeProfil(String talentId) => "$baseUrl/Talents/profile-completion-percentage/$talentId";   
+
+
+
+
   // ------------------------------------------------------------------------------------------DATA DIRI
   static String profilDataDiri(String id) => "$baseUrl/Talents/profil/data_diri/$id";   // get headerprofil data diri
   static String updateTalent(String id) => "$baseUrl/Talents/$id";                      // Update profil 
@@ -223,7 +228,7 @@ class ApiConfig {
 
 
   // Notifikasi
-  static String allNotifikasi = "$baseUrl/Notification";                                // Get All Notifikasi
+  static String allNotifikasi = "$baseUrl/Notification";                             
   static String readNotifikasi(String notificationId) => "$baseUrl/Notification/read/$notificationId";
   static String deleteNotifikasi(String notificationId) => "$baseUrl/Notification/$notificationId";
 
