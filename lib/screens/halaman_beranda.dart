@@ -9,6 +9,7 @@ import 'package:jobfair/models/loker_umum_model.dart';
 import 'package:jobfair/models/loker_rekomendasi_model.dart'; // Model baru untuk LokerRekomendasi
 import 'package:jobfair/models/saved_job_model.dart';
 import 'package:jobfair/screens/detail_job_sheet.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '/widget/bottom_navbar.dart';
 import 'package:jobfair/api/route.dart';
 
@@ -319,7 +320,8 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
               child: Column(
                 children: [
                   SizedBox(height: maxHeaderHeight + 20),
-                  // Ganti _CocokUntukKamuSection dengan yang baru yang menerima data
+
+                  // Section Cocok Untuk Kamu - akan hilang jika tidak ada data
                   _CocokUntukKamuSection(
                     recommendedJobsFuture: _recommendedJobsFuture,
                     savedJobIds: _savedJobIds,
@@ -327,25 +329,37 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
                     onJobTap: _showRecommendedJobDetail,
                     onBookmarkToggle: _toggleSaveJob,
                   ),
-                  const SizedBox(height: 40),
 
-                  // Divider
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Container(
-                      height: 1,
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                          colors: [
-                            Color(0x00C7C7C7),
-                            Color(0xFFC7C7C7),
-                            Color(0x00C7C7C7),
+                  // Hanya tampilkan divider jika ada data rekomendasi
+                  FutureBuilder<List<LokerRekomendasi>>(
+                    future: _recommendedJobsFuture,
+                    builder: (context, snapshot) {
+                      // Cek apakah ada data rekomendasi
+                      final hasData =
+                          snapshot.hasData &&
+                          snapshot.data != null &&
+                          snapshot.data!.isNotEmpty;
+
+                      // Jika masih loading atau error, anggap ada data (tampilkan divider)
+                      if (_isLoadingRecommendedJobs || snapshot.hasError) {
+                        return Column(
+                          children: [
+                            const SizedBox(height: 40),
+                            _buildDivider(),
                           ],
-                        ),
-                      ),
-                    ),
+                        );
+                      }
+
+                      // Jika tidak ada data, jangan tampilkan divider
+                      if (!hasData) {
+                        return const SizedBox.shrink();
+                      }
+
+                      // Jika ada data, tampilkan divider
+                      return Column(
+                        children: [const SizedBox(height: 40), _buildDivider()],
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 40),
@@ -398,6 +412,27 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
   }
 }
 
+Widget _buildDivider() {
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 20),
+    child: Container(
+      height: 1,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [
+            Color(0x00C7C7C7),
+            Color(0xFFC7C7C7),
+            Color(0x00C7C7C7),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+
 class _AnimatedHeader extends StatefulWidget {
   final bool showSearchOnly;
   final double topPadding;
@@ -419,11 +454,12 @@ class _AnimatedHeader extends StatefulWidget {
 
 class __AnimatedHeaderState extends State<_AnimatedHeader> {
   bool _isSearchFocused = false;
-
+  String _userName = '';
   @override
   void initState() {
     super.initState();
     widget.searchFocusNode.addListener(_onFocusChange);
+    _loadUserName();
   }
 
   @override
@@ -438,6 +474,16 @@ class __AnimatedHeaderState extends State<_AnimatedHeader> {
     });
   }
 
+  Future<void> _loadUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userName = prefs.getString('nama') ?? 'Talent'; // Default fallback
+    if (mounted) {
+      setState(() {
+        _userName = userName;
+      });
+    }
+  }
+
   void _clearSearch() {
     widget.searchController.clear();
   }
@@ -448,12 +494,10 @@ class __AnimatedHeaderState extends State<_AnimatedHeader> {
     final screenHeight = MediaQuery.of(context).size.height;
     final isSmallDevice = screenWidth < 360;
     final isVerySmallDevice = screenWidth < 320;
-    
+
     return Container(
       // Tambahkan height constraint agar tidak overflow
-      constraints: BoxConstraints(
-        minHeight: widget.showSearchOnly ? 80 : 180,
-      ),
+      constraints: BoxConstraints(minHeight: widget.showSearchOnly ? 80 : 180),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment(1.00, 0.30),
@@ -477,7 +521,7 @@ class __AnimatedHeaderState extends State<_AnimatedHeader> {
           padding: EdgeInsets.only(
             left: isVerySmallDevice ? 12 : (isSmallDevice ? 14 : 16),
             right: isVerySmallDevice ? 12 : (isSmallDevice ? 14 : 16),
-            top: widget.showSearchOnly 
+            top: widget.showSearchOnly
                 ? (isVerySmallDevice ? 10 : (isSmallDevice ? 12 : 14))
                 : (isVerySmallDevice ? 16 : (isSmallDevice ? 18 : 24)),
             bottom: isVerySmallDevice ? 12 : (isSmallDevice ? 14 : 20),
@@ -490,13 +534,17 @@ class __AnimatedHeaderState extends State<_AnimatedHeader> {
                 Flexible(
                   child: Container(
                     margin: EdgeInsets.only(
-                      bottom: isVerySmallDevice ? 12 : (isSmallDevice ? 16 : 20),
+                      bottom: isVerySmallDevice
+                          ? 12
+                          : (isSmallDevice ? 16 : 20),
                     ),
                     child: Text(
-                      'Hai Muhammad! Aku siap bantu cari pekerjaan terbaik buat kamu.',
+                      'Hai $_userName! Aku siap bantu cari pekerjaan terbaik buat kamu.',
                       style: TextStyle(
                         color: const Color(0xFFFFF8F8),
-                        fontSize: isVerySmallDevice ? 16 : (isSmallDevice ? 18 : 22),
+                        fontSize: isVerySmallDevice
+                            ? 16
+                            : (isSmallDevice ? 18 : 22),
                         fontFamily: 'Poppins',
                         fontWeight: FontWeight.w600,
                         height: 1.3,
@@ -507,7 +555,7 @@ class __AnimatedHeaderState extends State<_AnimatedHeader> {
                   ),
                 ),
               ],
-              
+
               // Search bar dan icons
               _buildSearchRow(
                 isVerySmallDevice: isVerySmallDevice,
@@ -524,10 +572,12 @@ class __AnimatedHeaderState extends State<_AnimatedHeader> {
     required bool isVerySmallDevice,
     required bool isSmallDevice,
   }) {
-    final iconButtonSize = isVerySmallDevice ? 36.0 : (isSmallDevice ? 38.0 : 42.0);
+    final iconButtonSize = isVerySmallDevice
+        ? 36.0
+        : (isSmallDevice ? 38.0 : 42.0);
     final iconSize = isVerySmallDevice ? 18.0 : (isSmallDevice ? 19.0 : 20.0);
     final spacing = isVerySmallDevice ? 6.0 : (isSmallDevice ? 8.0 : 10.0);
-    
+
     return Row(
       children: [
         Expanded(
@@ -542,13 +592,13 @@ class __AnimatedHeaderState extends State<_AnimatedHeader> {
             ),
             child: Row(
               children: [
-                SizedBox(width: isVerySmallDevice ? 10 : (isSmallDevice ? 12 : 14)),
-                Icon(
-                  Icons.search,
-                  color: Colors.white,
-                  size: iconSize,
+                SizedBox(
+                  width: isVerySmallDevice ? 10 : (isSmallDevice ? 12 : 14),
                 ),
-                SizedBox(width: isVerySmallDevice ? 6 : (isSmallDevice ? 8 : 10)),
+                Icon(Icons.search, color: Colors.white, size: iconSize),
+                SizedBox(
+                  width: isVerySmallDevice ? 6 : (isSmallDevice ? 8 : 10),
+                ),
                 Expanded(
                   child: TextField(
                     controller: widget.searchController,
@@ -556,7 +606,9 @@ class __AnimatedHeaderState extends State<_AnimatedHeader> {
                     cursorColor: Colors.white,
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: isVerySmallDevice ? 12 : (isSmallDevice ? 13 : 14),
+                      fontSize: isVerySmallDevice
+                          ? 12
+                          : (isSmallDevice ? 13 : 14),
                       fontFamily: 'Poppins',
                       fontWeight: FontWeight.w500,
                     ),
@@ -569,7 +621,9 @@ class __AnimatedHeaderState extends State<_AnimatedHeader> {
                       hintText: 'Cari lowongan kerja...',
                       hintStyle: TextStyle(
                         color: Colors.white70,
-                        fontSize: isVerySmallDevice ? 12 : (isSmallDevice ? 13 : 14),
+                        fontSize: isVerySmallDevice
+                            ? 12
+                            : (isSmallDevice ? 13 : 14),
                         fontFamily: 'Poppins',
                         fontWeight: FontWeight.w500,
                       ),
@@ -586,13 +640,12 @@ class __AnimatedHeaderState extends State<_AnimatedHeader> {
                     ),
                     onPressed: _clearSearch,
                     padding: EdgeInsets.zero,
-                    constraints: BoxConstraints(
-                      minWidth: 32,
-                      minHeight: 32,
-                    ),
+                    constraints: BoxConstraints(minWidth: 32, minHeight: 32),
                   )
                 else
-                  SizedBox(width: isVerySmallDevice ? 6 : (isSmallDevice ? 8 : 10)),
+                  SizedBox(
+                    width: isVerySmallDevice ? 6 : (isSmallDevice ? 8 : 10),
+                  ),
               ],
             ),
           ),
@@ -630,11 +683,7 @@ class __AnimatedHeaderState extends State<_AnimatedHeader> {
           color: Colors.white.withOpacity(0.1),
           shape: BoxShape.circle,
         ),
-        child: Icon(
-          icon,
-          color: Colors.white,
-          size: iconSize,
-        ),
+        child: Icon(icon, color: Colors.white, size: iconSize),
       ),
     );
   }
@@ -657,6 +706,33 @@ class _CocokUntukKamuSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return FutureBuilder<List<LokerRekomendasi>>(
+      future: recommendedJobsFuture,
+      builder: (context, snapshot) {
+        // Jika masih loading, tampilkan skeleton
+        if (isLoadingRecommendedJobs) {
+          return _buildSectionWithSkeleton(context);
+        }
+
+        // Jika error, sembunyikan section
+        if (snapshot.hasError) {
+          print("❌ Error loading recommended jobs: ${snapshot.error}");
+          return const SizedBox.shrink();
+        }
+
+        // Jika tidak ada data atau data kosong, sembunyikan section
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          print("ℹ️ No recommended jobs available, hiding section");
+          return const SizedBox.shrink();
+        }
+
+        // Jika ada data, tampilkan section dengan data
+        return _buildSectionWithData(context, snapshot.data!);
+      },
+    );
+  }
+
+  Widget _buildSectionWithSkeleton(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final cardWidth = (screenWidth * 0.9).clamp(300.0, 380.0);
     final cardHeight = cardWidth * 0.685;
@@ -681,92 +757,92 @@ class _CocokUntukKamuSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
+        SizedBox(
+          height: cardHeight + 30,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: EdgeInsets.only(
+              left: screenWidth * 0.05,
+              top: 5,
+              bottom: 5,
+            ),
+            clipBehavior: Clip.none,
+            itemCount: 3,
+            itemBuilder: (context, index) {
+              return Padding(
+                padding: EdgeInsets.only(right: screenWidth * 0.04),
+                child: _CocokUntukKamuCardSkeleton(
+                  cardWidth: cardWidth,
+                  cardHeight: cardHeight,
+                  screenWidth: screenWidth,
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
 
-        FutureBuilder<List<LokerRekomendasi>>(
-          future: recommendedJobsFuture,
-          builder: (context, snapshot) {
-            if (isLoadingRecommendedJobs) {
-              return SizedBox(
-                height: cardHeight + 30,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: EdgeInsets.only(
-                    left: screenWidth * 0.05,
-                    top: 5,
-                    bottom: 5,
-                  ),
-                  clipBehavior: Clip.none,
-                  itemCount: 3,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: EdgeInsets.only(right: screenWidth * 0.04),
-                      child: _CocokUntukKamuCardSkeleton(
-                        cardWidth: cardWidth,
-                        cardHeight: cardHeight,
-                        screenWidth: screenWidth,
-                      ),
-                    );
-                  },
-                ),
-              );
-            } else if (snapshot.hasError) {
-              return Container(
-                height: cardHeight,
-                margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
-                child: Center(
-                  child: Text(
-                    'Gagal memuat rekomendasi',
-                    style: TextStyle(color: Colors.red, fontSize: 14),
-                  ),
-                ),
-              );
-            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return Container(
-                height: cardHeight,
-                margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
-                child: Center(
-                  child: Text(
-                    'Tidak ada rekomendasi tersedia',
-                    style: TextStyle(color: Colors.grey, fontSize: 14),
-                  ),
-                ),
-              );
-            } else {
-              final recommendedJobs = snapshot.data!;
-              return SizedBox(
-                height: cardHeight + 30,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: EdgeInsets.only(
-                    left: screenWidth * 0.05,
-                    top: 5,
-                    bottom: 5,
-                  ),
-                  clipBehavior: Clip.none,
-                  itemCount: recommendedJobs.length,
-                  itemBuilder: (context, index) {
-                    final job = recommendedJobs[index];
-                    final daysLeft = _calculateDaysLeft(job.batasLamaran);
-                    final isSaved = savedJobIds.contains(job.lowonganId);
+  Widget _buildSectionWithData(
+    BuildContext context,
+    List<LokerRekomendasi> recommendedJobs,
+  ) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final cardWidth = (screenWidth * 0.9).clamp(300.0, 380.0);
+    final cardHeight = cardWidth * 0.685;
 
-                    return Padding(
-                      padding: EdgeInsets.only(right: screenWidth * 0.04),
-                      child: _CocokUntukKamuCard(
-                        lowongan: job,
-                        daysLeft: daysLeft,
-                        isSaved: isSaved,
-                        cardWidth: cardWidth,
-                        cardHeight: cardHeight,
-                        screenWidth: screenWidth,
-                        onTap: () => onJobTap(job),
-                        onBookmarkToggle: onBookmarkToggle,
-                      ),
-                    );
-                  },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
+          child: const Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Cocok untuk kamu',
+              style: TextStyle(
+                color: Color(0xFF070707),
+                fontSize: 26,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w600,
+                height: 1.15,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: cardHeight + 30,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: EdgeInsets.only(
+              left: screenWidth * 0.05,
+              top: 5,
+              bottom: 5,
+            ),
+            clipBehavior: Clip.none,
+            itemCount: recommendedJobs.length,
+            itemBuilder: (context, index) {
+              final job = recommendedJobs[index];
+              final daysLeft = _calculateDaysLeft(job.batasLamaran);
+              final isSaved = savedJobIds.contains(job.lowonganId);
+
+              return Padding(
+                padding: EdgeInsets.only(right: screenWidth * 0.04),
+                child: _CocokUntukKamuCard(
+                  lowongan: job,
+                  daysLeft: daysLeft,
+                  isSaved: isSaved,
+                  cardWidth: cardWidth,
+                  cardHeight: cardHeight,
+                  screenWidth: screenWidth,
+                  onTap: () => onJobTap(job),
+                  onBookmarkToggle: onBookmarkToggle,
                 ),
               );
-            }
-          },
+            },
+          ),
         ),
       ],
     );
@@ -962,7 +1038,6 @@ class _CocokUntukKamuCardState extends State<_CocokUntukKamuCard>
                   //       ),
                   //     ),
                   //   ),
-
                   Padding(
                     padding: EdgeInsets.all(widget.cardWidth * 0.058),
                     child: Column(
