@@ -1031,11 +1031,20 @@ class _FilterTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final isSmallDevice = screenWidth < 360;
+    
+    // Responsive breakpoints
+    final isVerySmall = screenWidth < 340;
+    final isSmall = screenWidth < 380;
+    final isMedium = screenWidth < 420;
+    
+    // Dynamic spacing
+    final horizontalPadding = isVerySmall ? 10.0 : (isSmall ? 12.0 : 15.0);
+    final tabSpacing = isVerySmall ? 4.0 : (isSmall ? 6.0 : 10.0);
+    final fontSize = isVerySmall ? 11.0 : (isSmall ? 12.0 : 14.0);
     
     return Padding(
       padding: EdgeInsets.symmetric(
-        horizontal: isSmallDevice ? 12 : 15,
+        horizontal: horizontalPadding,
         vertical: 15,
       ),
       child: Row(
@@ -1049,30 +1058,33 @@ class _FilterTabs extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  SizedBox(width: isSmallDevice ? 4 : 6),
-                  // Tab Semua
+                  SizedBox(width: tabSpacing),
+                  // Tab Semua - Fixed width yang responsif
                   _TabButton(
                     label: 'Semua',
                     isSelected: selectedTab == 0,
                     onTap: () => onTabChanged(0),
-                    width: isSmallDevice ? 100 : 136,
-                    isSmallDevice: isSmallDevice,
+                    width: isVerySmall ? 85 : (isSmall ? 95 : (isMedium ? 110 : 136)),
+                    fontSize: fontSize,
                   ),
-                  SizedBox(width: isSmallDevice ? 6 : 10),
-                  // Tab Rekomendasi AI
-                  _TabButton(
-                    label: 'Rekomendasi AI',
-                    isSelected: selectedTab == 1,
-                    onTap: () => onTabChanged(1),
-                    isFlexible: true,
-                    isSmallDevice: isSmallDevice,
+                  SizedBox(width: tabSpacing),
+                  // Tab Rekomendasi AI - Flexible
+                  Expanded(
+                    child: _TabButton(
+                      label: 'Rekomendasi AI',
+                      isSelected: selectedTab == 1,
+                      onTap: () => onTabChanged(1),
+                      isFlexible: true,
+                      fontSize: fontSize,
+                    ),
                   ),
+                  SizedBox(width: tabSpacing),
                 ],
               ),
             ),
           ),
           const SizedBox(width: 5),
-          // Filter button - SELALU TAMPIL
+          // Filter button
           GestureDetector(
             onTap: onFilterTap,
             child: Container(
@@ -1082,7 +1094,11 @@ class _FilterTabs extends StatelessWidget {
                 color: const Color(0xFF162781).withValues(alpha: 0.9),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.tune, color: Colors.white, size: 18),
+              child: Icon(
+                Icons.tune, 
+                color: Colors.white, 
+                size: isVerySmall ? 16 : 18,
+              ),
             ),
           ),
         ],
@@ -1098,7 +1114,7 @@ class _TabButton extends StatelessWidget {
   final VoidCallback onTap;
   final double? width;
   final bool isFlexible;
-  final bool isSmallDevice;
+  final double fontSize;
 
   const _TabButton({
     required this.label,
@@ -1106,21 +1122,21 @@ class _TabButton extends StatelessWidget {
     required this.onTap,
     this.width,
     this.isFlexible = false,
-    this.isSmallDevice = false,
+    required this.fontSize,
   });
 
   @override
   Widget build(BuildContext context) {
-    final widget = GestureDetector(
+    return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
-        width: width,
+        width: isFlexible ? null : width,
         height: 35,
-        padding: isFlexible 
-            ? EdgeInsets.symmetric(horizontal: isSmallDevice ? 10 : 16)
-            : null,
+        padding: EdgeInsets.symmetric(
+          horizontal: isFlexible ? 12 : 0,
+        ),
         decoration: BoxDecoration(
           color: isSelected
               ? const Color(0xFF2345F7).withValues(alpha: 0.7)
@@ -1132,18 +1148,18 @@ class _TabButton extends StatelessWidget {
             label,
             style: TextStyle(
               color: Colors.white,
-              fontSize: isSmallDevice ? 12 : 14,
+              fontSize: fontSize,
               fontFamily: 'Poppins',
               fontWeight: FontWeight.w500,
+              letterSpacing: fontSize < 12 ? -0.2 : 0,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
           ),
         ),
       ),
     );
-
-    return isFlexible ? Expanded(child: widget) : widget;
   }
 }
 

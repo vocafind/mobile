@@ -21,11 +21,11 @@ class _TabPengalamanState extends State<TabPengalaman> {
         Container(
           height: 50,
           color: const Color(0xFFF0F4F9),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          child: Align(
-            alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
-              mainAxisSize: MainAxisSize.min,
               children: [
                 _buildSubTab('Riwayat pekerjaan', 0),
                 const SizedBox(width: 8),

@@ -21,11 +21,11 @@ class _TabAkademikState extends State<TabAkademik> {
         Container(
           height: 50,
           color: const Color(0xFFF0F4F9),
-          padding: const EdgeInsets.symmetric(horizontal: 21, vertical: 8),
-          child: Align(
-            alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 21),
             child: Row(
-              mainAxisSize: MainAxisSize.min,
               children: [
                 _buildSubTab('Pendidikan', 0),
                 const SizedBox(width: 8),
