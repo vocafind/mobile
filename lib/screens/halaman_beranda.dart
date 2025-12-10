@@ -1161,7 +1161,7 @@ class _CocokUntukKamuCardState extends State<_CocokUntukKamuCard>
                                 vertical: widget.cardHeight * 0.017,
                               ),
                               decoration: ShapeDecoration(
-                                color: const Color(0xFFF0F4F9),
+                                color: const Color.fromARGB(255, 255, 255, 255),
                                 shape: RoundedRectangleBorder(
                                   side: const BorderSide(
                                     width: 1,
@@ -1190,7 +1190,7 @@ class _CocokUntukKamuCardState extends State<_CocokUntukKamuCard>
                                 vertical: widget.cardHeight * 0.017,
                               ),
                               decoration: ShapeDecoration(
-                                color: const Color(0xFFF0F4F9),
+                                color: const Color.fromARGB(255, 255, 255, 255),
                                 shape: RoundedRectangleBorder(
                                   side: const BorderSide(
                                     width: 1,
@@ -1218,7 +1218,7 @@ class _CocokUntukKamuCardState extends State<_CocokUntukKamuCard>
                                   vertical: widget.cardHeight * 0.017,
                                 ),
                                 decoration: ShapeDecoration(
-                                  color: const Color(0xFFF0F4F9),
+                                  color: const Color.fromARGB(255, 255, 255, 255),
                                   shape: RoundedRectangleBorder(
                                     side: const BorderSide(
                                       width: 1,
