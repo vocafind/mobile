@@ -47,35 +47,49 @@ class AppRoutes {
           builder: (_) => const HalamanBeranda(),
           settings: settings,
         );
-      
+
       case halaman1:
         return MaterialPageRoute(
           builder: (_) => const Halaman1(),
           settings: settings,
         );
-      
+
       case bookmark:
         return MaterialPageRoute(
           builder: (_) => const HalamanBookmark(),
           settings: settings,
         );
-      
+
+      // Di dalam switch case di generateRoute method, perbaiki case cariLoker:
       case cariLoker:
+        // Jika ada arguments, extract initialSearchQuery
+        String? initialSearchQuery;
+
+        if (args != null) {
+          if (args is Map<String, dynamic>) {
+            initialSearchQuery = args['initialSearchQuery'] as String?;
+          } else if (args is String) {
+            // Untuk backward compatibility
+            initialSearchQuery = args;
+          }
+        }
+
         return MaterialPageRoute(
-          builder: (_) => const HalamanCariLoker(),
+          builder: (_) =>
+              HalamanCariLoker(initialSearchQuery: initialSearchQuery),
           settings: settings,
         );
-      
+
       case jobfair:
         return MaterialPageRoute(
           builder: (_) => const HalamanJobfair(),
           settings: settings,
         );
-      
+
       case jobfairDetail:
         if (args != null) {
           int jobfairId;
-          
+
           if (args is int) {
             jobfairId = args;
           } else if (args is Map<String, dynamic>) {
@@ -86,18 +100,18 @@ class AppRoutes {
               settings.name,
             );
           }
-          
+
           return MaterialPageRoute(
             builder: (_) => HalamanJobfairDetail(jobfairId: jobfairId),
             settings: settings,
           );
         }
-        
+
         return _buildErrorRoute(
           'Parameter jobfairId wajib diisi',
           settings.name,
         );
-      
+
       case lamaran:
         // Handle parameter untuk auto-open lamaran
         if (args != null) {
@@ -121,31 +135,31 @@ class AppRoutes {
           builder: (_) => const HalamanLamaran(),
           settings: settings,
         );
-      
+
       case login:
         return MaterialPageRoute(
           builder: (_) => const HalamanLogin(),
           settings: settings,
         );
-      
+
       case notifikasi:
         return MaterialPageRoute(
           builder: (_) => const NotificationPage(),
           settings: settings,
         );
-      
+
       case register:
         return MaterialPageRoute(
           builder: (_) => const RegisterPage(),
           settings: settings,
         );
-      
-      case profil: 
+
+      case profil:
         return MaterialPageRoute(
           builder: (_) => const HalamanProfil(),
           settings: settings,
         );
-      
+
       default:
         return _buildErrorRoute('Halaman tidak ditemukan', settings.name);
     }
@@ -155,21 +169,14 @@ class AppRoutes {
   static Route<dynamic> _buildErrorRoute(String message, String? routeName) {
     return MaterialPageRoute(
       builder: (context) => Scaffold(
-        appBar: AppBar(
-          title: const Text('Error'),
-          backgroundColor: Colors.red,
-        ),
+        appBar: AppBar(title: const Text('Error'), backgroundColor: Colors.red),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  Icons.error_outline,
-                  color: Colors.red,
-                  size: 80,
-                ),
+                const Icon(Icons.error_outline, color: Colors.red, size: 80),
                 const SizedBox(height: 16),
                 Text(
                   message,
@@ -182,17 +189,14 @@ class AppRoutes {
                 const SizedBox(height: 8),
                 Text(
                   'Route: ${routeName ?? "Unknown"}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton.icon(
                   onPressed: () {
                     Navigator.pushNamedAndRemoveUntil(
-                      context, 
-                      AppRoutes.beranda, 
+                      context,
+                      AppRoutes.beranda,
                       (route) => false,
                     );
                   },
@@ -216,30 +220,26 @@ class AppRoutes {
   }
 
   // ==================== NAVIGATION HELPER METHODS ====================
-  
+
   /// Navigate to a new route
   static Future<T?> navigateTo<T>(
-    BuildContext context, 
+    BuildContext context,
     String routeName, {
     Object? arguments,
   }) {
-    return Navigator.pushNamed<T>(
-      context, 
-      routeName, 
-      arguments: arguments,
-    );
+    return Navigator.pushNamed<T>(context, routeName, arguments: arguments);
   }
 
   /// Replace current route with a new one
   static Future<T?> replaceWith<T, TO>(
-    BuildContext context, 
+    BuildContext context,
     String routeName, {
     Object? arguments,
     TO? result,
   }) {
     return Navigator.pushReplacementNamed<T, TO>(
-      context, 
-      routeName, 
+      context,
+      routeName,
       arguments: arguments,
       result: result,
     );
@@ -247,14 +247,14 @@ class AppRoutes {
 
   /// Pop current route and push a new one
   static Future<T?> popAndPush<T, TO>(
-    BuildContext context, 
+    BuildContext context,
     String routeName, {
     Object? arguments,
     TO? result,
   }) {
     return Navigator.popAndPushNamed<T, TO>(
-      context, 
-      routeName, 
+      context,
+      routeName,
       arguments: arguments,
       result: result,
     );
@@ -262,14 +262,14 @@ class AppRoutes {
 
   /// Push and remove all previous routes
   static Future<T?> pushAndRemoveUntil<T>(
-    BuildContext context, 
+    BuildContext context,
     String routeName, {
     Object? arguments,
     bool Function(Route<dynamic>)? predicate,
   }) {
     return Navigator.pushNamedAndRemoveUntil<T>(
-      context, 
-      routeName, 
+      context,
+      routeName,
       predicate ?? (route) => false,
       arguments: arguments,
     );
@@ -300,7 +300,7 @@ class AppRoutes {
 
 /// Navigate to a new route (shorthand)
 Future<T?> goTo<T>(
-  BuildContext context, 
+  BuildContext context,
   String routeName, {
   Object? arguments,
 }) {
@@ -309,14 +309,14 @@ Future<T?> goTo<T>(
 
 /// Replace current route (shorthand)
 Future<T?> goReplace<T, TO>(
-  BuildContext context, 
+  BuildContext context,
   String routeName, {
   Object? arguments,
   TO? result,
 }) {
   return AppRoutes.replaceWith<T, TO>(
-    context, 
-    routeName, 
+    context,
+    routeName,
     arguments: arguments,
     result: result,
   );
@@ -324,14 +324,14 @@ Future<T?> goReplace<T, TO>(
 
 /// Pop and push (shorthand)
 Future<T?> goPopAndPush<T, TO>(
-  BuildContext context, 
+  BuildContext context,
   String routeName, {
   Object? arguments,
   TO? result,
 }) {
   return AppRoutes.popAndPush<T, TO>(
-    context, 
-    routeName, 
+    context,
+    routeName,
     arguments: arguments,
     result: result,
   );
@@ -339,13 +339,13 @@ Future<T?> goPopAndPush<T, TO>(
 
 /// Push and remove all (shorthand)
 Future<T?> goResetTo<T>(
-  BuildContext context, 
+  BuildContext context,
   String routeName, {
   Object? arguments,
 }) {
   return AppRoutes.pushAndRemoveUntil<T>(
-    context, 
-    routeName, 
+    context,
+    routeName,
     arguments: arguments,
   );
 }

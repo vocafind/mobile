@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; 
+import 'package:flutter/services.dart';
+import 'package:jobfair/api/route.dart'; 
 import 'package:jobfair/screens/halaman_notifikasi.dart';
 import 'package:jobfair/screens/halaman_bookmark.dart';
 
@@ -12,7 +13,10 @@ class HeaderWidget extends StatefulWidget {
   final VoidCallback? onFilterTap;
   final VoidCallback? onBookmarkTap;
   final Function(String)? onSearch; // Untuk real-time search
-  final TextEditingController? externalSearchController; // TAMBAH: Controller eksternal
+  final TextEditingController? externalSearchController;
+  final bool enableNavigation; // TAMBAH: Enable navigation ke halaman cari loker
+  final String? searchRoute; // TAMBAH: Route untuk navigasi search
+  final Map<String, dynamic>? navigationArguments; // TAMBAH: Arguments untuk navigation
 
   const HeaderWidget({
     super.key,
@@ -23,7 +27,10 @@ class HeaderWidget extends StatefulWidget {
     this.onFilterTap,
     this.onBookmarkTap,
     this.onSearch,
-    this.externalSearchController, // TAMBAH
+    this.externalSearchController,
+    this.enableNavigation = false, // TAMBAH
+    this.searchRoute, // TAMBAH
+    this.navigationArguments, // TAMBAH
   });
 
   @override
@@ -41,9 +48,7 @@ class _HeaderWidgetState extends State<HeaderWidget> {
   void initState() {
     super.initState();
     
-    // GUNAKAN controller eksternal jika ada, jika tidak buat baru
     _searchController = widget.externalSearchController ?? TextEditingController();
-    
     _loadSearchHistory();
     _searchFocusNode.addListener(_onFocusChange);
   }
@@ -52,7 +57,6 @@ class _HeaderWidgetState extends State<HeaderWidget> {
   void didUpdateWidget(HeaderWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
     
-    // Update controller jika ada perubahan
     if (widget.externalSearchController != oldWidget.externalSearchController) {
       _searchController.dispose();
       _searchController = widget.externalSearchController ?? TextEditingController();
@@ -61,7 +65,6 @@ class _HeaderWidgetState extends State<HeaderWidget> {
 
   @override
   void dispose() {
-    // Hanya dispose controller jika kita yang membuatnya (bukan eksternal)
     if (widget.externalSearchController == null) {
       _searchController.dispose();
     }
@@ -108,8 +111,15 @@ class _HeaderWidgetState extends State<HeaderWidget> {
   void _handleSearchSubmitted(String query) {
     if (query.trim().isNotEmpty) {
       _saveSearchHistory(query);
+      
+      // Jika ada callback onSearch, panggil
       if (widget.onSearch != null) {
         widget.onSearch!(query.trim());
+      }
+      
+      // TAMBAH: Jika enableNavigation true, navigate ke halaman cari loker
+      if (widget.enableNavigation) {
+        _navigateToSearchPage(query.trim());
       }
       
       _searchFocusNode.unfocus();
@@ -119,30 +129,48 @@ class _HeaderWidgetState extends State<HeaderWidget> {
     }
   }
 
+  // TAMBAH: Method untuk navigate ke halaman cari loker
+  void _navigateToSearchPage(String query) {
+    final route = widget.searchRoute ?? AppRoutes.cariLoker; // Default route
+    
+    // Siapkan arguments
+    final arguments = {
+      'initialSearchQuery': query,
+      ...?widget.navigationArguments, // Gabungkan dengan arguments tambahan
+    };
+    
+    // Navigate ke halaman search
+    Navigator.pushNamed(
+      context,
+      route,
+      arguments: arguments,
+    );
+    
+    // Clear search controller jika diperlukan
+    _searchController.clear();
+  }
+
   void _clearSearch() {
     _searchController.clear();
+    
+    // Jika ada callback onSearch, beritahu bahwa search di-clear
     if (widget.onSearch != null) {
       widget.onSearch!('');
     }
+    
     _searchFocusNode.unfocus();
   }
 
-  // Method untuk real-time search dengan debouncing
   void _onSearchChanged(String value) {
-    // Cancel timer sebelumnya
     _debounceTimer?.cancel();
     
-    // Set timer baru untuk debouncing
     _debounceTimer = Timer(const Duration(milliseconds: 500), () {
-      if (value.trim().isNotEmpty && widget.onSearch != null) {
+      if (widget.onSearch != null) {
         widget.onSearch!(value.trim());
-      } else if (value.isEmpty && widget.onSearch != null) {
-        widget.onSearch!('');
       }
     });
   }
 
-  // Method untuk handle bookmark tap
   void _handleBookmarkTap() {
     if (widget.onBookmarkTap != null) {
       widget.onBookmarkTap!();
@@ -156,7 +184,6 @@ class _HeaderWidgetState extends State<HeaderWidget> {
     }
   }
 
-  // Method untuk handle notification tap
   void _handleNotificationTap() {
     if (widget.onNotificationTap != null) {
       widget.onNotificationTap!();
@@ -170,7 +197,6 @@ class _HeaderWidgetState extends State<HeaderWidget> {
     }
   }
 
-  // Method untuk handle filter tap
   void _handleFilterTap() {
     widget.onFilterTap?.call();
   }

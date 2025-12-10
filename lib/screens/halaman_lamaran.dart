@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jobfair/api/route.dart';
 import 'package:jobfair/models/lamar_loker.dart';
 import 'package:jobfair/widget/bottom_navbar.dart';
 import 'package:jobfair/widget/header.dart';
@@ -46,9 +47,9 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
     // Cari lamaran di semua data
     final allLamaran = [..._allLamaranUmum, ..._allLamaranJobfair];
     final lamaran = allLamaran
-      .where((lamaran) => lamaran.applyId == applyId)
-      .cast<LamaranSaya?>()
-      .firstOrNull;
+        .where((lamaran) => lamaran.applyId == applyId)
+        .cast<LamaranSaya?>()
+        .firstOrNull;
 
     if (lamaran != null && mounted) {
       final isJobfair = lamaran.acara != null;
@@ -150,7 +151,16 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
       extendBody: true,
       body: Column(
         children: [
-          const HeaderWidget(showNotification: true, showFilter: false),
+          HeaderWidget(
+            showNotification: true,
+            showFilter: false,
+            enableNavigation: true, // INI YANG PERLU DITAMBAHKAN!
+            searchRoute: AppRoutes.cariLoker,
+            onSearch: (query) {
+              // Real-time search di jobfair jika diperlukan
+              print("Search di jobfair: $query");
+            },
+          ),
 
           // Main Tabs (Umum & Job fair)
           Container(

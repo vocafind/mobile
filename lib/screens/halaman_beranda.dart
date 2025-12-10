@@ -293,11 +293,17 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
 
   void _handleSearchSubmitted(String query) {
     if (query.trim().isNotEmpty) {
-      goTo(
-        context,
-        AppRoutes.cariLoker,
-        arguments: {'initialSearchQuery': query.trim()},
-      );
+      print("🔍 Search query from home: ${query.trim()}");
+
+      // Tunggu frame berikutnya untuk navigasi
+      Future.delayed(Duration.zero, () {
+        Navigator.pushNamed(
+          context,
+          AppRoutes.cariLoker,
+          arguments: {'initialSearchQuery': query.trim()},
+        );
+      });
+
       _searchController.clear();
       _searchFocusNode.unfocus();
     }
@@ -421,17 +427,12 @@ Widget _buildDivider() {
         gradient: LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
-          colors: [
-            Color(0x00C7C7C7),
-            Color(0xFFC7C7C7),
-            Color(0x00C7C7C7),
-          ],
+          colors: [Color(0x00C7C7C7), Color(0xFFC7C7C7), Color(0x00C7C7C7)],
         ),
       ),
     ),
   );
 }
-
 
 class _AnimatedHeader extends StatefulWidget {
   final bool showSearchOnly;

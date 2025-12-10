@@ -179,51 +179,51 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  Expanded(
-                    child: Container(
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEEEEEE).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(50),
-                      ),
-                      child: const Row(
-                        children: [
-                          SizedBox(width: 14),
-                          Icon(Icons.search, color: Colors.white, size: 25),
-                          SizedBox(width: 16),
-                          Text(
-                            'Cari lowongan kerja...',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  GestureDetector(
-                    onTap: () {
-                      // Navigasi ke halaman notifikasi menggunakan route.dart
-                      goTo(context, AppRoutes.notifikasi);
-                    },
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEEEEEE).withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.notifications_outlined,
-                        color: Colors.white,
-                        size: 24,
-                      ),
-                    ),
-                  ),
+                  // Expanded(
+                  //   child: Container(
+                  //     height: 44,
+                  //     decoration: BoxDecoration(
+                  //       color: const Color(0xFFEEEEEE).withOpacity(0.1),
+                  //       borderRadius: BorderRadius.circular(50),
+                  //     ),
+                  //     child: const Row(
+                  //       children: [
+                  //         SizedBox(width: 14),
+                  //         Icon(Icons.search, color: Colors.white, size: 25),
+                  //         SizedBox(width: 16),
+                  //         Text(
+                  //           'Cari lowongan kerja...',
+                  //           style: TextStyle(
+                  //             color: Colors.white,
+                  //             fontSize: 14,
+                  //             fontFamily: 'Poppins',
+                  //             fontWeight: FontWeight.w500,
+                  //           ),
+                  //         ),
+                  //       ],
+                  //     ),
+                  //   ),
+                  // ),
+                  // const SizedBox(width: 6),
+                  // GestureDetector(
+                  //   onTap: () {
+                  //     // Navigasi ke halaman notifikasi menggunakan route.dart
+                  //     goTo(context, AppRoutes.notifikasi);
+                  //   },
+                  //   child: Container(
+                  //     width: 44,
+                  //     height: 44,
+                  //     decoration: BoxDecoration(
+                  //       color: const Color(0xFFEEEEEE).withOpacity(0.1),
+                  //       shape: BoxShape.circle,
+                  //     ),
+                  //     child: const Icon(
+                  //       Icons.notifications_outlined,
+                  //       color: Colors.white,
+                  //       size: 24,
+                  //     ),
+                  //   ),
+                  // ),
                 ],
               ),
               const SizedBox(height: 24),

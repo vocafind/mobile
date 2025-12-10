@@ -37,7 +37,17 @@ class _HalamanJobfairState extends State<HalamanJobfair> {
         children: [
           Column(
             children: [
-              const HeaderWidget(showNotification: true, showFilter: false),
+              // PERBAIKI: Tambahkan enableNavigation = true
+              HeaderWidget(
+                showNotification: true,
+                showFilter: false,
+                enableNavigation: true, // INI YANG PERLU DITAMBAHKAN!
+                searchRoute: AppRoutes.cariLoker,
+                onSearch: (query) {
+                  // Real-time search di jobfair jika diperlukan
+                  print("Search di jobfair: $query");
+                },
+              ),
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(
@@ -87,7 +97,8 @@ class _HalamanJobfairState extends State<HalamanJobfair> {
                   _buildJobFairCard(
                     context: context,
                     jobfair: jobfair,
-                    imagePath: backgroundImages[index % backgroundImages.length],
+                    imagePath:
+                        backgroundImages[index % backgroundImages.length],
                   ),
                   if (index < jobfairs.length - 1) const SizedBox(height: 15),
                 ],
@@ -111,7 +122,7 @@ class _HalamanJobfairState extends State<HalamanJobfair> {
     final maxCardWidth = screenWidth > 536 ? 500.0 : screenWidth - 36;
     final cardWidth = maxCardWidth;
     final cardHeight = isSmallDevice ? 280.0 : 300.0;
-    
+
     final now = DateTime.now();
     final diff = jobfair.tanggalMulaiAcara.difference(
       DateTime(now.year, now.month, now.day),
@@ -121,11 +132,7 @@ class _HalamanJobfairState extends State<HalamanJobfair> {
 
     return GestureDetector(
       onTap: () {
-        goTo(
-          context,
-          AppRoutes.jobfairDetail,
-          arguments: jobfair.id,
-        );
+        goTo(context, AppRoutes.jobfairDetail, arguments: jobfair.id);
       },
       child: Container(
         width: cardWidth,
