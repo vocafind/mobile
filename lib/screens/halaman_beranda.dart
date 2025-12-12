@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import 'dart:ui' as ui;
 import 'package:intl/intl.dart';
 import 'package:jobfair/api/api_service.dart';
 import 'package:jobfair/models/company_model.dart';
 import 'package:jobfair/models/jobfair_model.dart';
-import 'package:jobfair/models/loker_umum_detail_model.dart';
 import 'package:jobfair/models/loker_umum_model.dart';
 import 'package:jobfair/models/loker_rekomendasi_model.dart'; // Model baru untuk LokerRekomendasi
-import 'package:jobfair/models/saved_job_model.dart';
 import 'package:jobfair/screens/detail_job_sheet.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '/widget/bottom_navbar.dart';
@@ -492,7 +489,7 @@ class __AnimatedHeaderState extends State<_AnimatedHeader> {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
+    //final screenHeight = MediaQuery.of(context).size.height;
     final isSmallDevice = screenWidth < 360;
     final isVerySmallDevice = screenWidth < 320;
 

@@ -535,14 +535,20 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
       if (mounted) Navigator.of(context).pop();
 
       if (mounted) {
+        // ✅ TAMBAHKAN PARAMETER isAlreadyApplied
+        final isAlreadyApplied = _appliedJobIds.contains(lowongan.lowonganId);
+
         showModalBottomSheet(
           context: context,
           isScrollControlled: true,
           backgroundColor: Colors.transparent,
-          builder: (context) => JobDetailSheet(loker: detailLowongan),
+          builder: (context) => JobDetailSheet(
+            loker: detailLowongan,
+            isAlreadyApplied: isAlreadyApplied, // ✅ KIRIM STATUS DI SINI
+          ),
         ).then((shouldRefresh) {
           if (shouldRefresh == true) {
-            _loadData();
+            _loadData(); // Refresh data untuk update status
           }
         });
       }
@@ -568,7 +574,6 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
         builder: (context) => const Center(child: CircularProgressIndicator()),
       );
 
-      // Gunakan service yang sama untuk detail lowongan umum
       final detailLowongan = await _apiService.getLokerUmumDetailById(
         rekomendasi.lowonganId,
       );
@@ -576,14 +581,22 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
       if (mounted) Navigator.of(context).pop();
 
       if (mounted) {
+        // ✅ TAMBAHKAN PARAMETER isAlreadyApplied
+        final isAlreadyApplied = _appliedJobIds.contains(
+          rekomendasi.lowonganId,
+        );
+
         showModalBottomSheet(
           context: context,
           isScrollControlled: true,
           backgroundColor: Colors.transparent,
-          builder: (context) => JobDetailSheet(loker: detailLowongan),
+          builder: (context) => JobDetailSheet(
+            loker: detailLowongan,
+            isAlreadyApplied: isAlreadyApplied, // ✅ KIRIM STATUS DI SINI
+          ),
         ).then((shouldRefresh) {
           if (shouldRefresh == true) {
-            _loadData();
+            _loadData(); // Refresh data untuk update status
           }
         });
       }
@@ -1031,17 +1044,17 @@ class _FilterTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    
+
     // Responsive breakpoints
     final isVerySmall = screenWidth < 340;
     final isSmall = screenWidth < 380;
     final isMedium = screenWidth < 420;
-    
+
     // Dynamic spacing
     final horizontalPadding = isVerySmall ? 10.0 : (isSmall ? 12.0 : 15.0);
     final tabSpacing = isVerySmall ? 4.0 : (isSmall ? 6.0 : 10.0);
     final fontSize = isVerySmall ? 11.0 : (isSmall ? 12.0 : 14.0);
-    
+
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: horizontalPadding,
@@ -1064,7 +1077,9 @@ class _FilterTabs extends StatelessWidget {
                     label: 'Semua',
                     isSelected: selectedTab == 0,
                     onTap: () => onTabChanged(0),
-                    width: isVerySmall ? 85 : (isSmall ? 95 : (isMedium ? 110 : 136)),
+                    width: isVerySmall
+                        ? 85
+                        : (isSmall ? 95 : (isMedium ? 110 : 136)),
                     fontSize: fontSize,
                   ),
                   SizedBox(width: tabSpacing),
@@ -1095,8 +1110,8 @@ class _FilterTabs extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                Icons.tune, 
-                color: Colors.white, 
+                Icons.tune,
+                color: Colors.white,
                 size: isVerySmall ? 16 : 18,
               ),
             ),
@@ -1134,9 +1149,7 @@ class _TabButton extends StatelessWidget {
         curve: Curves.easeInOut,
         width: isFlexible ? null : width,
         height: 35,
-        padding: EdgeInsets.symmetric(
-          horizontal: isFlexible ? 12 : 0,
-        ),
+        padding: EdgeInsets.symmetric(horizontal: isFlexible ? 12 : 0),
         decoration: BoxDecoration(
           color: isSelected
               ? const Color(0xFF2345F7).withValues(alpha: 0.7)

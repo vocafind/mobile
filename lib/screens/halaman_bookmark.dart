@@ -14,6 +14,7 @@ class HalamanBookmark extends StatefulWidget {
 class _HalamanBookmarkState extends State<HalamanBookmark> {
   final ApiService _apiService = ApiService();
   List<SavedJob> _savedJobs = [];
+  List<String> _appliedJobIds = []; // ✅ TAMBAHKAN INI
   bool _isLoading = true;
   bool _hasError = false;
 
@@ -30,14 +31,22 @@ class _HalamanBookmarkState extends State<HalamanBookmark> {
     });
 
     try {
-      final savedJobs = await _apiService.getSavedJobs();
+      // ✅ LOAD DATA SAVED JOBS DAN APPLIED JOIDS SECARA BERSAMAAN
+      final results = await Future.wait<dynamic>([
+        _apiService.getSavedJobs(),
+        _apiService.getLowonganSudahDilamar(), // ✅ LOAD DATA SUDAH DILAMAR
+      ]);
+
+      final savedJobs = results[0] as List<SavedJob>;
+      final appliedIds = results[1] as List<String>;
 
       setState(() {
         _savedJobs = savedJobs;
+        _appliedJobIds = appliedIds; // ✅ SIMPAN DATA SUDAH DILAMAR
         _isLoading = false;
       });
 
-      print("✅ Loaded ${savedJobs.length} saved jobs");
+      print("✅ Loaded ${savedJobs.length} saved jobs, ${appliedIds.length} already applied");
     } catch (e) {
       print("❌ Error loading saved jobs: $e");
       setState(() {
@@ -92,14 +101,20 @@ class _HalamanBookmarkState extends State<HalamanBookmark> {
       if (mounted) Navigator.of(context).pop();
 
       if (mounted) {
+        // ✅ CEK APAKAH SUDAH DILAMAR
+        final isAlreadyApplied = _appliedJobIds.contains(lowongan.lowonganId);
+        
         showModalBottomSheet(
           context: context,
           isScrollControlled: true,
           backgroundColor: Colors.transparent,
-          builder: (context) => JobDetailSheet(loker: detailLowongan),
+          builder: (context) => JobDetailSheet(
+            loker: detailLowongan,
+            isAlreadyApplied: isAlreadyApplied, // ✅ KIRIM STATUS DI SINI
+          ),
         ).then((shouldRefresh) {
           if (shouldRefresh == true) {
-            _loadSavedJobs();
+            _loadSavedJobs(); // Refresh data untuk update status
           }
         });
       }
@@ -324,6 +339,9 @@ class _HalamanBookmarkState extends State<HalamanBookmark> {
           final lokerUmum = savedJob.toLokerUmum();
           final daysLeft = _calculateDaysLeft(lokerUmum.batasLamaran);
           final isUrgent = daysLeft <= 10 && daysLeft >= 0;
+          
+          // ✅ CEK APAKAH SUDAH DILAMAR
+          final isApplied = _appliedJobIds.contains(lokerUmum.lowonganId);
 
           return Column(
             children: [
@@ -332,7 +350,7 @@ class _HalamanBookmarkState extends State<HalamanBookmark> {
                 savedJobId: savedJob.savedJobId,
                 isUrgent: isUrgent,
                 daysLeft: daysLeft,
-                isApplied: false,
+                isApplied: isApplied, // ✅ KIRIM STATUS INI
                 onTap: () => _showJobDetail(lokerUmum),
                 onBookmarkTap: () => _unsaveJob(savedJob.savedJobId),
               ),
@@ -351,7 +369,7 @@ class _JobCard extends StatefulWidget {
   final String savedJobId;
   final bool isUrgent;
   final int daysLeft;
-  final bool isApplied;
+  final bool isApplied; // ✅ TAMBAHKAN INI
   final VoidCallback onTap;
   final VoidCallback onBookmarkTap;
 
@@ -360,7 +378,7 @@ class _JobCard extends StatefulWidget {
     required this.savedJobId,
     required this.isUrgent,
     required this.daysLeft,
-    required this.isApplied,
+    required this.isApplied, // ✅ TAMBAHKAN INI
     required this.onTap,
     required this.onBookmarkTap,
   });
@@ -490,7 +508,7 @@ class __JobCardState extends State<_JobCard>
                       ),
                     ),
 
-                  // Badge sudah dilamar (kanan atas) - hanya jika sudah dilamar
+                  // ✅ BADGE SUDAH DILAMAR (KANAN ATAS) - JIKA SUDAH DILAMAR
                   if (widget.isApplied)
                     Positioned(
                       right: 0,
@@ -499,7 +517,7 @@ class __JobCardState extends State<_JobCard>
                         width: cardWidth * 0.45,
                         height: cardHeight * 0.119,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF4CAF50),
+                          color: const Color(0xFF4CAF50), // HIJAU
                           borderRadius: BorderRadius.only(
                             topRight: Radius.circular(cardWidth * 0.102),
                             bottomLeft: Radius.circular(cardWidth * 0.058),

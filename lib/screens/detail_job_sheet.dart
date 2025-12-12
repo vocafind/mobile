@@ -4,19 +4,23 @@ import 'package:jobfair/models/loker_umum_detail_model.dart';
 
 class JobDetailSheet extends StatefulWidget {
   final LokerUmumDetail? loker;
+  final bool isAlreadyApplied; // ✅ TAMBAHKAN PARAMETER INI
 
-  const JobDetailSheet({super.key, this.loker});
+  const JobDetailSheet({super.key, this.loker, this.isAlreadyApplied = false});
 
   @override
   State<JobDetailSheet> createState() => _JobDetailSheetState();
 }
 
-class _JobDetailSheetState extends State<JobDetailSheet> 
-    with SingleTickerProviderStateMixin { // ✅ TAMBAHKAN INI
+class _JobDetailSheetState extends State<JobDetailSheet>
+    with SingleTickerProviderStateMixin {
+  // ✅ TAMBAHKAN INI
   int _selectedTab = 0;
   bool _isLoading = false;
   bool _isSaved = false;
   bool _checkingSavedStatus = true;
+  bool _isRegistered = false; // ✅ TAMBAHKAN STATE INI
+
   final ApiService _apiService = ApiService();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -31,16 +35,19 @@ class _JobDetailSheetState extends State<JobDetailSheet>
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize animation controller - FIXED
     _bookmarkController = AnimationController(
       duration: const Duration(milliseconds: 200),
-      vsync: this, // ✅ SEKSUDah BISA PAKAI 'this' karena sudah pakai SingleTickerProviderStateMixin
+      vsync:
+          this, // ✅ SEKSUDah BISA PAKAI 'this' karena sudah pakai SingleTickerProviderStateMixin
     );
     _bookmarkScale = Tween<double>(begin: 1.0, end: 1.3).animate(
       CurvedAnimation(parent: _bookmarkController, curve: Curves.easeInOut),
     );
-    
+
+    _isRegistered = widget.isAlreadyApplied; // ✅ SET DARI PARAMETER
+
     // Check saved status ketika detail dibuka
     _checkSavedStatus();
   }
@@ -61,7 +68,9 @@ class _JobDetailSheetState extends State<JobDetailSheet>
     }
 
     try {
-      final isSaved = await _apiService.checkIfJobIsSaved(widget.loker!.lowonganId);
+      final isSaved = await _apiService.checkIfJobIsSaved(
+        widget.loker!.lowonganId,
+      );
       setState(() {
         _isSaved = isSaved;
         _checkingSavedStatus = false;
@@ -82,7 +91,7 @@ class _JobDetailSheetState extends State<JobDetailSheet>
     setState(() {
       _isSaved = !_isSaved;
     });
-    
+
     // Play animation
     _bookmarkController.forward().then((_) {
       _bookmarkController.reverse();
@@ -127,9 +136,10 @@ class _JobDetailSheetState extends State<JobDetailSheet>
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         action: SnackBarAction(
           textColor: Colors.white,
-          label: 'Ok', onPressed : (){
-          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        }
+          label: 'Ok',
+          onPressed: () {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          },
         ),
         duration: const Duration(seconds: 5),
       ),
@@ -152,10 +162,14 @@ class _JobDetailSheetState extends State<JobDetailSheet>
       if (mounted) {
         _showSnackBar(response.message);
 
-        // Refresh data di halaman pencarian
+        // ✅ UPDATE STATUS PENDAFTARAN
+        setState(() {
+          _isRegistered = true;
+        });
+
         Future.delayed(const Duration(seconds: 5), () {
           if (mounted) {
-            Navigator.of(context).pop(true); // Return true untuk trigger refresh
+            Navigator.of(context).pop(true);
           }
         });
       }
@@ -315,7 +329,8 @@ class _JobDetailSheetState extends State<JobDetailSheet>
                 children: [
                   if (isRemote) _buildTag('Remote'),
                   if (jenisPekerjaan.isNotEmpty) _buildTag(jenisPekerjaan),
-                  if (tingkatPengalaman.isNotEmpty) _buildTag(tingkatPengalaman),
+                  if (tingkatPengalaman.isNotEmpty)
+                    _buildTag(tingkatPengalaman),
                 ],
               ),
             ],
@@ -349,7 +364,7 @@ class _JobDetailSheetState extends State<JobDetailSheet>
                         : Icon(
                             Icons.bookmark_border,
                             key: const ValueKey('unsaved'),
-                            color: Colors.black.withValues(alpha:0.3),
+                            color: Colors.black.withValues(alpha: 0.3),
                             size: 24,
                           ),
                   ),
@@ -829,6 +844,33 @@ class _JobDetailSheetState extends State<JobDetailSheet>
     final isExpired =
         widget.loker?.batasLamaran.isBefore(DateTime.now()) ?? false;
 
+    // ✅ LOGIKA TOMBOL BERDASARKAN STATUS
+    String buttonText;
+    bool isDisabled;
+    Color backgroundColor;
+
+    if (_isRegistered) {
+      // Sudah mendaftar
+      buttonText = 'Anda Sudah Mendaftar';
+      isDisabled = true;
+      backgroundColor = const Color(0xFF4CAF50); // Hijau
+    } else if (isKuotaPenuh) {
+      // Kuota penuh
+      buttonText = 'Kuota Penuh';
+      isDisabled = true;
+      backgroundColor = Colors.grey;
+    } else if (isExpired) {
+      // Lowongan ditutup
+      buttonText = 'Lowongan Ditutup';
+      isDisabled = true;
+      backgroundColor = Colors.grey;
+    } else {
+      // Bisa mendaftar
+      buttonText = 'Lamar Sekarang';
+      isDisabled = false;
+      backgroundColor = const Color(0xFF1548F5); // Biru
+    }
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: const BoxDecoration(
@@ -842,13 +884,9 @@ class _JobDetailSheetState extends State<JobDetailSheet>
         ],
       ),
       child: ElevatedButton(
-        onPressed: (isKuotaPenuh || isExpired || _isLoading)
-            ? null
-            : _lamarLoker,
+        onPressed: isDisabled || _isLoading ? null : _lamarLoker,
         style: ElevatedButton.styleFrom(
-          backgroundColor: (isKuotaPenuh || isExpired)
-              ? Colors.grey
-              : const Color(0xFF1548F5),
+          backgroundColor: backgroundColor,
           minimumSize: const Size(double.infinity, 45),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(50),
@@ -865,11 +903,7 @@ class _JobDetailSheetState extends State<JobDetailSheet>
                 ),
               )
             : Text(
-                isKuotaPenuh
-                    ? 'Kuota Penuh'
-                    : isExpired
-                    ? 'Lowongan Ditutup'
-                    : 'Lamar Sekarang',
+                buttonText,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
