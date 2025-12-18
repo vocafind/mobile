@@ -2145,6 +2145,14 @@ class ApiService {
     }
   }
 
+
+
+
+
+
+
+
+
   // ================== GET LOKER DETAIL BY ID ==================
   Future<LokerUmumDetail?> getLokerUmumDetailById(String id) async {
     final url = Uri.parse(ApiConfig.lokerById(id));

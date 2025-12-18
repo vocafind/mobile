@@ -23,12 +23,12 @@ class _SecurityPrivacyPageState extends State<SecurityPrivacyPage> {
     try {
       final apiService = ApiService();
       final profil = await apiService.getProfilDataDiri();
-      
+
       if (profil != null) {
         print('📊 Profil data from API:');
         print('📧 Email: ${profil.email}');
         print('👤 Nama: ${profil.nama}');
-        
+
         setState(() {
           _userEmail = profil.email ?? 'Email tidak tersedia';
           _userName = profil.nama;
@@ -161,7 +161,7 @@ class _SecurityPrivacyPageState extends State<SecurityPrivacyPage> {
                             title: 'Email',
                             value: _userEmail,
                             showTopBorder: false,
-                          )
+                          ),
                         ],
                       ),
                     ),
@@ -220,11 +220,7 @@ class _SecurityPrivacyPageState extends State<SecurityPrivacyPage> {
                 fontWeight: FontWeight.w400,
               ),
             ),
-            const Icon(
-              Icons.chevron_right,
-              color: Colors.black45,
-              size: 24,
-            ),
+            const Icon(Icons.chevron_right, color: Colors.black45, size: 24),
           ],
         ),
       ),
@@ -290,7 +286,7 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
   final _oldPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  
+
   bool _obscureOldPassword = true;
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
@@ -355,55 +351,91 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
           confirmPassword: _confirmPasswordController.text,
         );
 
-        print('📦 Change password API response: $response');
-        
-        // Cek jika response memiliki message
-        final message = response['message'] ?? 'Password berhasil diubah';
-        final success = response['success'] ?? true;
-        
-        if (success) {
-          // Success - show success dialog
-          if (mounted) {
-            Navigator.pop(context);
-            await Future.delayed(const Duration(milliseconds: 300));
-            
-            if (mounted) {
-              _showSuccessDialog(message: message);
-            }
-          }
-        } else {
-          setState(() {
-            _errorMessage = message;
-            _isLoading = false;
-          });
-        }
+        print('📦 API Response: $response');
+
+        // Asumsi response berhasil jika tidak ada exception
+        // Tutup bottom sheet terlebih dahulu
+        Navigator.of(context).pop();
+
+        // Tunggu bottom sheet benar-benar tertutup
+        await Future.delayed(const Duration(milliseconds: 100));
+
+        // Tampilkan dialog sukses
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1B56FD).withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_circle,
+                    color: Color(0xFF1B56FD),
+                    size: 40,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Berhasil!',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Password berhasil diubah',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14, color: Colors.black54),
+                ),
+              ],
+            ),
+            actions: [
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1B56FD),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'OK',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
       } catch (e) {
-        print('❌ Error in handleChangePassword: $e');
-        
-        String errorMessage = 'Terjadi kesalahan';
-        
-        // Format pesan error yang lebih user-friendly
-        if (e.toString().contains('Exception:')) {
-          errorMessage = e.toString().replaceAll('Exception:', '').trim();
-        } else if (e.toString().contains('DioError')) {
-          errorMessage = 'Gagal terhubung ke server';
-        }
-        
+        print('❌ Error: $e');
+
         setState(() {
-          _errorMessage = errorMessage;
+          _errorMessage = 'Gagal mengubah password. Coba lagi.';
           _isLoading = false;
         });
-        
-        if (mounted) {
-          _showErrorSnackbar(errorMessage);
-        }
       }
     }
   }
 
   void _showErrorSnackbar(String message) {
     final cleanMessage = message.replaceAll('Exception:', '').trim();
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(cleanMessage),
@@ -419,9 +451,7 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -506,9 +536,7 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(color: Colors.grey.shade200),
-                ),
+                border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
               ),
               child: Row(
                 children: [
@@ -529,7 +557,7 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                 ],
               ),
             ),
-            
+
             // Form
             Expanded(
               child: SingleChildScrollView(
@@ -570,9 +598,9 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                             ],
                           ),
                         ),
-                      
+
                       if (_errorMessage != null) const SizedBox(height: 16),
-                      
+
                       const Text(
                         'Password Lama',
                         style: TextStyle(
@@ -595,8 +623,8 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                             color: Colors.black38,
                           ),
                           filled: true,
-                          fillColor: _isLoading 
-                              ? Colors.grey.shade100 
+                          fillColor: _isLoading
+                              ? Colors.grey.shade100
                               : const Color(0xFFF5F5F5),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -627,14 +655,15 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                                 ? null
                                 : () {
                                     setState(() {
-                                      _obscureOldPassword = !_obscureOldPassword;
+                                      _obscureOldPassword =
+                                          !_obscureOldPassword;
                                     });
                                   },
                           ),
                         ),
                       ),
                       const SizedBox(height: 20),
-                      
+
                       const Text(
                         'Password Baru',
                         style: TextStyle(
@@ -657,8 +686,8 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                             color: Colors.black38,
                           ),
                           filled: true,
-                          fillColor: _isLoading 
-                              ? Colors.grey.shade100 
+                          fillColor: _isLoading
+                              ? Colors.grey.shade100
                               : const Color(0xFFF5F5F5),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -689,7 +718,8 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                                 ? null
                                 : () {
                                     setState(() {
-                                      _obscureNewPassword = !_obscureNewPassword;
+                                      _obscureNewPassword =
+                                          !_obscureNewPassword;
                                     });
                                   },
                           ),
@@ -725,7 +755,7 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      
+
                       const Text(
                         'Konfirmasi Password Baru',
                         style: TextStyle(
@@ -748,8 +778,8 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                             color: Colors.black38,
                           ),
                           filled: true,
-                          fillColor: _isLoading 
-                              ? Colors.grey.shade100 
+                          fillColor: _isLoading
+                              ? Colors.grey.shade100
                               : const Color(0xFFF5F5F5),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -780,14 +810,15 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                                 ? null
                                 : () {
                                     setState(() {
-                                      _obscureConfirmPassword = !_obscureConfirmPassword;
+                                      _obscureConfirmPassword =
+                                          !_obscureConfirmPassword;
                                     });
                                   },
                           ),
                         ),
                       ),
                       const SizedBox(height: 32),
-                      
+
                       SizedBox(
                         width: double.infinity,
                         height: 52,
@@ -795,7 +826,9 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                           onPressed: _isLoading ? null : _handleChangePassword,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF1B56FD),
-                            disabledBackgroundColor: const Color(0xFF1B56FD).withOpacity(0.5),
+                            disabledBackgroundColor: const Color(
+                              0xFF1B56FD,
+                            ).withOpacity(0.5),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),

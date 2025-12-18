@@ -50,7 +50,7 @@ class LokerRekomendasi {
       logo: json['logo'] ?? '',
       posisi: json['posisi'] ?? '',
       deskripsiPekerjaan: json['deskripsiPekerjaan'] ?? '',
-      minimalLulusan: json['minimalLulusan'] ?? '',
+      minimalLulusan: json['minimalLulusan'] ?? 'Tidak Ada',
       status: json['status'] ?? '',
       lokasi: json['lokasi'] ?? '',
       gaji: json['gaji']?.toString() ?? '',

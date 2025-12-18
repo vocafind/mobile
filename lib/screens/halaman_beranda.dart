@@ -915,6 +915,7 @@ class _CocokUntukKamuCardState extends State<_CocokUntukKamuCard>
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
     return GestureDetector(
       onTap: widget.onTap,
       child: SizedBox(
@@ -1133,15 +1134,47 @@ class _CocokUntukKamuCardState extends State<_CocokUntukKamuCard>
                         SizedBox(height: widget.cardHeight * 0.085),
 
                         // Salary
-                        Text(
-                          widget.lowongan.gaji,
-                          style: TextStyle(
-                            color: const Color(0xFF40403F),
-                            fontSize: widget.screenWidth * 0.047,
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w600,
-                            height: 1.11,
-                            letterSpacing: -0.24,
+                        RichText(
+                          text: TextSpan(
+                            children: [
+                              // Teks "Rp" dari fungsi format
+                              TextSpan(
+                                text: _formatSalaryValue(widget.lowongan.gaji),
+                                style: TextStyle(
+                                  color: const Color(0xFF40403F),
+                                  fontSize:
+                                      screenWidth *
+                                      0.047, // Gunakan screenWidth yang sudah didefinisikan
+                                  fontFamily: 'Poppins',
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.11,
+                                  letterSpacing: -0.24,
+                                ),
+                              ),
+                              // Icon mata silang hanya jika gaji tidak ditampilkan
+                              if (widget.lowongan.gaji.toLowerCase().contains(
+                                    'gaji tidak ditampilkan',
+                                  ) ||
+                                  widget.lowongan.gaji.toLowerCase().contains(
+                                    'tidak diumumkan',
+                                  ) ||
+                                  widget.lowongan.gaji.isEmpty)
+                                WidgetSpan(
+                                  child: Padding(
+                                    padding: EdgeInsets.only(
+                                      left: screenWidth * 0.015,
+                                    ), // Gunakan screenWidth yang sudah didefinisikan
+                                    child: Icon(
+                                      Icons.visibility_off,
+                                      color: const Color(0xFF40403F),
+                                      size:
+                                          screenWidth *
+                                          0.04, // Gunakan screenWidth yang sudah didefinisikan
+                                    ),
+                                  ),
+                                  alignment: PlaceholderAlignment.middle,
+                                ),
+                            ],
                           ),
                         ),
 
@@ -1208,6 +1241,47 @@ class _CocokUntukKamuCardState extends State<_CocokUntukKamuCard>
                                 ),
                               ),
                             ),
+
+                            // Hanya tampilkan jika minimalLulusan bukan "Tidak Ada"
+                            if (widget.lowongan.minimalLulusan.toLowerCase() !=
+                                'tidak ada')
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal:
+                                      widget.cardWidth *
+                                      0.035, // Ganti cardWidth dengan widget.cardWidth
+                                  vertical:
+                                      widget.cardHeight *
+                                      0.017, // Ganti cardHeight dengan widget.cardHeight
+                                ),
+                                decoration: ShapeDecoration(
+                                  color: const Color.fromARGB(
+                                    255,
+                                    255,
+                                    255,
+                                    255,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    side: const BorderSide(
+                                      width: 1,
+                                      color: Color(0xFFC7C7C7),
+                                    ),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                child: Text(
+                                  widget.lowongan.minimalLulusan,
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: screenWidth * 0.032,
+                                    fontFamily: 'SF Pro',
+                                    fontWeight: FontWeight.w400,
+                                    height: 1.43,
+                                    letterSpacing: -0.50,
+                                  ),
+                                ),
+                              ),
+
                             if (widget.lowongan.opsiKerjaRemote)
                               Container(
                                 padding: EdgeInsets.symmetric(
@@ -1215,7 +1289,12 @@ class _CocokUntukKamuCardState extends State<_CocokUntukKamuCard>
                                   vertical: widget.cardHeight * 0.017,
                                 ),
                                 decoration: ShapeDecoration(
-                                  color: const Color.fromARGB(255, 255, 255, 255),
+                                  color: const Color.fromARGB(
+                                    255,
+                                    255,
+                                    255,
+                                    255,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     side: const BorderSide(
                                       width: 1,
@@ -1277,6 +1356,18 @@ class _CocokUntukKamuCardState extends State<_CocokUntukKamuCard>
         ),
       ),
     );
+  }
+
+  String _formatSalaryValue(String gaji) {
+    if (gaji.toLowerCase().contains('gaji tidak ditampilkan') ||
+        gaji.toLowerCase().contains('tidak diumumkan') ||
+        gaji.isEmpty) {
+      return 'Rp '; // Hanya return 'Rp ' untuk digabung dengan icon
+    }
+    if (gaji.startsWith('Rp')) {
+      return gaji;
+    }
+    return 'Rp $gaji';
   }
 
   String _formatTimeAgo(DateTime tanggalPosting) {
@@ -1990,7 +2081,7 @@ class _TemuiMerekaDanKesempatanSegeraSection extends StatelessWidget {
                   'Dibutuhkan Segera!',
                   style: TextStyle(
                     color: Colors.black,
-                    fontSize: 16,
+                    fontSize: 26,
                     fontFamily: 'Poppins',
                     fontWeight: FontWeight.w600,
                     height: 1.75,
@@ -2269,6 +2360,7 @@ class _UrgentJobCardState extends State<_UrgentJobCard>
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: GestureDetector(
@@ -2448,15 +2540,47 @@ class _UrgentJobCardState extends State<_UrgentJobCard>
                         const SizedBox(height: 20),
 
                         // Salary
-                        Text(
-                          widget.lowongan.gaji,
-                          style: const TextStyle(
-                            color: Color(0xFF40403F),
-                            fontSize: 18,
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w600,
-                            height: 1.11,
-                            letterSpacing: -0.24,
+                        RichText(
+                          text: TextSpan(
+                            children: [
+                              // Teks "Rp" dari fungsi format
+                              TextSpan(
+                                text: _formatSalaryValue(widget.lowongan.gaji),
+                                style: TextStyle(
+                                  color: const Color(0xFF40403F),
+                                  fontSize:
+                                      screenWidth *
+                                      0.047, // Gunakan screenWidth yang sudah didefinisikan
+                                  fontFamily: 'Poppins',
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.11,
+                                  letterSpacing: -0.24,
+                                ),
+                              ),
+                              // Icon mata silang hanya jika gaji tidak ditampilkan
+                              if (widget.lowongan.gaji.toLowerCase().contains(
+                                    'gaji tidak ditampilkan',
+                                  ) ||
+                                  widget.lowongan.gaji.toLowerCase().contains(
+                                    'tidak diumumkan',
+                                  ) ||
+                                  widget.lowongan.gaji.isEmpty)
+                                WidgetSpan(
+                                  child: Padding(
+                                    padding: EdgeInsets.only(
+                                      left: screenWidth * 0.015,
+                                    ), // Gunakan screenWidth yang sudah didefinisikan
+                                    child: Icon(
+                                      Icons.visibility_off,
+                                      color: const Color(0xFF40403F),
+                                      size:
+                                          screenWidth *
+                                          0.04, // Gunakan screenWidth yang sudah didefinisikan
+                                    ),
+                                  ),
+                                  alignment: PlaceholderAlignment.middle,
+                                ),
+                            ],
                           ),
                         ),
 
@@ -2511,6 +2635,7 @@ class _UrgentJobCardState extends State<_UrgentJobCard>
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                               ),
+
                               child: Text(
                                 widget.lowongan.jenisPekerjaan,
                                 style: const TextStyle(
@@ -2523,6 +2648,47 @@ class _UrgentJobCardState extends State<_UrgentJobCard>
                                 ),
                               ),
                             ),
+
+                            // Hanya tampilkan jika minimalLulusan bukan "Tidak Ada"
+                            // Hanya tampilkan jika minimalLulusan bukan "Tidak Ada"
+                            if (widget.lowongan.minimalLulusan.toLowerCase() !=
+                                'tidak ada')
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  // Gunakan padding fixed
+                                  horizontal: 12, // Ganti dengan nilai fixed
+                                  vertical: 4, // Ganti dengan nilai fixed
+                                ),
+                                decoration: ShapeDecoration(
+                                  color: const Color.fromARGB(
+                                    255,
+                                    255,
+                                    255,
+                                    255,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    side: const BorderSide(
+                                      width: 1,
+                                      color: Color(0xFFC7C7C7),
+                                    ),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                child: Text(
+                                  widget.lowongan.minimalLulusan,
+                                  style: const TextStyle(
+                                    // Gunakan style fixed seperti container lainnya
+                                    color: Colors.black,
+                                    fontSize:
+                                        12, // Sesuaikan dengan ukuran font container lainnya
+                                    fontFamily: 'SF Pro',
+                                    fontWeight: FontWeight.w400,
+                                    height: 1.43,
+                                    letterSpacing: -0.50,
+                                  ),
+                                ),
+                              ),
+
                             if (widget.lowongan.opsiKerjaRemote)
                               Container(
                                 padding: const EdgeInsets.symmetric(
@@ -2597,6 +2763,18 @@ class _UrgentJobCardState extends State<_UrgentJobCard>
         ),
       ),
     );
+  }
+
+  String _formatSalaryValue(String gaji) {
+    if (gaji.toLowerCase().contains('gaji tidak ditampilkan') ||
+        gaji.toLowerCase().contains('tidak diumumkan') ||
+        gaji.isEmpty) {
+      return 'Rp '; // Hanya return 'Rp ' untuk digabung dengan icon
+    }
+    if (gaji.startsWith('Rp')) {
+      return gaji;
+    }
+    return 'Rp $gaji';
   }
 
   // Method untuk format time ago

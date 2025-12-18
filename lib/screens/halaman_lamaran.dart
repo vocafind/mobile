@@ -216,7 +216,7 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                       ),
                       child: Center(
                         child: Text(
-                          'Job fair ${_allLamaranJobfair.isNotEmpty ? '(${_allLamaranJobfair.length})' : ''}',
+                          'Job Fair ${_allLamaranJobfair.isNotEmpty ? '(${_allLamaranJobfair.length})' : ''}',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 14,
@@ -614,6 +614,8 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
                                 ),
                               ),
                             ),
+
+                            
 
                             // Remote Tag jika tersedia
                             if (lowongan.opsiKerjaRemote) ...[

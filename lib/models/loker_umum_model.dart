@@ -46,7 +46,7 @@ class LokerUmum {
       logo: json['logo'] ?? '',
       posisi: json['posisi'] ?? '',
       deskripsiPekerjaan: json['deskripsiPekerjaan'] ?? '',
-      minimalLulusan: json['minimalLulusan'],
+      minimalLulusan: json['minimalLulusan'] ?? 'Tidak Ada',
       status: json['status'] ?? '',
       lokasi: json['lokasi'] ?? '',
       gaji: json['gaji']?.toString() ?? '',
@@ -62,3 +62,26 @@ class LokerUmum {
     );
   }
 }
+
+
+
+// Model untuk response pagination
+  class LokerPaginationResponse {
+    final List<LokerUmum> data;
+    final int page;
+    final int pageSize;
+    final int totalCount;
+    final int totalPages;
+    final bool hasNextPage;
+    final bool hasPreviousPage;
+
+    LokerPaginationResponse({
+      required this.data,
+      required this.page,
+      required this.pageSize,
+      required this.totalCount,
+      required this.totalPages,
+      required this.hasNextPage,
+      required this.hasPreviousPage,
+    });
+  }
