@@ -46,7 +46,9 @@ class _HalamanBookmarkState extends State<HalamanBookmark> {
         _isLoading = false;
       });
 
-      print("✅ Loaded ${savedJobs.length} saved jobs, ${appliedIds.length} already applied");
+      print(
+        "✅ Loaded ${savedJobs.length} saved jobs, ${appliedIds.length} already applied",
+      );
     } catch (e) {
       print("❌ Error loading saved jobs: $e");
       setState(() {
@@ -103,7 +105,7 @@ class _HalamanBookmarkState extends State<HalamanBookmark> {
       if (mounted) {
         // ✅ CEK APAKAH SUDAH DILAMAR
         final isAlreadyApplied = _appliedJobIds.contains(lowongan.lowonganId);
-        
+
         showModalBottomSheet(
           context: context,
           isScrollControlled: true,
@@ -339,7 +341,7 @@ class _HalamanBookmarkState extends State<HalamanBookmark> {
           final lokerUmum = savedJob.toLokerUmum();
           final daysLeft = _calculateDaysLeft(lokerUmum.batasLamaran);
           final isUrgent = daysLeft <= 10 && daysLeft >= 0;
-          
+
           // ✅ CEK APAKAH SUDAH DILAMAR
           final isApplied = _appliedJobIds.contains(lokerUmum.lowonganId);
 
@@ -752,13 +754,22 @@ class __JobCardState extends State<_JobCard>
                               ),
                             ),
 
-                             // Hanya tampilkan jika minimalLulusan bukan "Tidak Ada"
-                            if (widget.lowongan.minimalLulusan.toLowerCase() !=
-                                'tidak ada')
+                            // Hanya tampilkan jika minimalLulusan bukan "Tidak Ada", bukan string kosong, atau bukan hanya spasi
+                            if (widget.lowongan.minimalLulusan
+                                    .trim()
+                                    .isNotEmpty &&
+                                widget.lowongan.minimalLulusan
+                                        .trim()
+                                        .toLowerCase() !=
+                                    'tidak ada')
                               Container(
                                 padding: EdgeInsets.symmetric(
-                                  horizontal: cardWidth * 0.035,
-                                  vertical: cardHeight * 0.017,
+                                  horizontal:
+                                      cardWidth *
+                                      0.035, // Gunakan cardWidth lokal
+                                  vertical:
+                                      cardHeight *
+                                      0.017, // Gunakan cardHeight lokal
                                 ),
                                 decoration: ShapeDecoration(
                                   color: const Color.fromARGB(
@@ -776,7 +787,7 @@ class __JobCardState extends State<_JobCard>
                                   ),
                                 ),
                                 child: Text(
-                                  widget.lowongan.minimalLulusan,
+                                  widget.lowongan.minimalLulusan.trim(),
                                   style: TextStyle(
                                     color: Colors.black,
                                     fontSize: screenWidth * 0.032,

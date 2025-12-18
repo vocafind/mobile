@@ -626,7 +626,7 @@ class _JobDetailSheetState extends State<JobDetailSheet>
                     fontSize: 13,
                     fontFamily: 'SF Pro',
                     fontWeight: FontWeight.w400,
-                    height: 1.4,
+                    height: 1.6,
                   ),
                 ),
               ],

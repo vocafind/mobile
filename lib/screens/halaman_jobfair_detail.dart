@@ -578,7 +578,7 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
                   color: Color(0xFF18181B),
                   fontSize: 20,
                   fontFamily: 'SF Pro',
-                  fontWeight: FontWeight.w400,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 16),
@@ -589,7 +589,7 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
                     color: Color(0xFF525252),
                     fontSize: 14,
                     fontFamily: 'SF Pro',
-                    height: 1.3,
+                    height: 1.6,
                   ),
                   children: [
                     TextSpan(
@@ -1410,7 +1410,7 @@ class __JobCardJobfairState extends State<_JobCardJobfair>
                               ),
                             ),
 
-                             // Hanya tampilkan jika minimalLulusan bukan "Tidak Ada"
+                            // Hanya tampilkan jika minimalLulusan bukan "Tidak Ada"
                             if (widget.lowongan.minimalLulusan.toLowerCase() !=
                                 'tidak ada')
                               Container(
