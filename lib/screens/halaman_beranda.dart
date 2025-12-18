@@ -20,6 +20,9 @@ class HalamanBeranda extends StatefulWidget {
 class _HalamanBerandaState extends State<HalamanBeranda> {
   final ScrollController _scrollController = ScrollController();
   final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
+  final ValueNotifier<String> _userName = ValueNotifier<String>(
+    'Talent',
+  ); // Tambahkan ini
   final ApiService _apiService = ApiService();
 
   // Inisialisasi langsung dengan Future.value([]) untuk menghindari late error
@@ -452,18 +455,28 @@ class _AnimatedHeader extends StatefulWidget {
 
 class __AnimatedHeaderState extends State<_AnimatedHeader> {
   bool _isSearchFocused = false;
-  String _userName = '';
+  String _userName = 'Talent';
+
   @override
   void initState() {
     super.initState();
     widget.searchFocusNode.addListener(_onFocusChange);
+    // Panggil load nama segera
     _loadUserName();
   }
 
   @override
-  void dispose() {
-    widget.searchFocusNode.removeListener(_onFocusChange);
-    super.dispose();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Load ulang nama setiap kali dependencies berubah
+    _loadUserName();
+  }
+
+  @override
+  void didUpdateWidget(_AnimatedHeader oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Load ulang nama setiap kali widget di-update
+    _loadUserName();
   }
 
   void _onFocusChange() {
@@ -472,13 +485,20 @@ class __AnimatedHeaderState extends State<_AnimatedHeader> {
     });
   }
 
+  // PASTIKAN INI ASYNC TAPI TIDAK PERLU AWAIT
   Future<void> _loadUserName() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userName = prefs.getString('nama') ?? 'Talent'; // Default fallback
-    if (mounted) {
-      setState(() {
-        _userName = userName;
-      });
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userName = prefs.getString('nama') ?? 'Talent';
+
+      // HANYA update state jika nama berubah
+      if (mounted && userName != _userName) {
+        setState(() {
+          _userName = userName;
+        });
+      }
+    } catch (e) {
+      print("⚠️ Error loading user name: $e");
     }
   }
 
@@ -489,12 +509,10 @@ class __AnimatedHeaderState extends State<_AnimatedHeader> {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    //final screenHeight = MediaQuery.of(context).size.height;
     final isSmallDevice = screenWidth < 360;
     final isVerySmallDevice = screenWidth < 320;
 
     return Container(
-      // Tambahkan height constraint agar tidak overflow
       constraints: BoxConstraints(minHeight: widget.showSearchOnly ? 80 : 180),
       decoration: BoxDecoration(
         gradient: const LinearGradient(

@@ -76,7 +76,6 @@ class ApiService {
 
 
   // ================== LOGIN ==================
-
   Future<Map<String, dynamic>> loginTalent(
     String email,
     String password,
@@ -178,6 +177,9 @@ class ApiService {
       return {"message": "Terjadi kesalahan sistem"};
     }
   }
+
+
+
 
   // ✅ METHOD UNTUK KIRIM FCM TOKEN SETELAH LOGIN SUKSES
   void _trySendFcmTokenAfterLogin(String accessToken) async {
