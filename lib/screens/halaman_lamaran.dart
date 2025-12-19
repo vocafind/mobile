@@ -154,11 +154,10 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
           HeaderWidget(
             showNotification: true,
             showFilter: false,
-            enableNavigation: true, // INI YANG PERLU DITAMBAHKAN!
-            searchRoute: AppRoutes.cariLoker,
+            enableNavigation: true,
+            navigationArguments: {'initialTab': 1}, 
             onSearch: (query) {
-              // Real-time search di jobfair jika diperlukan
-              print("Search di jobfair: $query");
+              print("Search di lamaran: $query");
             },
           ),
 
@@ -262,7 +261,6 @@ class _HalamanLamaranState extends State<HalamanLamaran> {
           Expanded(child: _buildContent()),
         ],
       ),
-      bottomNavigationBar: const BottomNavBar(currentIndex: 3),
     );
   }
 

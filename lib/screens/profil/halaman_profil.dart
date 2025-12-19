@@ -50,7 +50,6 @@ class _HalamanProfilState extends State<HalamanProfil>
           ),
         ],
       ),
-      bottomNavigationBar: const BottomNavBar(currentIndex: 4),
     );
   }
 }

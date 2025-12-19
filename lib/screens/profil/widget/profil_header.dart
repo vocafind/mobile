@@ -246,10 +246,13 @@ class _ProfileHeaderState extends State<ProfileHeader>
   }
 
   // ✅ FIXED: Fungsi logout yang benar-benar aman
-  void _showLogoutConfirmation(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
+// ✅ FIXED: Fungsi logout yang benar-benar bekerja
+void _showLogoutConfirmation(BuildContext context) {
+  showDialog(
+    context: context,
+    barrierDismissible: false, // Mencegah tutup dengan tap luar
+    builder: (context) {
+      return AlertDialog(
         title: const Text(
           'Logout',
           style: TextStyle(fontFamily: 'SF Pro', fontWeight: FontWeight.w600),
@@ -260,57 +263,89 @@ class _ProfileHeaderState extends State<ProfileHeader>
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Batal',
-                style: TextStyle(fontFamily: 'SF Pro', color: Colors.grey)),
+            onPressed: () {
+              Navigator.of(context).pop(); // Tutup dialog
+            },
+            child: const Text(
+              'Batal',
+              style: TextStyle(fontFamily: 'SF Pro', color: Colors.grey),
+            ),
           ),
           TextButton(
             onPressed: () async {
-              // ✅ Simpan context sebelum menutup dialog
+              // Ambil navigator sebelum menutup dialog
               final navigator = Navigator.of(context);
               
               // Tutup dialog konfirmasi
               navigator.pop();
               
-              // ✅ Tampilkan loading indicator menggunakan context yang valid
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Row(
-                    children: [
-                      SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
+              // Tampilkan loading indicator
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => Dialog(
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      SizedBox(width: 12),
-                      Text('Sedang logout...'),
-                    ],
+                      child: const Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text(
+                            'Sedang logout...',
+                            style: TextStyle(fontFamily: 'SF Pro'),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  duration: Duration(seconds: 3),
                 ),
               );
-
+              
               try {
-                // Panggil service logout
+                // Panggil API logout
                 final apiService = ApiService();
                 await apiService.logout();
-
-                // ✅ Gunakan navigator yang sudah disimpan
+                
+                // Tunggu sebentar untuk memastikan data terhapus
+                await Future.delayed(const Duration(milliseconds: 500));
+                
+                // Tutup loading dialog
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                }
+                
+                // Navigasi ke halaman login
                 navigator.pushAndRemoveUntil(
                   MaterialPageRoute(builder: (context) => const HalamanLogin()),
                   (route) => false,
                 );
-
-                // ✅ Simpan status untuk pesan sukses di halaman login
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.setBool('showLogoutSuccess', true);
-
+                
               } catch (e) {
-                print("Logout error: $e");
-                // ✅ Tetap redirect ke login meski ada error
+                print("❌ Logout error in UI: $e");
+                
+                // Tutup loading dialog
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                }
+                
+                // Tampilkan error tapi tetap redirect ke login
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Berhasil logout'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+                
+                // Tetap redirect ke login
+                await Future.delayed(const Duration(seconds: 1));
                 navigator.pushAndRemoveUntil(
                   MaterialPageRoute(builder: (context) => const HalamanLogin()),
                   (route) => false,
@@ -327,9 +362,10 @@ class _ProfileHeaderState extends State<ProfileHeader>
             ),
           ),
         ],
-      ),
-    );
-  }
+      );
+    },
+  );
+}
 
   @override
   Widget build(BuildContext context) {

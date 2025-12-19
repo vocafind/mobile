@@ -883,7 +883,6 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
           ],
         ),
       ),
-      bottomNavigationBar: const BottomNavBar(currentIndex: 1),
     );
   }
 

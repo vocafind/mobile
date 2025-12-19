@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:ui';
-import 'package:jobfair/api/route.dart';
 
 class BottomNavBar extends StatefulWidget {
   final int currentIndex;
-  final Function(int)? onTap;
+  final Function(int) onTap; // Wajib onTap, tidak optional
 
   const BottomNavBar({
     super.key,
     required this.currentIndex,
-    this.onTap,
+    required this.onTap, // Required
   });
 
   @override
@@ -26,12 +25,12 @@ class _BottomNavBarState extends State<BottomNavBar>
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 250),
+      duration: const Duration(milliseconds: 200),
       vsync: this,
     );
     _fadeAnimation = CurvedAnimation(
       parent: _animationController,
-      curve: Curves.easeInOut,
+      curve: Curves.easeOut,
     );
     _animationController.forward();
   }
@@ -40,7 +39,8 @@ class _BottomNavBarState extends State<BottomNavBar>
   void didUpdateWidget(BottomNavBar oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.currentIndex != widget.currentIndex) {
-      _animationController.forward(from: 0);
+      _animationController.reset();
+      _animationController.forward();
     }
   }
 
@@ -50,34 +50,12 @@ class _BottomNavBarState extends State<BottomNavBar>
     super.dispose();
   }
 
-  void _handleNavigation(int index) {
-    if (index == widget.currentIndex) return;
-    
-    if (widget.onTap != null) {
-      widget.onTap!(index);
-      return;
-    }
-
-    final routes = [
-      AppRoutes.beranda,
-      AppRoutes.cariLoker,
-      AppRoutes.jobfair,
-      AppRoutes.lamaran,
-      AppRoutes.profil,
-    ];
-    
-    if (index < routes.length) {
-      goReplace(context, routes[index]);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isVerySmall = screenWidth < 320;
     final isSmall = screenWidth < 360;
     
-    // Konfigurasi responsif
     final margin = isVerySmall ? 8.0 : isSmall ? 12.0 : 20.0;
     final height = isVerySmall ? 56.0 : isSmall ? 60.0 : 68.0;
     final borderRadius = isVerySmall ? 45.0 : 60.0;
@@ -86,7 +64,7 @@ class _BottomNavBarState extends State<BottomNavBar>
       margin: EdgeInsets.only(
         left: margin,
         right: margin,
-        bottom: margin - 4, // Bottom sedikit lebih kecil
+        bottom: margin - 4,
       ),
       height: height,
       child: ClipRRect(
@@ -140,7 +118,6 @@ class _BottomNavBarState extends State<BottomNavBar>
   }) {
     final isActive = widget.currentIndex == index;
     
-    // Ukuran responsif
     final iconSize = isVerySmall ? 22.0 : isSmall ? 24.0 : 28.0;
     final horizontalPadding = isActive 
         ? (isVerySmall ? 6.0 : isSmall ? 8.0 : 12.0)
@@ -151,10 +128,10 @@ class _BottomNavBarState extends State<BottomNavBar>
     final fontSize = isVerySmall ? 9.0 : isSmall ? 10.0 : 12.0;
 
     return GestureDetector(
-      onTap: () => _handleNavigation(index),
+      onTap: () => widget.onTap(index), // Langsung panggil onTap dari parent
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
         padding: EdgeInsets.symmetric(
           horizontal: horizontalPadding,
           vertical: verticalPadding,

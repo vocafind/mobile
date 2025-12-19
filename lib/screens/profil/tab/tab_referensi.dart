@@ -13,6 +13,7 @@ class _TabReferensiState extends State<TabReferensi> {
   final ApiService _apiService = ApiService();
   List<ReferenceModel> _references = [];
   bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -21,13 +22,16 @@ class _TabReferensiState extends State<TabReferensi> {
   }
 
   Future<void> _loadReferences() async {
-    if (!mounted) return; // ✅ TAMBAHKAN INI
+    if (!mounted) return;
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    
     try {
       final references = await _apiService.getReference();
       if (mounted) {
-        // ✅ TAMBAHKAN INI
         setState(() {
           _references = references;
           _isLoading = false;
@@ -35,8 +39,10 @@ class _TabReferensiState extends State<TabReferensi> {
       }
     } catch (e) {
       if (mounted) {
-        // ✅ TAMBAHKAN INI
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Gagal memuat data: ${e.toString()}';
+        });
         _showSnackBar('Gagal memuat data referensi', isError: true);
       }
       print("Error load references: $e");
@@ -44,7 +50,7 @@ class _TabReferensiState extends State<TabReferensi> {
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
-    if (!mounted) return; // TAMBAHKAN INI
+    if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -73,41 +79,49 @@ class _TabReferensiState extends State<TabReferensi> {
     );
   }
 
-  void _showAddEditModal({ReferenceModel? reference}) {
-    final isEdit = reference != null;
-    bool isSaving = false;
+void _showAddEditModal({ReferenceModel? reference}) {
+  final isEdit = reference != null;
 
-    // BUAT CONTROLLER LOCAL DI DALAM METHOD
-    final _namaController = TextEditingController(text: reference?.nama ?? '');
-    final _relasiController = TextEditingController(
-      text: reference?.relasi ?? '',
-    );
-    final _perusahaanController = TextEditingController(
-      text: reference?.perusahaan ?? '',
-    );
-    final _posisiController = TextEditingController(
-      text: reference?.posisi ?? '',
-    );
-    final _emailController = TextEditingController(
-      text: reference?.email ?? '',
-    );
-    final _teleponController = TextEditingController(
-      text: reference?.telepon ?? '',
-    );
-    final _deskripsiController = TextEditingController(
-      text: reference?.deskripsi ?? '',
-    );
+  // Deklarasikan error variables di sini
+  String? namaError;
+  String? relasiError;
+  String? perusahaanError;
+  String? posisiError;
+  String? emailError;
+  String? teleponError;
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: StatefulBuilder(
-          builder: (context, setModalState) => Container(
+  // Buat controller lokal untuk modal
+  final _namaController = TextEditingController(text: reference?.nama ?? '');
+  final _relasiController = TextEditingController(
+    text: reference?.relasi ?? '',
+  );
+  final _perusahaanController = TextEditingController(
+    text: reference?.perusahaan ?? '',
+  );
+  final _posisiController = TextEditingController(
+    text: reference?.posisi ?? '',
+  );
+  final _emailController = TextEditingController(
+    text: reference?.email ?? '',
+  );
+  final _teleponController = TextEditingController(
+    text: reference?.telepon ?? '',
+  );
+  final _deskripsiController = TextEditingController(
+    text: reference?.deskripsi ?? '',
+  );
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: StatefulBuilder(
+        builder: (context, setModalState) {
+          return Container(
             height: MediaQuery.of(context).size.height * 0.9,
             decoration: const BoxDecoration(
               color: Colors.white,
@@ -127,9 +141,7 @@ class _TabReferensiState extends State<TabReferensi> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.close),
-                        onPressed: isSaving
-                            ? null
-                            : () => Navigator.pop(context),
+                        onPressed: () => Navigator.pop(context),
                       ),
                       Expanded(
                         child: Text(
@@ -142,137 +154,101 @@ class _TabReferensiState extends State<TabReferensi> {
                         ),
                       ),
                       TextButton(
-                        onPressed: isSaving
-                            ? null
-                            : () async {
-                                if (_namaController.text.isEmpty ||
-                                    _relasiController.text.isEmpty ||
-                                    _perusahaanController.text.isEmpty ||
-                                    _posisiController.text.isEmpty ||
-                                    _emailController.text.isEmpty ||
-                                    _teleponController.text.isEmpty) {
-                                  // ✅ GUNAKAN mounted check DI SINI
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Field wajib harus diisi',
-                                          style: const TextStyle(
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.w500,
-                                            fontFamily: 'Poppins',
-                                          ),
-                                        ),
-                                        backgroundColor: Colors.red[100],
-                                        behavior: SnackBarBehavior.floating,
-                                        elevation: 2,
-                                        margin: const EdgeInsets.symmetric(
-                                          horizontal: 16,
-                                          vertical: 10,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                        ),
-                                        duration: const Duration(seconds: 2),
-                                      ),
-                                    );
-                                  }
-                                  return;
-                                }
+                        onPressed: () {
+                          // Reset error messages
+                          bool hasError = false;
 
-                                setModalState(() => isSaving = true);
+                          // Validasi Nama
+                          if (_namaController.text.trim().isEmpty) {
+                            namaError = 'Nama lengkap harus diisi';
+                            hasError = true;
+                          } else {
+                            namaError = null;
+                          }
 
-                                try {
-                                  final newReference = ReferenceModel(
-                                    referenceId: reference?.referenceId,
-                                    talentId: reference?.talentId,
-                                    nama: _namaController.text,
-                                    relasi: _relasiController.text,
-                                    perusahaan: _perusahaanController.text,
-                                    posisi: _posisiController.text,
-                                    email: _emailController.text,
-                                    telepon: _teleponController.text,
-                                    deskripsi: _deskripsiController.text,
-                                  );
+                          // Validasi Relasi
+                          if (_relasiController.text.trim().isEmpty) {
+                            relasiError = 'Hubungan/relasi harus diisi';
+                            hasError = true;
+                          } else {
+                            relasiError = null;
+                          }
 
-                                  if (isEdit) {
-                                    await _apiService.updateReference(
-                                      reference!.referenceId!,
-                                      newReference,
-                                    );
-                                  } else {
-                                    await _apiService.createReference(
-                                      newReference,
-                                    );
-                                  }
+                          // Validasi Perusahaan
+                          if (_perusahaanController.text.trim().isEmpty) {
+                            perusahaanError = 'Perusahaan harus diisi';
+                            hasError = true;
+                          } else {
+                            perusahaanError = null;
+                          }
 
-                                  // TUTUP MODAL DULU SEBELUM LOAD DATA
-                                  Navigator.pop(context);
+                          // Validasi Posisi
+                          if (_posisiController.text.trim().isEmpty) {
+                            posisiError = 'Posisi/jabatan harus diisi';
+                            hasError = true;
+                          } else {
+                            posisiError = null;
+                          }
 
-                                  // ✅ TAMBAHKAN mounted check DI SINI
-                                  if (mounted) {
-                                    await _loadReferences();
+                          // Validasi Email
+                          final email = _emailController.text.trim();
+                          if (email.isEmpty) {
+                            emailError = 'Email harus diisi';
+                            hasError = true;
+                          } else if (!_isValidEmail(email)) {
+                            emailError = 'Format email tidak valid';
+                            hasError = true;
+                          } else {
+                            emailError = null;
+                          }
 
-                                    // ✅ GUNAKAN Future.microtask UNTUK MEMASTIKAN CONTEXT MASIH ADA
-                                    Future.microtask(() {
-                                      if (mounted) {
-                                        _showSnackBar(
-                                          'Referensi berhasil ${isEdit ? 'diperbarui' : 'ditambahkan'}',
-                                        );
-                                      }
-                                    });
-                                  }
-                                } catch (e) {
-                                  setModalState(() => isSaving = false);
-                                  // ✅ TAMBAHKAN mounted check DI SINI
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Gagal ${isEdit ? 'memperbarui' : 'menambahkan'} referensi',
-                                          style: const TextStyle(
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.w500,
-                                            fontFamily: 'Poppins',
-                                          ),
-                                        ),
-                                        backgroundColor: Colors.red[100],
-                                        behavior: SnackBarBehavior.floating,
-                                        elevation: 2,
-                                        margin: const EdgeInsets.symmetric(
-                                          horizontal: 16,
-                                          vertical: 10,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                        ),
-                                        duration: const Duration(seconds: 2),
-                                      ),
-                                    );
-                                  }
-                                  print("Error save reference: $e");
-                                }
-                              },
-                        child: isSaving
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text(
-                                'Simpan',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: 'Poppins',
-                                ),
-                              ),
+                          // Validasi Telepon
+                          final telepon = _teleponController.text.trim();
+                          if (telepon.isEmpty) {
+                            teleponError = 'Nomor telepon harus diisi';
+                            hasError = true;
+                          } else if (!_isValidPhoneNumber(telepon)) {
+                            teleponError = 'Format nomor telepon tidak valid';
+                            hasError = true;
+                          } else {
+                            teleponError = null;
+                          }
+
+                          // Update UI untuk menampilkan error
+                          if (hasError) {
+                            setModalState(() {});
+                            return;
+                          }
+
+                          // Jika semua validasi lolos
+                          final newReference = ReferenceModel(
+                            referenceId: reference?.referenceId,
+                            talentId: reference?.talentId,
+                            nama: _namaController.text.trim(),
+                            relasi: _relasiController.text.trim(),
+                            perusahaan: _perusahaanController.text.trim(),
+                            posisi: _posisiController.text.trim(),
+                            email: email,
+                            telepon: telepon,
+                            deskripsi: _deskripsiController.text.trim(),
+                          );
+
+                          Navigator.pop(context);
+
+                          if (isEdit) {
+                            _updateReference(newReference);
+                          } else {
+                            _addReference(newReference);
+                          }
+                        },
+                        child: const Text(
+                          'Simpan',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -324,17 +300,20 @@ class _TabReferensiState extends State<TabReferensi> {
                           hint: 'Contoh: Abdul Gofar Hilman',
                           icon: Icons.person_outline,
                           required: true,
+                          errorText: namaError,
                         ),
                         const SizedBox(height: 16),
 
-                       _buildTextField(
+                        _buildTextField(
                           controller: _relasiController,
                           label: 'Hubungan/Relasi',
                           hint: 'Contoh: Dosen Pembimbing, Supervisor Magang, Atasan di Tempat Magang',
                           icon: Icons.connect_without_contact_outlined,
                           required: true,
                           helperText: 'Posisi orang tersebut dalam hubungan akademik atau profesional',
+                          errorText: relasiError,
                         ),
+                        const SizedBox(height: 16),
 
                         _buildTextField(
                           controller: _perusahaanController,
@@ -342,6 +321,7 @@ class _TabReferensiState extends State<TabReferensi> {
                           hint: 'Contoh: PT. Inforsys Indonesia',
                           icon: Icons.business_outlined,
                           required: true,
+                          errorText: perusahaanError,
                         ),
                         const SizedBox(height: 16),
 
@@ -351,26 +331,27 @@ class _TabReferensiState extends State<TabReferensi> {
                           hint: 'Contoh: Manager HRD, Direktur',
                           icon: Icons.badge_outlined,
                           required: true,
+                          errorText: posisiError,
                         ),
                         const SizedBox(height: 16),
 
-                        _buildTextField(
+                        _buildEmailTextField(
                           controller: _emailController,
                           label: 'Email',
                           hint: 'Contoh: email@example.com',
                           icon: Icons.email_outlined,
-                          keyboardType: TextInputType.emailAddress,
                           required: true,
+                          errorText: emailError,
                         ),
                         const SizedBox(height: 16),
 
-                        _buildTextField(
+                        _buildPhoneTextField(
                           controller: _teleponController,
                           label: 'Nomor Telepon',
                           hint: 'Contoh: 08123456789',
                           icon: Icons.phone_outlined,
-                          keyboardType: TextInputType.phone,
                           required: true,
+                          errorText: teleponError,
                         ),
                         const SizedBox(height: 16),
 
@@ -390,12 +371,10 @@ class _TabReferensiState extends State<TabReferensi> {
                           const SizedBox(height: 32),
                           Center(
                             child: OutlinedButton.icon(
-                              onPressed: isSaving
-                                  ? null
-                                  : () {
-                                      Navigator.pop(context);
-                                      _showDeleteConfirmation(reference!);
-                                    },
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _showDeleteConfirmation(reference!);
+                              },
                               icon: const Icon(
                                 Icons.delete_outline,
                                 color: Colors.red,
@@ -427,131 +406,73 @@ class _TabReferensiState extends State<TabReferensi> {
                 ),
               ],
             ),
-          ),
-        ),
+          );
+        },
       ),
-    );
+    ),
+  );
+}
+
+  bool _isValidEmail(String email) {
+    final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    return emailRegex.hasMatch(email);
   }
 
-  void _showDeleteConfirmation(ReferenceModel reference) {
-    bool isDeleting = false;
+  bool _isValidPhoneNumber(String phone) {
+    final phoneRegex = RegExp(r'^[0-9]{10,13}$');
+    return phoneRegex.hasMatch(phone);
+  }
 
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          backgroundColor: Colors.white,
-          title: const Text(
-            'Hapus Referensi',
-            style: TextStyle(
-              fontSize: 18,
-              fontFamily: 'Poppins',
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          content: Text(
-            'Apakah Anda yakin ingin menghapus ${reference.nama}?',
-            style: const TextStyle(
-              fontSize: 14,
-              fontFamily: 'Poppins',
-              color: Color(0xFF515151),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: isDeleting ? null : () => Navigator.pop(context),
-              child: const Text(
-                'Batal',
-                style: TextStyle(
-                  color: Color(0xFF515151),
-                  fontSize: 14,
-                  fontFamily: 'Poppins',
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            TextButton(
-              onPressed: isDeleting
-                  ? null
-                  : () async {
-                      setDialogState(() => isDeleting = true);
+  Future<void> _addReference(ReferenceModel reference) async {
+    try {
+      await _apiService.createReference(reference);
+      if (mounted) {
+        await _loadReferences();
+        _showSnackBar('Referensi berhasil ditambahkan');
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnackBar('Gagal menambahkan referensi', isError: true);
+      }
+    }
+  }
 
-                      try {
-                        await _apiService.deleteReference(
-                          reference.referenceId!,
-                        );
+  Future<void> _updateReference(ReferenceModel reference) async {
+    if (reference.referenceId == null) {
+      if (mounted) {
+        _showSnackBar('ID referensi tidak valid', isError: true);
+      }
+      return;
+    }
 
-                        // TUTUP DIALOG DULU
-                        Navigator.pop(context);
+    try {
+      await _apiService.updateReference(
+        reference.referenceId!,
+        reference,
+      );
+      if (mounted) {
+        await _loadReferences();
+        _showSnackBar('Referensi berhasil diperbarui');
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnackBar('Gagal memperbarui referensi', isError: true);
+      }
+    }
+  }
 
-                        // ✅ TAMBAHKAN mounted check DI SINI
-                        if (mounted) {
-                          await _loadReferences();
-
-                          // ✅ GUNAKAN Future.microtask
-                          Future.microtask(() {
-                            if (mounted) {
-                              _showSnackBar('Referensi berhasil dihapus');
-                            }
-                          });
-                        }
-                      } catch (e) {
-                        setDialogState(() => isDeleting = false);
-                        // ✅ TAMBAHKAN mounted check DI SINI
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Gagal menghapus referensi',
-                                style: const TextStyle(
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.w500,
-                                  fontFamily: 'Poppins',
-                                ),
-                              ),
-                              backgroundColor: Colors.red[100],
-                              behavior: SnackBarBehavior.floating,
-                              elevation: 2,
-                              margin: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 10,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              duration: const Duration(seconds: 2),
-                            ),
-                          );
-                        }
-                        print("Error delete reference: $e");
-                      }
-                    },
-              child: isDeleting
-                  ? const SizedBox(
-                      height: 14,
-                      width: 14,
-                      child: CircularProgressIndicator(
-                        color: Colors.red,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : const Text(
-                      'Hapus',
-                      style: TextStyle(
-                        color: Colors.red,
-                        fontSize: 14,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-            ),
-          ],
-        ),
-      ),
-    );
+  Future<void> _deleteReference(String referenceId) async {
+    try {
+      await _apiService.deleteReference(referenceId);
+      if (mounted) {
+        await _loadReferences();
+        _showSnackBar('Referensi berhasil dihapus');
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnackBar('Gagal menghapus referensi', isError: true);
+      }
+    }
   }
 
   Widget _buildTextField({
@@ -563,6 +484,7 @@ class _TabReferensiState extends State<TabReferensi> {
     TextInputType? keyboardType,
     bool required = false,
     String? helperText,
+    String? errorText,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -604,15 +526,30 @@ class _TabReferensiState extends State<TabReferensi> {
             prefixIcon: Icon(icon, color: Colors.grey.shade600, size: 20),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderSide: BorderSide(
+                color: errorText != null ? Colors.red : Colors.grey.shade300,
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderSide: BorderSide(
+                color: errorText != null ? Colors.red : Colors.grey.shade300,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF113CEE), width: 2),
+              borderSide: BorderSide(
+                color: errorText != null ? Colors.red : const Color(0xFF113CEE),
+                width: 2,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Colors.red, width: 2),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Colors.red, width: 2),
             ),
             filled: true,
             fillColor: Colors.grey.shade50,
@@ -620,7 +557,13 @@ class _TabReferensiState extends State<TabReferensi> {
               horizontal: 16,
               vertical: 14,
             ),
-            helperText: helperText,
+            errorText: errorText,
+            errorStyle: const TextStyle(
+              fontSize: 12,
+              fontFamily: 'Poppins',
+              color: Colors.red,
+            ),
+            helperText: errorText == null ? helperText : null,
             helperStyle: TextStyle(
               fontSize: 11,
               color: Colors.grey.shade600,
@@ -632,8 +575,348 @@ class _TabReferensiState extends State<TabReferensi> {
     );
   }
 
+  Widget _buildEmailTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    bool required = false,
+    String? helperText,
+    String? errorText,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                fontFamily: 'Poppins',
+                color: Color(0xFF515151),
+              ),
+            ),
+            if (required)
+              const Text(
+                ' *',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          keyboardType: TextInputType.emailAddress,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+              color: Colors.grey.shade400,
+              fontSize: 14,
+              fontFamily: 'Poppins',
+            ),
+            prefixIcon: Icon(icon, color: Colors.grey.shade600, size: 20),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(
+                color: errorText != null ? Colors.red : Colors.grey.shade300,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(
+                color: errorText != null ? Colors.red : Colors.grey.shade300,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(
+                color: errorText != null ? Colors.red : const Color(0xFF113CEE),
+                width: 2,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Colors.red, width: 2),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Colors.red, width: 2),
+            ),
+            filled: true,
+            fillColor: Colors.grey.shade50,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+            errorText: errorText,
+            errorStyle: const TextStyle(
+              fontSize: 12,
+              fontFamily: 'Poppins',
+              color: Colors.red,
+            ),
+            helperText: errorText == null ? helperText : null,
+            helperStyle: TextStyle(
+              fontSize: 11,
+              color: Colors.grey.shade600,
+              fontFamily: 'Poppins',
+            ),
+            suffixIcon: errorText == null
+                ? ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: controller,
+                    builder: (context, value, child) {
+                      if (value.text.isEmpty) return const SizedBox();
+
+                      final isValid = _isValidEmail(value.text.trim());
+
+                      return Icon(
+                        isValid ? Icons.check_circle : Icons.error_outline,
+                        color: isValid ? Colors.green : Colors.red,
+                        size: 20,
+                      );
+                    },
+                  )
+                : null,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPhoneTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    bool required = false,
+    String? helperText,
+    String? errorText,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                fontFamily: 'Poppins',
+                color: Color(0xFF515151),
+              ),
+            ),
+            if (required)
+              const Text(
+                ' *',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          keyboardType: TextInputType.phone,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+              color: Colors.grey.shade400,
+              fontSize: 14,
+              fontFamily: 'Poppins',
+            ),
+            prefixIcon: Icon(icon, color: Colors.grey.shade600, size: 20),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(
+                color: errorText != null ? Colors.red : Colors.grey.shade300,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(
+                color: errorText != null ? Colors.red : Colors.grey.shade300,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(
+                color: errorText != null ? Colors.red : const Color(0xFF113CEE),
+                width: 2,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Colors.red, width: 2),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Colors.red, width: 2),
+            ),
+            filled: true,
+            fillColor: Colors.grey.shade50,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+            errorText: errorText,
+            errorStyle: const TextStyle(
+              fontSize: 12,
+              fontFamily: 'Poppins',
+              color: Colors.red,
+            ),
+            helperText: errorText == null ? helperText : null,
+            helperStyle: TextStyle(
+              fontSize: 11,
+              color: Colors.grey.shade600,
+              fontFamily: 'Poppins',
+            ),
+            suffixIcon: errorText == null
+                ? ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: controller,
+                    builder: (context, value, child) {
+                      if (value.text.isEmpty) return const SizedBox();
+
+                      final isValid = _isValidPhoneNumber(value.text.trim());
+
+                      return Icon(
+                        isValid ? Icons.check_circle : Icons.error_outline,
+                        color: isValid ? Colors.green : Colors.red,
+                        size: 20,
+                      );
+                    },
+                  )
+                : null,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showDeleteConfirmation(ReferenceModel reference) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.white,
+        title: const Text(
+          'Hapus Referensi',
+          style: TextStyle(
+            fontSize: 18,
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        content: Text(
+          'Apakah Anda yakin ingin menghapus ${reference.nama}?',
+          style: const TextStyle(
+            fontSize: 14,
+            fontFamily: 'Poppins',
+            color: Color(0xFF515151),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Batal',
+              style: TextStyle(
+                color: Color(0xFF515151),
+                fontSize: 14,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              if (reference.referenceId != null) {
+                _deleteReference(reference.referenceId!);
+              }
+            },
+            child: const Text(
+              'Hapus',
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: 14,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF1B56FD)),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 60, color: Color(0xFFB8B8B8)),
+            const SizedBox(height: 16),
+            const Text(
+              'Terjadi Kesalahan',
+              style: TextStyle(
+                fontSize: 16,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF515151),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: Text(
+                _errorMessage!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontFamily: 'Poppins',
+                  color: Color(0xFFB8B8B8),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _loadReferences,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Coba Lagi'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1B56FD),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return RefreshIndicator(
       onRefresh: _loadReferences,
       color: const Color(0xFF1B56FD),
@@ -670,20 +953,8 @@ class _TabReferensiState extends State<TabReferensi> {
             ),
             const SizedBox(height: 21),
 
-            // Loading State
-            if (_isLoading)
-              Container(
-                padding: const EdgeInsets.all(40),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Center(
-                  child: CircularProgressIndicator(color: Color(0xFF1B56FD)),
-                ),
-              )
-            // Empty State
-            else if (_references.isEmpty)
+            // List atau Empty State
+            if (_references.isEmpty)
               Container(
                 padding: const EdgeInsets.all(40),
                 decoration: BoxDecoration(
@@ -765,11 +1036,11 @@ class _TabReferensiState extends State<TabReferensi> {
                   topRight: Radius.circular(20),
                 )
               : isLast
-              ? const BorderRadius.only(
-                  bottomLeft: Radius.circular(20),
-                  bottomRight: Radius.circular(20),
-                )
-              : BorderRadius.zero,
+                  ? const BorderRadius.only(
+                      bottomLeft: Radius.circular(20),
+                      bottomRight: Radius.circular(20),
+                    )
+                  : BorderRadius.zero,
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,

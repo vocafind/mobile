@@ -15,36 +15,10 @@ class _TabProyekState extends State<TabProyek> {
   List<ProjectModel> _projects = [];
   bool _isLoading = true;
 
-  // Controllers
-  final _namaProyekController = TextEditingController();
-  final _klienController = TextEditingController();
-  final _peranTimController = TextEditingController();
-  final _penggunaanTeknologiController = TextEditingController();
-  DateTime? _tanggalMulai;
-  DateTime? _tanggalSelesai;
-
   @override
   void initState() {
     super.initState();
     _loadProjects();
-  }
-
-  @override
-  void dispose() {
-    _namaProyekController.dispose();
-    _klienController.dispose();
-    _peranTimController.dispose();
-    _penggunaanTeknologiController.dispose();
-    super.dispose();
-  }
-
-  void _clearControllers() {
-    _namaProyekController.clear();
-    _klienController.clear();
-    _peranTimController.clear();
-    _penggunaanTeknologiController.clear();
-    _tanggalMulai = null;
-    _tanggalSelesai = null;
   }
 
   Future<void> _loadProjects() async {
@@ -98,9 +72,8 @@ class _TabProyekState extends State<TabProyek> {
 
   void _showAddEditModal({ProjectModel? project}) {
     final isEdit = project != null;
-    bool isSaving = false;
 
-    // Populate controllers if editing
+    // Controller form
     final TextEditingController _namaController = TextEditingController(
       text: project?.namaProyek ?? '',
     );
@@ -113,8 +86,18 @@ class _TabProyekState extends State<TabProyek> {
     final TextEditingController _teknologiController = TextEditingController(
       text: project?.penggunaanTeknologi ?? '',
     );
-    DateTime? _tanggalMulai = project?.tanggalMulai;
-    DateTime? _tanggalSelesai = project?.tanggalSelesai;
+
+    // Variables untuk tanggal
+    DateTime? _tempTanggalMulai = project?.tanggalMulai;
+    DateTime? _tempTanggalSelesai = project?.tanggalSelesai;
+
+    // Error variables - DI LUAR StatefulBuilder agar bisa diakses
+    String? namaProyekError;
+    String? klienError;
+    String? tanggalMulaiError;
+    String? tanggalSelesaiError;
+    String? peranTimError;
+    String? teknologiError;
 
     showModalBottomSheet(
       context: context,
@@ -145,9 +128,7 @@ class _TabProyekState extends State<TabProyek> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.close),
-                        onPressed: isSaving
-                            ? null
-                            : () => Navigator.pop(context),
+                        onPressed: () => Navigator.pop(context),
                       ),
                       Expanded(
                         child: Text(
@@ -160,84 +141,119 @@ class _TabProyekState extends State<TabProyek> {
                         ),
                       ),
                       TextButton(
-                        onPressed: isSaving
-                            ? null
-                            : () async {
-                                final nama = _namaController.text.trim();
-                                final klien = _klienController.text.trim();
-                                final peran = _peranController.text.trim();
-                                final teknologi = _teknologiController.text.trim();
+                        onPressed: () async {
+                          // Reset error messages
+                          bool hasError = false;
 
-                                if (nama.isEmpty ||
-                                    klien.isEmpty ||
-                                    peran.isEmpty ||
-                                    teknologi.isEmpty ||
-                                    _tanggalMulai == null ||
-                                    _tanggalSelesai == null) {
-                                  _showSnackBar(
-                                    "Lengkapi semua data wajib",
-                                    isError: true,
-                                  );
-                                  return;
-                                }
+                          // Validasi Nama Proyek
+                          if (_namaController.text.trim().isEmpty) {
+                            namaProyekError = 'Nama proyek harus diisi';
+                            hasError = true;
+                          } else {
+                            namaProyekError = null;
+                          }
 
-                                setModalState(() => isSaving = true);
+                          // Validasi Klien
+                          if (_klienController.text.trim().isEmpty) {
+                            klienError = 'Nama klien/perusahaan harus diisi';
+                            hasError = true;
+                          } else {
+                            klienError = null;
+                          }
 
-                                final newProject = ProjectModel(
-                                  projectId: project?.projectId,
-                                  namaProyek: nama,
-                                  klien: klien,
-                                  tanggalMulai: _tanggalMulai,
-                                  tanggalSelesai: _tanggalSelesai,
-                                  peranTim: peran,
-                                  penggunaanTeknologi: teknologi,
-                                );
+                          // Validasi Tanggal Mulai
+                          if (_tempTanggalMulai == null) {
+                            tanggalMulaiError = 'Tanggal mulai harus diisi';
+                            hasError = true;
+                          } else {
+                            tanggalMulaiError = null;
+                          }
 
-                                try {
-                                  if (isEdit) {
-                                    await _apiService.updateProject(
-                                      project.projectId!,
-                                      newProject,
-                                    );
-                                    _showSnackBar(
-                                      'Berhasil memperbarui proyek',
-                                    );
-                                  } else {
-                                    await _apiService.createProject(
-                                      newProject,
-                                    );
-                                    _showSnackBar(
-                                      'Berhasil menambah proyek',
-                                    );
-                                  }
+                          // Validasi Tanggal Selesai
+                          if (_tempTanggalSelesai == null) {
+                            tanggalSelesaiError = 'Tanggal selesai harus diisi';
+                            hasError = true;
+                          } else if (_tempTanggalMulai != null &&
+                              _tempTanggalSelesai!.isBefore(_tempTanggalMulai!)) {
+                            tanggalSelesaiError =
+                                'Tanggal selesai harus setelah tanggal mulai';
+                            hasError = true;
+                          } else if (_tempTanggalSelesai!
+                              .isAfter(DateTime.now())) {
+                            tanggalSelesaiError =
+                                'Tanggal selesai tidak boleh lebih dari hari ini';
+                            hasError = true;
+                          } else {
+                            tanggalSelesaiError = null;
+                          }
 
-                                  await _loadProjects();
-                                  Navigator.pop(context);
-                                } catch (e) {
-                                  setModalState(() => isSaving = false);
-                                  _showSnackBar(
-                                    'Gagal menyimpan data',
-                                    isError: true,
-                                  );
-                                  print("❌ Error submit project: $e");
-                                }
-                              },
-                        child: isSaving
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text(
-                                'Simpan',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: 'Poppins',
-                                ),
-                              ),
+                          // Validasi Peran Tim
+                          if (_peranController.text.trim().isEmpty) {
+                            peranTimError = 'Peran tim harus diisi';
+                            hasError = true;
+                          } else {
+                            peranTimError = null;
+                          }
+
+                          // Validasi Teknologi
+                          if (_teknologiController.text.trim().isEmpty) {
+                            teknologiError = 'Penggunaan teknologi harus diisi';
+                            hasError = true;
+                          } else {
+                            teknologiError = null;
+                          }
+
+                          // Update UI untuk menampilkan error
+                          if (hasError) {
+                            setModalState(() {});
+                            return;
+                          }
+
+                          // Jika semua validasi lolos
+                          final newProject = ProjectModel(
+                            projectId: project?.projectId,
+                            namaProyek: _namaController.text.trim(),
+                            klien: _klienController.text.trim(),
+                            tanggalMulai: _tempTanggalMulai!,
+                            tanggalSelesai: _tempTanggalSelesai!,
+                            peranTim: _peranController.text.trim(),
+                            penggunaanTeknologi: _teknologiController.text.trim(),
+                          );
+
+                          try {
+                            if (isEdit) {
+                              await _apiService.updateProject(
+                                project!.projectId!,
+                                newProject,
+                              );
+                              _showSnackBar(
+                                'Berhasil memperbarui proyek',
+                              );
+                            } else {
+                              await _apiService.createProject(newProject);
+                              _showSnackBar(
+                                'Berhasil menambah proyek',
+                              );
+                            }
+
+                            await _loadProjects();
+                            Navigator.pop(context);
+                          } catch (e) {
+                            _showSnackBar(
+                              'Gagal menyimpan data',
+                              isError: true,
+                            );
+                            print("❌ Error submit project: $e");
+                          }
+                        },
+                        child: const Text(
+                          'Simpan',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -289,20 +305,22 @@ class _TabProyekState extends State<TabProyek> {
                           hint: 'Contoh: Sistem Keuangan Negara',
                           icon: Icons.folder_outlined,
                           required: true,
+                          errorText: namaProyekError,
                         ),
                         const SizedBox(height: 16),
 
-                       _buildTextField(
+                        _buildTextField(
                           controller: _klienController,
                           label: 'Nama Klien / Perusahaan',
                           hint: 'Contoh: PT. Telkom Indonesia, Bank Mandiri, Kementerian Kesehatan',
                           icon: Icons.business_outlined,
                           required: true,
+                          errorText: klienError,
                           helperText: 'Nama perusahaan atau institusi tempat Anda bekerja/bekerjasama',
                         ),
                         const SizedBox(height: 16),
 
-                        // Tanggal Mulai
+                        // Tanggal Mulai dengan error handling
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -332,7 +350,7 @@ class _TabProyekState extends State<TabProyek> {
                               onTap: () async {
                                 final date = await showDatePicker(
                                   context: context,
-                                  initialDate: _tanggalMulai ?? DateTime.now(),
+                                  initialDate: _tempTanggalMulai ?? DateTime.now(),
                                   firstDate: DateTime(1900),
                                   lastDate: DateTime.now(),
                                   builder: (context, child) {
@@ -348,7 +366,9 @@ class _TabProyekState extends State<TabProyek> {
                                 );
                                 if (date != null) {
                                   setModalState(() {
-                                    _tanggalMulai = date;
+                                    _tempTanggalMulai = date;
+                                    // Reset error jika dipilih
+                                    tanggalMulaiError = null;
                                   });
                                 }
                               },
@@ -361,23 +381,28 @@ class _TabProyekState extends State<TabProyek> {
                                   color: Colors.grey.shade50,
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                    color: Colors.grey.shade300,
+                                    color: tanggalMulaiError != null
+                                        ? Colors.red
+                                        : Colors.grey.shade300,
+                                    width: tanggalMulaiError != null ? 2 : 1,
                                   ),
                                 ),
                                 child: Row(
                                   children: [
                                     Icon(
                                       Icons.calendar_today_outlined,
-                                      color: Colors.grey.shade600,
+                                      color: tanggalMulaiError != null
+                                          ? Colors.red
+                                          : Colors.grey.shade600,
                                       size: 20,
                                     ),
                                     const SizedBox(width: 12),
                                     Text(
-                                      _tanggalMulai != null
-                                          ? '${_tanggalMulai!.day}/${_tanggalMulai!.month}/${_tanggalMulai!.year}'
+                                      _tempTanggalMulai != null
+                                          ? '${_tempTanggalMulai!.day}/${_tempTanggalMulai!.month}/${_tempTanggalMulai!.year}'
                                           : 'Pilih tanggal mulai',
                                       style: TextStyle(
-                                        color: _tanggalMulai != null
+                                        color: _tempTanggalMulai != null
                                             ? const Color(0xFF515151)
                                             : Colors.grey.shade400,
                                         fontSize: 14,
@@ -388,11 +413,24 @@ class _TabProyekState extends State<TabProyek> {
                                 ),
                               ),
                             ),
+                            // Tampilkan error message untuk tanggal mulai
+                            if (tanggalMulaiError != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4, left: 4),
+                                child: Text(
+                                  tanggalMulaiError!,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontFamily: 'Poppins',
+                                    color: Colors.red,
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                         const SizedBox(height: 16),
 
-                        // Tanggal Selesai
+                        // Tanggal Selesai dengan error handling
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -423,8 +461,8 @@ class _TabProyekState extends State<TabProyek> {
                                 final date = await showDatePicker(
                                   context: context,
                                   initialDate:
-                                      _tanggalSelesai ?? DateTime.now(),
-                                  firstDate: _tanggalMulai ?? DateTime(1900),
+                                      _tempTanggalSelesai ?? DateTime.now(),
+                                  firstDate: _tempTanggalMulai ?? DateTime(1900),
                                   lastDate: DateTime.now(),
                                   builder: (context, child) {
                                     return Theme(
@@ -439,7 +477,9 @@ class _TabProyekState extends State<TabProyek> {
                                 );
                                 if (date != null) {
                                   setModalState(() {
-                                    _tanggalSelesai = date;
+                                    _tempTanggalSelesai = date;
+                                    // Reset error jika dipilih
+                                    tanggalSelesaiError = null;
                                   });
                                 }
                               },
@@ -452,23 +492,28 @@ class _TabProyekState extends State<TabProyek> {
                                   color: Colors.grey.shade50,
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                    color: Colors.grey.shade300,
+                                    color: tanggalSelesaiError != null
+                                        ? Colors.red
+                                        : Colors.grey.shade300,
+                                    width: tanggalSelesaiError != null ? 2 : 1,
                                   ),
                                 ),
                                 child: Row(
                                   children: [
                                     Icon(
                                       Icons.calendar_today_outlined,
-                                      color: Colors.grey.shade600,
+                                      color: tanggalSelesaiError != null
+                                          ? Colors.red
+                                          : Colors.grey.shade600,
                                       size: 20,
                                     ),
                                     const SizedBox(width: 12),
                                     Text(
-                                      _tanggalSelesai != null
-                                          ? '${_tanggalSelesai!.day}/${_tanggalSelesai!.month}/${_tanggalSelesai!.year}'
+                                      _tempTanggalSelesai != null
+                                          ? '${_tempTanggalSelesai!.day}/${_tempTanggalSelesai!.month}/${_tempTanggalSelesai!.year}'
                                           : 'Pilih tanggal selesai',
                                       style: TextStyle(
-                                        color: _tanggalSelesai != null
+                                        color: _tempTanggalSelesai != null
                                             ? const Color(0xFF515151)
                                             : Colors.grey.shade400,
                                         fontSize: 14,
@@ -479,6 +524,19 @@ class _TabProyekState extends State<TabProyek> {
                                 ),
                               ),
                             ),
+                            // Tampilkan error message untuk tanggal selesai
+                            if (tanggalSelesaiError != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4, left: 4),
+                                child: Text(
+                                  tanggalSelesaiError!,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontFamily: 'Poppins',
+                                    color: Colors.red,
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                         const SizedBox(height: 16),
@@ -490,6 +548,7 @@ class _TabProyekState extends State<TabProyek> {
                           icon: Icons.group_outlined,
                           maxLines: 4,
                           required: true,
+                          errorText: peranTimError,
                         ),
                         const SizedBox(height: 16),
 
@@ -500,6 +559,7 @@ class _TabProyekState extends State<TabProyek> {
                           icon: Icons.settings_outlined,
                           maxLines: 3,
                           required: true,
+                          errorText: teknologiError,
                         ),
 
                         // Tombol Hapus (hanya untuk edit)
@@ -507,12 +567,10 @@ class _TabProyekState extends State<TabProyek> {
                           const SizedBox(height: 32),
                           Center(
                             child: OutlinedButton.icon(
-                              onPressed: isSaving
-                                  ? null
-                                  : () {
-                                      Navigator.pop(context);
-                                      _showDeleteConfirmation(project);
-                                    },
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _showDeleteConfirmation(project!);
+                              },
                               icon: const Icon(
                                 Icons.delete_outline,
                                 color: Colors.red,
@@ -559,6 +617,7 @@ class _TabProyekState extends State<TabProyek> {
     TextInputType? keyboardType,
     bool required = false,
     String? helperText,
+    String? errorText, // Tambahkan parameter errorText
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -600,21 +659,42 @@ class _TabProyekState extends State<TabProyek> {
             prefixIcon: Icon(icon, color: Colors.grey.shade600, size: 20),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderSide: BorderSide(
+                color: errorText != null ? Colors.red : Colors.grey.shade300,
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderSide: BorderSide(
+                color: errorText != null ? Colors.red : Colors.grey.shade300,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF113CEE), width: 2),
+              borderSide: BorderSide(
+                color: errorText != null ? Colors.red : const Color(0xFF113CEE),
+                width: 2,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Colors.red, width: 2),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Colors.red, width: 2),
             ),
             filled: true,
             fillColor: Colors.grey.shade50,
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            helperText: helperText,
+            errorText: errorText, // Tampilkan error text
+            errorStyle: const TextStyle(
+              fontSize: 12,
+              fontFamily: 'Poppins',
+              color: Colors.red,
+            ),
+            helperText: errorText == null ? helperText : null, // Sembunyikan helper saat ada error
             helperStyle: TextStyle(
               fontSize: 11,
               color: Colors.grey.shade600,

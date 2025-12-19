@@ -1,4 +1,3 @@
-// route.dart - SIMPLIFIED VERSION
 import 'package:flutter/material.dart';
 
 import 'package:jobfair/screens/halaman_1.dart';
@@ -12,29 +11,31 @@ import 'package:jobfair/screens/halaman_login.dart';
 import 'package:jobfair/screens/halaman_notifikasi.dart';
 import 'package:jobfair/screens/halaman_register.dart';
 import 'package:jobfair/screens/profil/halaman_profil.dart';
-// Import untuk bottom sheet (optional, hanya untuk reference)
 import 'package:jobfair/screens/detail_lamaran.dart';
 import 'package:jobfair/screens/detail_lamaran_jobfair.dart';
+import 'package:jobfair/screens/main_screen.dart'; // TAMBAHKAN INI
 
 class AppRoutes {
   // ==================== ROUTE NAMES CONSTANTS ====================
-  static const String beranda = '/beranda';
+  static const String mainScreen = '/main'; // TAMBAHKAN INI
   static const String halaman1 = '/halaman1';
   static const String bookmark = '/bookmark';
-  static const String cariLoker = '/cari-loker';
-  static const String jobfair = '/jobfair';
   static const String jobfairDetail = '/jobfair-detail';
-  static const String lamaran = '/lamaran';
   static const String login = '/login';
   static const String notifikasi = '/notifikasi';
   static const String register = '/register';
-  static const String profil = '/profil';
-  // HAPUS: detailLamaran dan detailLamaranJobfair dari route constants
+  
+  // HAPUS route untuk tab-tab (karena sudah ada di MainScreen):
+  // static const String beranda = '/beranda';
+  // static const String cariLoker = '/cari-loker';
+  // static const String jobfair = '/jobfair';
+  // static const String lamaran = '/lamaran';
+  // static const String profil = '/profil';
 
   // ==================== ARGUMENT KEYS ====================
   static const String argJobfairId = 'jobfairId';
   static const String argApplyId = 'applyId';
-  // HAPUS: argLamaran dan argIsJobfair karena tidak butuh route khusus
+  static const String argInitialSearchQuery = 'initialSearchQuery';
 
   // ==================== GENERATE ROUTE ====================
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -42,9 +43,9 @@ class AppRoutes {
 
     switch (settings.name) {
       case '/':
-      case beranda:
+      case mainScreen: // UBAH DARI beranda KE mainScreen
         return MaterialPageRoute(
-          builder: (_) => const HalamanBeranda(),
+          builder: (_) => const MainScreen(),
           settings: settings,
         );
 
@@ -57,32 +58,6 @@ class AppRoutes {
       case bookmark:
         return MaterialPageRoute(
           builder: (_) => const HalamanBookmark(),
-          settings: settings,
-        );
-
-      // Di dalam switch case di generateRoute method, perbaiki case cariLoker:
-      case cariLoker:
-        // Jika ada arguments, extract initialSearchQuery
-        String? initialSearchQuery;
-
-        if (args != null) {
-          if (args is Map<String, dynamic>) {
-            initialSearchQuery = args['initialSearchQuery'] as String?;
-          } else if (args is String) {
-            // Untuk backward compatibility
-            initialSearchQuery = args;
-          }
-        }
-
-        return MaterialPageRoute(
-          builder: (_) =>
-              HalamanCariLoker(initialSearchQuery: initialSearchQuery),
-          settings: settings,
-        );
-
-      case jobfair:
-        return MaterialPageRoute(
-          builder: (_) => const HalamanJobfair(),
           settings: settings,
         );
 
@@ -112,30 +87,6 @@ class AppRoutes {
           settings.name,
         );
 
-      case lamaran:
-        // Handle parameter untuk auto-open lamaran
-        if (args != null) {
-          if (args is String) {
-            // Jika args langsung applyId
-            return MaterialPageRoute(
-              builder: (_) => HalamanLamaran(applyIdToOpen: args),
-              settings: settings,
-            );
-          } else if (args is Map<String, dynamic>) {
-            final applyId = args[argApplyId] as String?;
-            if (applyId != null) {
-              return MaterialPageRoute(
-                builder: (_) => HalamanLamaran(applyIdToOpen: applyId),
-                settings: settings,
-              );
-            }
-          }
-        }
-        return MaterialPageRoute(
-          builder: (_) => const HalamanLamaran(),
-          settings: settings,
-        );
-
       case login:
         return MaterialPageRoute(
           builder: (_) => const HalamanLogin(),
@@ -151,12 +102,6 @@ class AppRoutes {
       case register:
         return MaterialPageRoute(
           builder: (_) => const RegisterPage(),
-          settings: settings,
-        );
-
-      case profil:
-        return MaterialPageRoute(
-          builder: (_) => const HalamanProfil(),
           settings: settings,
         );
 
@@ -196,7 +141,7 @@ class AppRoutes {
                   onPressed: () {
                     Navigator.pushNamedAndRemoveUntil(
                       context,
-                      AppRoutes.beranda,
+                      AppRoutes.mainScreen, // UBAH DARI beranda KE mainScreen
                       (route) => false,
                     );
                   },
@@ -219,8 +164,17 @@ class AppRoutes {
     );
   }
 
-  // ==================== NAVIGATION HELPER METHODS ====================
+  // TAMBAHKAN method untuk navigasi ke tab tertentu dari luar
+  static void navigateToTab(BuildContext context, int tabIndex) {
+    // Navigasi ke main screen dengan tab tertentu
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      mainScreen,
+      (route) => false,
+    );
+  }
 
+  // ==================== NAVIGATION HELPER METHODS ====================
   /// Navigate to a new route
   static Future<T?> navigateTo<T>(
     BuildContext context,

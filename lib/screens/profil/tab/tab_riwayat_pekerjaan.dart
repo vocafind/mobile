@@ -66,25 +66,28 @@ class _TabRiwayatPekerjaanState extends State<TabRiwayatPekerjaan> {
 
   void _showAddEditModal({WorkHistoryModel? workHistory}) {
     final isEdit = workHistory != null;
-    bool isSaving = false;
-
-    // Parse tanggal dari string jika edit
-    DateTime? parsedTanggalMulai = workHistory?.tanggalMulai;
-    DateTime? parsedTanggalSelesai = workHistory?.tanggalSelesai;
 
     // Controller form
-    final TextEditingController posisiController = TextEditingController(
+    final TextEditingController _posisiController = TextEditingController(
       text: workHistory?.posisi ?? '',
     );
-    final TextEditingController perusahaanController = TextEditingController(
+    final TextEditingController _perusahaanController = TextEditingController(
       text: workHistory?.perusahaan ?? '',
     );
-    final TextEditingController deskripsiController = TextEditingController(
+    final TextEditingController _deskripsiController = TextEditingController(
       text: workHistory?.deskripsi ?? '',
     );
 
-    DateTime? tempTanggalMulai = parsedTanggalMulai;
-    DateTime? tempTanggalSelesai = parsedTanggalSelesai;
+    // Variables untuk tanggal
+    DateTime? _tempTanggalMulai = workHistory?.tanggalMulai;
+    DateTime? _tempTanggalSelesai = workHistory?.tanggalSelesai;
+
+    // Error variables - DI LUAR StatefulBuilder agar bisa diakses
+    String? posisiError;
+    String? perusahaanError;
+    String? tanggalMulaiError;
+    String? tanggalSelesaiError;
+    String? deskripsiError;
 
     showModalBottomSheet(
       context: context,
@@ -115,9 +118,7 @@ class _TabRiwayatPekerjaanState extends State<TabRiwayatPekerjaan> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.close),
-                        onPressed: isSaving
-                            ? null
-                            : () => Navigator.pop(context),
+                        onPressed: () => Navigator.pop(context),
                       ),
                       Expanded(
                         child: Text(
@@ -132,81 +133,110 @@ class _TabRiwayatPekerjaanState extends State<TabRiwayatPekerjaan> {
                         ),
                       ),
                       TextButton(
-                        onPressed: isSaving
-                            ? null
-                            : () async {
-                                final posisi = posisiController.text.trim();
-                                final perusahaan = perusahaanController.text
-                                    .trim();
-                                final deskripsi = deskripsiController.text
-                                    .trim();
+                        onPressed: () async {
+                          // Reset error messages
+                          bool hasError = false;
 
-                                if (posisi.isEmpty ||
-                                    perusahaan.isEmpty ||
-                                    deskripsi.isEmpty ||
-                                    tempTanggalMulai == null ||
-                                    tempTanggalSelesai == null) {
-                                  _showSnackBar(
-                                    "Lengkapi semua data",
-                                    isError: true,
-                                  );
-                                  return;
-                                }
+                          // Validasi Posisi
+                          if (_posisiController.text.trim().isEmpty) {
+                            posisiError = 'Posisi harus diisi';
+                            hasError = true;
+                          } else {
+                            posisiError = null;
+                          }
 
-                                setModalState(() => isSaving = true);
+                          // Validasi Perusahaan
+                          if (_perusahaanController.text.trim().isEmpty) {
+                            perusahaanError = 'Perusahaan harus diisi';
+                            hasError = true;
+                          } else {
+                            perusahaanError = null;
+                          }
 
-                                final work = WorkHistoryModel(
-                                  workhistoryId: workHistory?.workhistoryId,
-                                  posisi: posisi,
-                                  perusahaan: perusahaan,
-                                  tanggalMulai: tempTanggalMulai,
-                                  tanggalSelesai: tempTanggalSelesai,
-                                  deskripsi: deskripsi,
-                                );
+                          // Validasi Tanggal Mulai
+                          if (_tempTanggalMulai == null) {
+                            tanggalMulaiError = 'Tanggal mulai harus diisi';
+                            hasError = true;
+                          } else {
+                            tanggalMulaiError = null;
+                          }
 
-                                try {
-                                  if (isEdit) {
-                                    await _apiService.updateWorkHistory(
-                                      workHistory.workhistoryId!,
-                                      work,
-                                    );
-                                    _showSnackBar(
-                                      'Berhasil memperbarui riwayat pekerjaan',
-                                    );
-                                  } else {
-                                    await _apiService.createWorkHistory(work);
-                                    _showSnackBar(
-                                      'Berhasil menambah riwayat pekerjaan',
-                                    );
-                                  }
+                          // Validasi Tanggal Selesai
+                          if (_tempTanggalSelesai == null) {
+                            tanggalSelesaiError = 'Tanggal selesai harus diisi';
+                            hasError = true;
+                          } else if (_tempTanggalMulai != null &&
+                              _tempTanggalSelesai!.isBefore(_tempTanggalMulai!)) {
+                            tanggalSelesaiError =
+                                'Tanggal selesai harus setelah tanggal mulai';
+                            hasError = true;
+                          } else if (_tempTanggalSelesai!
+                              .isAfter(DateTime.now())) {
+                            tanggalSelesaiError =
+                                'Tanggal selesai tidak boleh lebih dari hari ini';
+                            hasError = true;
+                          } else {
+                            tanggalSelesaiError = null;
+                          }
 
-                                  await _loadWorkHistory();
-                                  Navigator.pop(context);
-                                } catch (e) {
-                                  setModalState(() => isSaving = false);
-                                  _showSnackBar(
-                                    'Gagal menyimpan data',
-                                    isError: true,
-                                  );
-                                  print("❌ Error submit work history: $e");
-                                }
-                              },
-                        child: isSaving
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text(
-                                'Simpan',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: 'Poppins',
-                                ),
-                              ),
+                          // Validasi Deskripsi
+                          if (_deskripsiController.text.trim().isEmpty) {
+                            deskripsiError = 'Deskripsi harus diisi';
+                            hasError = true;
+                          } else {
+                            deskripsiError = null;
+                          }
+
+                          // Update UI untuk menampilkan error
+                          if (hasError) {
+                            setModalState(() {});
+                            return;
+                          }
+
+                          // Jika semua validasi lolos
+                          final newWorkHistory = WorkHistoryModel(
+                            workhistoryId: workHistory?.workhistoryId,
+                            posisi: _posisiController.text.trim(),
+                            perusahaan: _perusahaanController.text.trim(),
+                            tanggalMulai: _tempTanggalMulai!,
+                            tanggalSelesai: _tempTanggalSelesai!,
+                            deskripsi: _deskripsiController.text.trim(),
+                          );
+
+                          try {
+                            if (isEdit) {
+                              await _apiService.updateWorkHistory(
+                                workHistory!.workhistoryId!,
+                                newWorkHistory,
+                              );
+                              _showSnackBar(
+                                'Berhasil memperbarui riwayat pekerjaan',
+                              );
+                            } else {
+                              await _apiService.createWorkHistory(newWorkHistory);
+                              _showSnackBar(
+                                'Berhasil menambah riwayat pekerjaan',
+                              );
+                            }
+
+                            await _loadWorkHistory();
+                            Navigator.pop(context);
+                          } catch (e) {
+                            _showSnackBar(
+                              'Gagal menyimpan data',
+                              isError: true,
+                            );
+                            print("❌ Error submit work history: $e");
+                          }
+                        },
+                        child: const Text(
+                          'Simpan',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -253,24 +283,26 @@ class _TabRiwayatPekerjaanState extends State<TabRiwayatPekerjaan> {
                         const SizedBox(height: 24),
 
                         _buildTextField(
-                          controller: posisiController,
+                          controller: _posisiController,
                           label: 'Posisi',
                           hint: 'Contoh: Graphic Designer',
                           icon: Icons.work_outline,
                           required: true,
+                          errorText: posisiError, // ✅ Tambahkan errorText
                         ),
                         const SizedBox(height: 16),
 
                         _buildTextField(
-                          controller: perusahaanController,
+                          controller: _perusahaanController,
                           label: 'Perusahaan',
                           hint: 'Contoh: Google',
                           icon: Icons.business_outlined,
                           required: true,
+                          errorText: perusahaanError, // ✅ Tambahkan errorText
                         ),
                         const SizedBox(height: 16),
 
-                        // Tanggal Mulai
+                        // Tanggal Mulai dengan error handling
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -301,7 +333,7 @@ class _TabRiwayatPekerjaanState extends State<TabRiwayatPekerjaan> {
                                 final date = await showDatePicker(
                                   context: context,
                                   initialDate:
-                                      tempTanggalMulai ?? DateTime.now(),
+                                      _tempTanggalMulai ?? DateTime.now(),
                                   firstDate: DateTime(1900),
                                   lastDate: DateTime.now(),
                                   builder: (context, child) {
@@ -317,7 +349,9 @@ class _TabRiwayatPekerjaanState extends State<TabRiwayatPekerjaan> {
                                 );
                                 if (date != null) {
                                   setModalState(() {
-                                    tempTanggalMulai = date;
+                                    _tempTanggalMulai = date;
+                                    // Reset error jika dipilih
+                                    tanggalMulaiError = null;
                                   });
                                 }
                               },
@@ -330,25 +364,30 @@ class _TabRiwayatPekerjaanState extends State<TabRiwayatPekerjaan> {
                                   color: Colors.grey.shade50,
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                    color: Colors.grey.shade300,
+                                    color: tanggalMulaiError != null
+                                        ? Colors.red // ✅ Border merah jika error
+                                        : Colors.grey.shade300,
+                                    width: tanggalMulaiError != null ? 2 : 1,
                                   ),
                                 ),
                                 child: Row(
                                   children: [
                                     Icon(
                                       Icons.calendar_today_outlined,
-                                      color: Colors.grey.shade600,
+                                      color: tanggalMulaiError != null
+                                          ? Colors.red // ✅ Icon merah jika error
+                                          : Colors.grey.shade600,
                                       size: 20,
                                     ),
                                     const SizedBox(width: 12),
                                     Text(
-                                      tempTanggalMulai != null
+                                      _tempTanggalMulai != null
                                           ? DateFormat(
                                               'dd/MM/yyyy',
-                                            ).format(tempTanggalMulai!)
+                                            ).format(_tempTanggalMulai!)
                                           : 'Pilih tanggal mulai',
                                       style: TextStyle(
-                                        color: tempTanggalMulai != null
+                                        color: _tempTanggalMulai != null
                                             ? const Color(0xFF515151)
                                             : Colors.grey.shade400,
                                         fontSize: 14,
@@ -359,11 +398,24 @@ class _TabRiwayatPekerjaanState extends State<TabRiwayatPekerjaan> {
                                 ),
                               ),
                             ),
+                            // ✅ Tampilkan error message untuk tanggal mulai
+                            if (tanggalMulaiError != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4, left: 4),
+                                child: Text(
+                                  tanggalMulaiError!,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontFamily: 'Poppins',
+                                    color: Colors.red,
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                         const SizedBox(height: 16),
 
-                        // Tanggal Selesai
+                        // Tanggal Selesai dengan error handling
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -394,8 +446,8 @@ class _TabRiwayatPekerjaanState extends State<TabRiwayatPekerjaan> {
                                 final date = await showDatePicker(
                                   context: context,
                                   initialDate:
-                                      tempTanggalSelesai ?? DateTime.now(),
-                                  firstDate: tempTanggalMulai ?? DateTime(1900),
+                                      _tempTanggalSelesai ?? DateTime.now(),
+                                  firstDate: _tempTanggalMulai ?? DateTime(1900),
                                   lastDate: DateTime.now(),
                                   builder: (context, child) {
                                     return Theme(
@@ -410,7 +462,9 @@ class _TabRiwayatPekerjaanState extends State<TabRiwayatPekerjaan> {
                                 );
                                 if (date != null) {
                                   setModalState(() {
-                                    tempTanggalSelesai = date;
+                                    _tempTanggalSelesai = date;
+                                    // Reset error jika dipilih
+                                    tanggalSelesaiError = null;
                                   });
                                 }
                               },
@@ -423,25 +477,30 @@ class _TabRiwayatPekerjaanState extends State<TabRiwayatPekerjaan> {
                                   color: Colors.grey.shade50,
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                    color: Colors.grey.shade300,
+                                    color: tanggalSelesaiError != null
+                                        ? Colors.red // ✅ Border merah jika error
+                                        : Colors.grey.shade300,
+                                    width: tanggalSelesaiError != null ? 2 : 1,
                                   ),
                                 ),
                                 child: Row(
                                   children: [
                                     Icon(
                                       Icons.calendar_today_outlined,
-                                      color: Colors.grey.shade600,
+                                      color: tanggalSelesaiError != null
+                                          ? Colors.red // ✅ Icon merah jika error
+                                          : Colors.grey.shade600,
                                       size: 20,
                                     ),
                                     const SizedBox(width: 12),
                                     Text(
-                                      tempTanggalSelesai != null
+                                      _tempTanggalSelesai != null
                                           ? DateFormat(
                                               'dd/MM/yyyy',
-                                            ).format(tempTanggalSelesai!)
+                                            ).format(_tempTanggalSelesai!)
                                           : 'Pilih tanggal selesai',
                                       style: TextStyle(
-                                        color: tempTanggalSelesai != null
+                                        color: _tempTanggalSelesai != null
                                             ? const Color(0xFF515151)
                                             : Colors.grey.shade400,
                                         fontSize: 14,
@@ -452,18 +511,32 @@ class _TabRiwayatPekerjaanState extends State<TabRiwayatPekerjaan> {
                                 ),
                               ),
                             ),
+                            // ✅ Tampilkan error message untuk tanggal selesai
+                            if (tanggalSelesaiError != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4, left: 4),
+                                child: Text(
+                                  tanggalSelesaiError!,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontFamily: 'Poppins',
+                                    color: Colors.red,
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                         const SizedBox(height: 16),
 
                         _buildTextField(
-                          controller: deskripsiController,
+                          controller: _deskripsiController,
                           label: 'Deskripsi',
                           hint:
                               'Jelaskan tugas dan tanggung jawab Anda di posisi ini...',
                           icon: Icons.description_outlined,
                           maxLines: 5,
                           required: true,
+                          errorText: deskripsiError, // ✅ Tambahkan errorText
                         ),
 
                         // Tombol Hapus (hanya untuk edit)
@@ -471,12 +544,10 @@ class _TabRiwayatPekerjaanState extends State<TabRiwayatPekerjaan> {
                           const SizedBox(height: 32),
                           Center(
                             child: OutlinedButton.icon(
-                              onPressed: isSaving
-                                  ? null
-                                  : () {
-                                      Navigator.pop(context);
-                                      _showDeleteConfirmation(workHistory);
-                                    },
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _showDeleteConfirmation(workHistory!);
+                              },
                               icon: const Icon(
                                 Icons.delete_outline,
                                 color: Colors.red,
@@ -608,7 +679,7 @@ class _TabRiwayatPekerjaanState extends State<TabRiwayatPekerjaan> {
     int maxLines = 1,
     TextInputType? keyboardType,
     bool required = false,
-    String? helperText,
+    String? errorText, // ✅ Tambahkan parameter errorText
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -650,27 +721,42 @@ class _TabRiwayatPekerjaanState extends State<TabRiwayatPekerjaan> {
             prefixIcon: Icon(icon, color: Colors.grey.shade600, size: 20),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderSide: BorderSide(
+                color: errorText != null ? Colors.red : Colors.grey.shade300,
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderSide: BorderSide(
+                color: errorText != null ? Colors.red : Colors.grey.shade300,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF113CEE), width: 2),
+              borderSide: BorderSide(
+                color: errorText != null ? Colors.red : const Color(0xFF113CEE),
+                width: 2,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Colors.red, width: 2),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Colors.red, width: 2),
             ),
             filled: true,
             fillColor: Colors.grey.shade50,
-            contentPadding: const EdgeInsets.symmetric(
+            contentPadding: EdgeInsets.symmetric(
               horizontal: 16,
-              vertical: 14,
+              vertical: maxLines > 1 ? 16 : 14,
             ),
-            helperText: helperText,
-            helperStyle: TextStyle(
-              fontSize: 11,
-              color: Colors.grey.shade600,
+            errorText: errorText, // ✅ Tampilkan error text
+            errorStyle: const TextStyle(
+              fontSize: 12,
               fontFamily: 'Poppins',
+              color: Colors.red,
             ),
           ),
         ),

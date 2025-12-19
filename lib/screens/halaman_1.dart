@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/services.dart';
 import 'halaman_login.dart'; 
-import 'halaman_beranda.dart'; // Pastikan ini sudah ada
+import 'main_screen.dart';
 
 class Halaman1 extends StatefulWidget {
   const Halaman1({super.key});
@@ -13,8 +14,11 @@ class Halaman1 extends StatefulWidget {
 }
 
 class _Halaman1State extends State<Halaman1> {
-  bool _isPressed = false;
+  bool _isButtonPressed = false;
   bool _isCheckingSession = true;
+  bool _isHandlingBack = false;
+  bool _hasNavigated = false; // ✅ TAMBAH: Flag untuk track navigasi
+  DateTime? _currentBackPressTime;
 
   @override
   void initState() {
@@ -22,26 +26,23 @@ class _Halaman1State extends State<Halaman1> {
     _checkLoginStatus();
   }
 
+  @override
+  void dispose() {
+    _hasNavigated = true; // ✅ TAMBAH: Prevent navigasi setelah dispose
+    super.dispose();
+  }
+
   Future<void> _checkLoginStatus() async {
-    // Tunggu 2 detik untuk splash screen (tampil minimal)
     await Future.delayed(const Duration(seconds: 2));
+    
+    // ✅ TAMBAH: Cek jika sudah navigate atau disposed
+    if (!mounted || _hasNavigated) return;
     
     try {
       final prefs = await SharedPreferences.getInstance();
       
-      // PERIKSA SEMUA DATA SESSION
       final token = prefs.getString('token');
-      final refreshToken = prefs.getString('refreshToken');
       final talentId = prefs.getString('talentId');
-      final nama = prefs.getString('nama');
-      
-      print("\n" + "=" * 50);
-      print("🔄 AUTO-LOGIN CHECK - Halaman1");
-      print("=" * 50);
-      print("   Token: ${token != null ? 'Exists (${token.length} chars)' : 'NULL'}");
-      print("   Refresh Token: ${refreshToken != null ? 'Exists' : 'NULL'}");
-      print("   Talent ID: ${talentId ?? 'NULL'}");
-      print("   Nama: ${nama ?? 'NULL'}");
       
       // LOGIKA: Minimal harus ada token DAN talentId
       if (token != null && token.isNotEmpty && 
@@ -53,263 +54,260 @@ class _Halaman1State extends State<Halaman1> {
           final expiry = DateTime.parse(expiryString);
           final now = DateTime.now();
           
-          print("   Token expiry: $expiry");
-          print("   Current time: $now");
-          print("   Is expired: ${now.isAfter(expiry)}");
-          
           if (now.isBefore(expiry)) {
             print("✅ Session valid, navigating to Home");
-            _navigateToHome();
+            // ✅ PERBAIKAN: Cek lagi sebelum navigate
+            if (!_hasNavigated && mounted) {
+              _navigateToHome();
+            }
             return;
           } else {
-            print("⚠️ Token expired, trying refresh...");
-            // Coba refresh token
-            final success = await _tryRefreshToken(prefs);
-            if (success) {
-              _navigateToHome();
-              return;
-            } else {
-              print("❌ Refresh failed, need to login");
-              _showSessionExpiredDialog();
-              return;
-            }
+            print("⚠️ Token expired, clearing data");
+            await prefs.clear();
           }
         } else {
           // Tidak ada expiry info, anggap masih valid
           print("✅ No expiry info, assuming valid session");
-          _navigateToHome();
+          // ✅ PERBAIKAN: Cek lagi sebelum navigate
+          if (!_hasNavigated && mounted) {
+            _navigateToHome();
+          }
           return;
         }
       }
       
       // Jika sampai sini, berarti perlu login
-      print("❌ No valid session, showing login button");
-      setState(() {
-        _isCheckingSession = false;
-      });
+      if (mounted && !_hasNavigated) {
+        setState(() {
+          _isCheckingSession = false;
+        });
+      }
       
     } catch (e) {
       print("❌ Error checking login status: $e");
-      setState(() {
-        _isCheckingSession = false;
-      });
-    }
-  }
-
-  Future<bool> _tryRefreshToken(SharedPreferences prefs) async {
-    try {
-      final refreshToken = prefs.getString('refreshToken');
-      if (refreshToken == null || refreshToken.isEmpty) {
-        print("❌ No refresh token available");
-        return false;
+      if (mounted && !_hasNavigated) {
+        setState(() {
+          _isCheckingSession = false;
+        });
       }
-      
-      print("🔄 Attempting token refresh...");
-      
-      // Ganti 'YOUR_BASE_URL' dengan base URL Anda
-      final dio = Dio(BaseOptions(
-        baseUrl: 'https://your-api-base-url.com', // GANTI INI
-        connectTimeout: const Duration(seconds: 10),
-        receiveTimeout: const Duration(seconds: 10),
-      ));
-      
-      final response = await dio.post(
-        '/Auth/refresh-token',
-        data: {"refreshToken": refreshToken},
-        options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        ),
-      );
-      
-      print("📦 Refresh response: ${response.statusCode}");
-      
-      if (response.statusCode == 200) {
-        final data = response.data;
-        
-        await prefs.setString('token', data['accessToken']);
-        await prefs.setString('refreshToken', data['refreshToken']);
-        
-        final expiresIn = data['expiresIn'] ?? 900;
-        final expiryTime = DateTime.now().add(Duration(seconds: expiresIn));
-        await prefs.setString('tokenExpiry', expiryTime.toIso8601String());
-        
-        print("✅ Token refreshed successfully");
-        print("   New expiry: $expiryTime");
-        return true;
-      } else {
-        print("❌ Refresh failed with status: ${response.statusCode}");
-        return false;
-      }
-    } on DioException catch (e) {
-      print("❌ Dio error during refresh: ${e.message}");
-      print("❌ Error type: ${e.type}");
-      if (e.response != null) {
-        print("❌ Response: ${e.response?.data}");
-      }
-      return false;
-    } catch (e) {
-      print("❌ Unexpected error during refresh: $e");
-      return false;
     }
   }
 
   void _navigateToHome() {
-    if (mounted) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HalamanBeranda()),
-        );
-      });
-    }
-  }
-
-  void _showSessionExpiredDialog() {
-    if (!mounted) return;
+    // ✅ PERBAIKAN: Cek flag sebelum navigate
+    if (_hasNavigated || !mounted) return;
     
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text("Sesi Telah Berakhir"),
-        content: const Text("Sesi login Anda telah berakhir. Silakan login kembali."),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              setState(() {
-                _isCheckingSession = false;
-              });
-            },
-            child: const Text("OK"),
-          ),
-        ],
-      ),
-    );
+    _hasNavigated = true; // ✅ Set flag SEBELUM navigate
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      
+      Navigator.pushReplacement(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => const MainScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: child,
+            );
+          },
+          transitionDuration: const Duration(milliseconds: 300),
+        ),
+      );
+    });
   }
 
   void _navigateToLogin() {
+    // ✅ PERBAIKAN: Cek flag sebelum navigate
+    if (_hasNavigated || !mounted) return;
+    
+    _hasNavigated = true; // ✅ Set flag SEBELUM navigate
+    
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(
-        builder: (context) => const HalamanLogin(),
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => const HalamanLogin(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          const begin = Offset(1.0, 0.0);
+          const end = Offset.zero;
+          const curve = Curves.ease;
+          
+          var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+          
+          return SlideTransition(
+            position: animation.drive(tween),
+            child: child,
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 400),
       ),
     );
+  }
+
+  Future<bool> _onWillPop() async {
+    // ✅ PERBAIKAN: Cek jika sudah navigate
+    if (_hasNavigated || _isHandlingBack) return false;
+    
+    // Jika sedang checking session, keluar langsung tanpa konfirmasi
+    if (_isCheckingSession) {
+      _hasNavigated = true; // ✅ Set flag sebelum exit
+      _exitApp();
+      return true;
+    }
+    
+    _isHandlingBack = true;
+    
+    // DOUBLE TAP EXIT - UX yang lebih baik
+    DateTime now = DateTime.now();
+    
+    if (_currentBackPressTime == null || 
+        now.difference(_currentBackPressTime!) > const Duration(seconds: 2)) {
+      
+      _currentBackPressTime = now;
+      
+      // Tampilkan snackbar informasi
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tekan BACK sekali lagi untuk keluar'),
+            duration: Duration(seconds: 2),
+            backgroundColor: Colors.grey,
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.all(20),
+          ),
+        );
+      }
+      
+      _isHandlingBack = false;
+      return false;
+    }
+    
+    // KELUAR APLIKASI
+    _hasNavigated = true; // ✅ Set flag sebelum exit
+    _exitApp();
+    _isHandlingBack = false;
+    return true;
+  }
+
+  void _exitApp() {
+    SystemNavigator.pop();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFFFFFF),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Konten utama di tengah
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Logo dari assets SVG
-                    SvgPicture.asset(
-                      'assets/icons/logo2.svg',
-                      width: 116.63,
-                      height: 114.35,
-                    ),
-                    
-                    const SizedBox(height: 40),
-                    
-                    // Text "Siap temukan peluang karir terbaik?"
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 36),
-                      child: Text(
-                        'Siap temukan peluang karir terbaik?',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Color.fromRGBO(0, 0, 0, 0.6),
-                          fontSize: 16,
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w700,
-                          height: 1.5,
-                        ),
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFFFFFFF),
+        body: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SvgPicture.asset(
+                        'assets/icons/logo2.svg',
+                        width: 116.63,
+                        height: 114.35,
                       ),
-                    ),
-                    
-                    const SizedBox(height: 20),
-                    
-                    // Text "Loker Rekomendasi Pintar!" dengan line break
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20),
-                      child: Text(
-                        'Loker Rekomendasi\nPintar!',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Color(0xFF184EF8),
-                          fontSize: 30,
-                          fontFamily: 'SFProDisplay',
-                          fontWeight: FontWeight.w800,
-                          height: 1.0,
-                        ),
-                      ),
-                    ),
-
-                    // Loading indicator saat checking session
-                    if (_isCheckingSession) ...[
+                      
                       const SizedBox(height: 40),
-                      const CircularProgressIndicator(
-                        color: Color(0xFF184EF8),
-                      ),
-                      const SizedBox(height: 10),
-                      const Text(
-                        'Memeriksa sesi...',
-                        style: TextStyle(
-                          color: Color.fromRGBO(0, 0, 0, 0.6),
-                          fontSize: 14,
-                          fontFamily: 'Poppins',
+                      
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 36),
+                        child: Text(
+                          'Siap temukan peluang karir terbaik?',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Color.fromRGBO(0, 0, 0, 0.6),
+                            fontSize: 16,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w700,
+                            height: 1.5,
+                          ),
                         ),
                       ),
+                      
+                      const SizedBox(height: 20),
+                      
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20),
+                        child: Text(
+                          'Loker Rekomendasi\nPintar!',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Color(0xFF184EF8),
+                            fontSize: 30,
+                            fontFamily: 'SFProDisplay',
+                            fontWeight: FontWeight.w800,
+                            height: 1.0,
+                          ),
+                        ),
+                      ),
+
+                      if (_isCheckingSession) ...[
+                        const SizedBox(height: 40),
+                        const CircularProgressIndicator(
+                          color: Color(0xFF184EF8),
+                        ),
+                        const SizedBox(height: 10),
+                        const Text(
+                          'Memeriksa sesi...',
+                          style: TextStyle(
+                            color: Color.fromRGBO(0, 0, 0, 0.6),
+                            fontSize: 14,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
-            ),
-            
-            // Button Mulai di bagian bawah (HANYA TAMPIL jika tidak ada session)
-            if (!_isCheckingSession)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 60),
-                child: GestureDetector(
-                  onTapDown: (_) {
-                    setState(() {
-                      _isPressed = true;
-                    });
-                  },
-                  onTapUp: (_) {
-                    setState(() {
-                      _isPressed = false;
-                    });
-                  },
-                  onTapCancel: () {
-                    setState(() {
-                      _isPressed = false;
-                    });
-                  },
-                  onTap: _navigateToLogin,
-                  child: Transform.scale(
-                    scale: 1.0,
-                    child: Container(
+              
+              if (!_isCheckingSession)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 60),
+                  child: GestureDetector(
+                    onTapDown: (_) {
+                      if (mounted) {
+                        setState(() {
+                          _isButtonPressed = true;
+                        });
+                      }
+                    },
+                    onTapUp: (_) {
+                      if (mounted) {
+                        setState(() {
+                          _isButtonPressed = false;
+                        });
+                      }
+                    },
+                    onTapCancel: () {
+                      if (mounted) {
+                        setState(() {
+                          _isButtonPressed = false;
+                        });
+                      }
+                    },
+                    onTap: _navigateToLogin,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
                       width: 282,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: _isPressed ? const Color(0xFF0D2BA8) : const Color(0xFF1548F5),
+                        color: _isButtonPressed 
+                            ? const Color(0xFF0D2BA8) 
+                            : const Color(0xFF1548F5),
                         borderRadius: BorderRadius.circular(50),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF1548F5).withOpacity(0.5),
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
+                            color: const Color(0xFF1548F5).withOpacity(_isButtonPressed ? 0.3 : 0.5),
+                            blurRadius: _isButtonPressed ? 5 : 10,
+                            offset: Offset(0, _isButtonPressed ? 2 : 5),
                           ),
                         ],
                       ),
@@ -317,7 +315,7 @@ class _Halaman1State extends State<Halaman1> {
                         child: Text(
                           'Mulai',
                           style: TextStyle(
-                            color: Color.fromARGB(255, 255, 255, 255),
+                            color: Colors.white,
                             fontSize: 14,
                             fontFamily: 'Poppins',
                             fontWeight: FontWeight.w500,
@@ -328,8 +326,8 @@ class _Halaman1State extends State<Halaman1> {
                     ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
