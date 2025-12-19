@@ -131,7 +131,6 @@ class _HalamanJobfairDetailState extends State<HalamanJobfairDetail> {
           }
         },
       ),
-      bottomNavigationBar: const BottomNavBar(currentIndex: 2),
     );
   }
 

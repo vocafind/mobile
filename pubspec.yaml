@@ -30,6 +30,7 @@ dependencies:
   device_info_plus: ^12.3.0
   package_info_plus: ^9.0.0
   cached_network_image: ^3.4.1
+  url_launcher: ^6.2.1
 
 
 dev_dependencies:
@@ -186,20 +187,20 @@ flutter_icons:
   image_path: "assets/icons/icon.png"
 
 flutter_native_splash:
-  # Menggunakan background image untuk hasil yang sama persis
   color: "#FFFFFF"
   image: assets/icons/logox4.png
-  icon_background_color: "#FFFFFF"
+  
   android: true
   ios: true
   web: false
-  fullscreen: true
+  fullscreen: false
+  android_gravity: center
+  ios_content_mode: scaleAspectFit
   
-  # Untuk Android 12+ tetap perlu color + image
   android_12:
-    color: "#FFFFFF"
+    color: "#FFFFFF"                      # Background
     image: assets/icons/logox4.png
-    icon_background_color: "#FFFFFF"
+    icon_background_color: "#FFFFFF"      # Warna bulatan = putih juga
 
   # To add assets to your application, add an assets section, like this:
   # assets:

@@ -131,13 +131,14 @@ class _HeaderWidgetState extends State<HeaderWidget> {
 
   // TAMBAH: Method untuk navigate ke halaman cari loker
   void _navigateToSearchPage(String query) {
-    final route = widget.searchRoute ?? AppRoutes.cariLoker; // Default route
+    final route = widget.searchRoute ?? AppRoutes.mainScreen; // Default route
     
     // Siapkan arguments
-    final arguments = {
-      'initialSearchQuery': query,
-      ...?widget.navigationArguments, // Gabungkan dengan arguments tambahan
-    };
+  final arguments = {
+    'initialSearchQuery': query,
+    'initialTab': 1, // <-- TAMBAH INI
+    ...?widget.navigationArguments,
+  };
     
     // Navigate ke halaman search
     Navigator.pushNamed(

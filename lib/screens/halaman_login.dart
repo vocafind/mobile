@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:jobfair/api/api_service.dart';
 import 'package:jobfair/api/fcm_service.dart';
 import 'halaman_register.dart';
-import 'halaman_beranda.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:jobfair/api/route.dart';
 
 class HalamanLogin extends StatefulWidget {
   const HalamanLogin({super.key});
@@ -21,12 +22,17 @@ class _HalamanLoginState extends State<HalamanLogin> {
   bool _obscurePassword = true;
   bool _isLoading = false;
 
+  // ✅ TAMBAH: Variables untuk handle back button
+  bool _hasNavigated = false;
+  DateTime? _backPressTime;
+
   // Validasi error messages
   String? _emailError;
   String? _passwordError;
 
   @override
   void dispose() {
+    _hasNavigated = true; // ✅ TAMBAH: Set flag saat dispose
     _emailController.dispose();
     _passwordController.dispose();
     _emailFocus.dispose();
@@ -35,7 +41,7 @@ class _HalamanLoginState extends State<HalamanLogin> {
   }
 
   void _handleLogin() async {
-    if (_isLoading) return;
+    if (_isLoading || _hasNavigated) return; // ✅ TAMBAH: Cek _hasNavigated
 
     setState(() {
       _emailError = null;
@@ -57,7 +63,7 @@ class _HalamanLoginState extends State<HalamanLogin> {
     }
 
     if (password.isEmpty) {
-      setState(() => _passwordError = "Password tidak boleh kosong");
+      setState(() => _passwordError = "Kata Sandi tidak boleh kosong");
       return;
     }
 
@@ -72,6 +78,9 @@ class _HalamanLoginState extends State<HalamanLogin> {
 
       print('🔑 Attempting login...');
       final result = await ApiService().loginTalent(email, password);
+
+      // ✅ TAMBAH: Cek sebelum lanjut
+      if (!mounted || _hasNavigated) return;
 
       if (result['accessToken'] != null) {
         final accessToken = result['accessToken'];
@@ -89,40 +98,38 @@ class _HalamanLoginState extends State<HalamanLogin> {
         print("👤 Talent ID: $talentId");
         print("👤 Nama: $nama");
 
-        // ✅ HANYA GUNAKAN SATU METHOD: sendTokenToServer()
+        // ✅ TAMBAH: Cek lagi sebelum navigate
+        if (!mounted || _hasNavigated) return;
+
+        // ✅ PERBAIKAN: Set flag SEBELUM navigate
+        _hasNavigated = true;
+
+        // FCM Process (non-blocking)
         WidgetsBinding.instance.addPostFrameCallback((_) async {
           try {
             print('🚀 Starting FCM process...');
-
-            // Beri sedikit delay untuk memastikan navigasi berjalan
             await Future.delayed(const Duration(milliseconds: 500));
-
             final fcmService = FcmService();
-
-            // Hanya gunakan sendTokenToServer()
             bool success = await fcmService.sendTokenToServer(accessToken);
-
             if (success) {
               print('✅ FCM token sent successfully');
             } else {
               print('⚠️ Failed to send FCM token, but login continues...');
-              // Tidak perlu retry atau fallback, biarkan background process yang handle
             }
           } catch (e) {
             print('⚠️ FCM process error (non-critical): $e');
-            // Ignore error, tidak perlu mengganggu flow login
           }
         });
 
-        // Navigate ke home TANPA TUNGGU FCM
-        if (mounted) {
-          Navigator.pushReplacement(
+        // Navigate ke home
+        if (mounted && !Navigator.of(context).userGestureInProgress) {
+          Navigator.pushReplacementNamed(
             context,
-            MaterialPageRoute(builder: (context) => const HalamanBeranda()),
+            AppRoutes.mainScreen,
           );
         }
       } else {
-        if (mounted) {
+        if (mounted && !_hasNavigated) {
           setState(() {
             _passwordError = result['message'] ?? 'Login gagal';
           });
@@ -130,13 +137,13 @@ class _HalamanLoginState extends State<HalamanLogin> {
       }
     } catch (e) {
       print("❌ Login exception: $e");
-      if (mounted) {
+      if (mounted && !_hasNavigated) {
         setState(() {
           _passwordError = 'Terjadi kesalahan. Coba lagi.';
         });
       }
     } finally {
-      if (mounted) {
+      if (mounted && !_hasNavigated) {
         setState(() {
           _isLoading = false;
         });
@@ -144,166 +151,216 @@ class _HalamanLoginState extends State<HalamanLogin> {
     }
   }
 
+  // ✅ TAMBAH: Handle back button
+  Future<bool> _onWillPop() async {
+    if (_hasNavigated) return false;
+    
+    // Jika sedang loading, biarkan back langsung keluar
+    if (_isLoading) {
+      _hasNavigated = true;
+      SystemNavigator.pop();
+      return true;
+    }
+    
+    DateTime now = DateTime.now();
+    
+    if (_backPressTime == null || 
+        now.difference(_backPressTime!) > const Duration(seconds: 2)) {
+      _backPressTime = now;
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Tekan BACK sekali lagi untuk keluar',
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 14,
+              ),
+            ),
+            duration: const Duration(seconds: 2),
+            backgroundColor: Colors.grey,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(20),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+      return false;
+    }
+    
+    _hasNavigated = true;
+    SystemNavigator.pop();
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              const SizedBox(height: 88),
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  Container(width: 115, height: 115),
-                  SizedBox(
-                    width: 79.55,
-                    height: 78,
-                    child: Image.asset(
-                      'assets/icons/icon.png',
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 47),
-              const Text(
-                'Selamat Datang',
-                style: TextStyle(
-                  color: Color(0xFF1B56FD),
-                  fontSize: 26,
-                  fontFamily: 'Poppins',
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 2),
-              const Text(
-                'Masuk ke akun anda',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 18,
-                  fontFamily: 'Poppins',
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-              const SizedBox(height: 70),
-
-              // Email Field
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 46),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return WillPopScope(
+      onWillPop: _onWillPop, // ✅ TAMBAH: Handle back button
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                const SizedBox(height: 88),
+                Stack(
+                  alignment: Alignment.center,
                   children: [
-                    AnimatedTextField(
-                      controller: _emailController,
-                      focusNode: _emailFocus,
-                      label: 'Email',
-                      icon: Icons.email_outlined,
-                      keyboardType: TextInputType.emailAddress,
-                    ),
-                    if (_emailError != null)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 12, top: 4),
-                        child: Text(
-                          _emailError!,
-                          style: const TextStyle(
-                            color: Colors.red,
-                            fontSize: 12,
-                            fontFamily: 'Poppins',
-                          ),
-                        ),
+                    Container(width: 115, height: 115),
+                    SizedBox(
+                      width: 79.55,
+                      height: 78,
+                      child: Image.asset(
+                        'assets/icons/icon.png',
+                        fit: BoxFit.contain,
                       ),
+                    ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 14),
+                const SizedBox(height: 47),
+                const Text(
+                  'Selamat Datang',
+                  style: TextStyle(
+                    color: Color(0xFF1B56FD),
+                    fontSize: 26,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                const Text(
+                  'Masuk ke akun anda',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 18,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(height: 70),
 
-              // Password Field
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 46),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AnimatedPasswordField(
-                      controller: _passwordController,
-                      focusNode: _passwordFocus,
-                      label: 'Password',
-                      isPasswordVisible: !_obscurePassword,
-                      onToggleVisibility: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
-                    ),
-                    if (_passwordError != null)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 12, top: 4),
-                        child: Text(
-                          _passwordError!,
-                          style: const TextStyle(
-                            color: Colors.red,
-                            fontSize: 12,
-                            fontFamily: 'Poppins',
+                // Email Field
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 46),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AnimatedTextField(
+                        controller: _emailController,
+                        focusNode: _emailFocus,
+                        label: 'Email',
+                        icon: Icons.email_outlined,
+                        keyboardType: TextInputType.emailAddress,
+                      ),
+                      if (_emailError != null)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 12, top: 4),
+                          child: Text(
+                            _emailError!,
+                            style: const TextStyle(
+                              color: Colors.red,
+                              fontSize: 12,
+                              fontFamily: 'Poppins',
+                            ),
                           ),
                         ),
-                      ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 38),
-
-              // Button Masuk dengan Hover Effect yang Diperbaiki
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 46),
-                child: _LoginButton(
-                  isLoading: _isLoading,
-                  onPressed: _handleLogin,
-                ),
-              ),
-
-              const SizedBox(height: 46),
-
-              // Belum punya akun
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'Belum punya akun? ',
-                    style: TextStyle(
-                      color: Color(0xFF464E5E),
-                      fontSize: 12,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w500,
-                    ),
+                    ],
                   ),
-                  GestureDetector(
-                    onTap: _isLoading
-                        ? null // Disable ketika loading
-                        : () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const RegisterPage(),
-                              ),
-                            );
-                          },
-                    child: Text(
-                      'Daftar disini',
+                ),
+                const SizedBox(height: 14),
+
+                // Password Field
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 46),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AnimatedPasswordField(
+                        controller: _passwordController,
+                        focusNode: _passwordFocus,
+                        label: 'Kata Sandi',
+                        isPasswordVisible: !_obscurePassword,
+                        onToggleVisibility: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
+                      if (_passwordError != null)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 12, top: 4),
+                          child: Text(
+                            _passwordError!,
+                            style: const TextStyle(
+                              color: Colors.red,
+                              fontSize: 12,
+                              fontFamily: 'Poppins',
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 38),
+
+                // Button Masuk
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 46),
+                  child: _LoginButton(
+                    isLoading: _isLoading,
+                    onPressed: _handleLogin,
+                  ),
+                ),
+
+                const SizedBox(height: 46),
+
+                // Belum punya akun
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Belum punya akun? ',
                       style: TextStyle(
-                        color: _isLoading
-                            ? const Color(0xFF1548F5).withOpacity(0.5)
-                            : const Color(0xFF1548F5),
+                        color: Color(0xFF464E5E),
                         fontSize: 12,
                         fontFamily: 'Poppins',
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                    GestureDetector(
+                      onTap: (_isLoading || _hasNavigated) // ✅ TAMBAH: Cek _hasNavigated
+                          ? null
+                          : () {
+                              if (!_hasNavigated) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const RegisterPage(),
+                                  ),
+                                );
+                              }
+                            },
+                      child: Text(
+                        'Daftar disini',
+                        style: TextStyle(
+                          color: (_isLoading || _hasNavigated)
+                              ? const Color(0xFF1548F5).withOpacity(0.5)
+                              : const Color(0xFF1548F5),
+                          fontSize: 12,
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -468,7 +525,6 @@ class _AnimatedTextFieldState extends State<AnimatedTextField> {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // TextField dengan padding yang tepat untuk posisi tengah
           Padding(
             padding: const EdgeInsets.only(left: 20, right: 20),
             child: Align(
@@ -481,14 +537,11 @@ class _AnimatedTextFieldState extends State<AnimatedTextField> {
                   color: Color(0xFF515151),
                   fontSize: 14,
                   fontFamily: 'Poppins',
-                  height:
-                      1.0, // Atur height untuk kontrol vertikal yang lebih baik
+                  height: 1.0,
                 ),
                 decoration: const InputDecoration(
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.only(
-                    bottom: 2,
-                  ), // Sesuaikan untuk posisi tengah
+                  contentPadding: EdgeInsets.only(bottom: 2),
                   isDense: true,
                   errorStyle: TextStyle(fontSize: 0, height: 0),
                 ),
@@ -616,7 +669,6 @@ class _AnimatedPasswordFieldState extends State<AnimatedPasswordField> {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // TextField dengan padding yang tepat untuk posisi tengah
           Padding(
             padding: const EdgeInsets.only(left: 20, right: 50),
             child: Align(
@@ -629,14 +681,11 @@ class _AnimatedPasswordFieldState extends State<AnimatedPasswordField> {
                   color: Color(0xFF515151),
                   fontSize: 14,
                   fontFamily: 'Poppins',
-                  height:
-                      1.0, // Atur height untuk kontrol vertikal yang lebih baik
+                  height: 1.0,
                 ),
                 decoration: const InputDecoration(
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.only(
-                    bottom: 2,
-                  ), // Sesuaikan untuk posisi tengah
+                  contentPadding: EdgeInsets.only(bottom: 2),
                   isDense: true,
                   errorStyle: TextStyle(fontSize: 0, height: 0),
                 ),

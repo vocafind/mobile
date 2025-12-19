@@ -15,32 +15,14 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
   bool _isLoading = false;
   String? _errorMessage;
 
-  // Controllers
-  final _bidangController = TextEditingController();
-  final _alasanController = TextEditingController();
-  String _selectedLevel = 'Tinggi';
-
   @override
   void initState() {
     super.initState();
     _loadCareerInterests();
   }
 
-  @override
-  void dispose() {
-    _bidangController.dispose();
-    _alasanController.dispose();
-    super.dispose();
-  }
-
-  void _clearControllers() {
-    _bidangController.clear();
-    _alasanController.clear();
-    _selectedLevel = 'Tinggi';
-  }
-
   Future<void> _loadCareerInterests() async {
-    if (!mounted) return; // TAMBAHKAN INI
+    if (!mounted) return;
 
     setState(() {
       _isLoading = true;
@@ -50,7 +32,6 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
     try {
       final careerInterests = await _apiService.getCareerInterest();
       if (mounted) {
-        // TAMBAHKAN INI
         setState(() {
           _careerInterests = careerInterests;
           _isLoading = false;
@@ -58,7 +39,6 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
       }
     } catch (e) {
       if (mounted) {
-        // TAMBAHKAN INI
         setState(() {
           _isLoading = false;
           _errorMessage = 'Gagal memuat data: ${e.toString()}';
@@ -72,13 +52,11 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
     try {
       await _apiService.createCareerInterest(careerInterest);
       if (mounted) {
-        // TAMBAHKAN INI
         await _loadCareerInterests();
         _showSnackBar('Minat karir berhasil ditambahkan');
       }
     } catch (e) {
       if (mounted) {
-        // TAMBAHKAN INI
         _showSnackBar('Gagal menambahkan minat karir', isError: true);
       }
     }
@@ -87,7 +65,6 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
   Future<void> _updateCareerInterest(CareerInterestModel careerInterest) async {
     if (careerInterest.careerinterestId == null) {
       if (mounted) {
-        // TAMBAHKAN INI
         _showSnackBar('ID minat karir tidak valid', isError: true);
       }
       return;
@@ -99,13 +76,11 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
         careerInterest,
       );
       if (mounted) {
-        // TAMBAHKAN INI
         await _loadCareerInterests();
         _showSnackBar('Minat karir berhasil diperbarui');
       }
     } catch (e) {
       if (mounted) {
-        // TAMBAHKAN INI
         _showSnackBar('Gagal memperbarui minat karir', isError: true);
       }
     }
@@ -115,20 +90,18 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
     try {
       await _apiService.deleteCareerInterest(careerInterestId);
       if (mounted) {
-        // TAMBAHKAN INI
         await _loadCareerInterests();
         _showSnackBar('Minat karir berhasil dihapus');
       }
     } catch (e) {
       if (mounted) {
-        // TAMBAHKAN INI
         _showSnackBar('Gagal menghapus minat karir', isError: true);
       }
     }
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
-    if (!mounted) return; // TAMBAHKAN INI - INI YANG PALING PENTING
+    if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -157,33 +130,37 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
     );
   }
 
-  void _showAddEditModal({CareerInterestModel? careerInterest}) {
-    final isEdit = careerInterest != null;
+void _showAddEditModal({CareerInterestModel? careerInterest}) {
+  final isEdit = careerInterest != null;
 
-    // Buat controller lokal untuk modal
-    final TextEditingController _bidangControllerLocal =
-        TextEditingController();
-    final TextEditingController _alasanControllerLocal =
-        TextEditingController();
-    String _selectedLevelLocal = 'Tinggi';
+  final TextEditingController _bidangControllerLocal =
+      TextEditingController();
+  final TextEditingController _alasanControllerLocal =
+      TextEditingController();
+  String _selectedLevelLocal = 'Tinggi';
 
-    // Inisialisasi nilai jika edit
-    if (careerInterest != null) {
-      _bidangControllerLocal.text = careerInterest.bidangKetertarikan;
-      _alasanControllerLocal.text = careerInterest.alasan;
-      _selectedLevelLocal = careerInterest.tingkatKetertarikan;
-    }
+  // Deklarasikan error variables di sini
+  String? bidangError;
+  String? alasanError;
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: StatefulBuilder(
-          builder: (context, setModalState) => Container(
+  // Inisialisasi nilai jika edit
+  if (careerInterest != null) {
+    _bidangControllerLocal.text = careerInterest.bidangKetertarikan;
+    _alasanControllerLocal.text = careerInterest.alasan;
+    _selectedLevelLocal = careerInterest.tingkatKetertarikan;
+  }
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: StatefulBuilder(
+        builder: (context, setModalState) {
+          return Container(
             height: MediaQuery.of(context).size.height * 0.8,
             decoration: const BoxDecoration(
               color: Colors.white,
@@ -217,23 +194,40 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
                       ),
                       TextButton(
                         onPressed: () {
-                          if (_bidangControllerLocal.text.isEmpty ||
-                              _alasanControllerLocal.text.isEmpty) {
-                            if (mounted) {
-                              // TAMBAHKAN INI
-                              _showSnackBar(
-                                'Semua field harus diisi',
-                                isError: true,
-                              );
+                          // Reset error messages
+                          bool hasError = false;
+
+                          // Validasi Bidang Minat
+                          if (_bidangControllerLocal.text.trim().isEmpty) {
+                            bidangError = 'Bidang minat harus diisi';
+                            hasError = true;
+                          } else {
+                            bidangError = null;
+                          }
+
+                          // Validasi Alasan Minat
+                            final alasan = _alasanControllerLocal.text.trim();
+
+                            if (alasan.isEmpty) {
+                              alasanError = 'Alasan minat harus diisi';
+                              hasError = true;
+                            } else {
+                              alasanError = null;
                             }
+
+
+                          // Update UI untuk menampilkan error
+                          if (hasError) {
+                            setModalState(() {});
                             return;
                           }
 
+                          // Jika semua validasi lolos
                           final newCareerInterest = CareerInterestModel(
                             careerinterestId: careerInterest?.careerinterestId,
                             tingkatKetertarikan: _selectedLevelLocal,
-                            alasan: _alasanControllerLocal.text,
-                            bidangKetertarikan: _bidangControllerLocal.text,
+                            alasan: alasan,
+                            bidangKetertarikan: _bidangControllerLocal.text.trim(),
                           );
 
                           Navigator.pop(context);
@@ -303,6 +297,7 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
                           hint: 'Contoh: Teknologi Informasi, Marketing',
                           icon: Icons.work_outline,
                           required: true,
+                          errorText: bidangError,
                         ),
                         const SizedBox(height: 16),
 
@@ -394,8 +389,7 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
                           icon: Icons.description_outlined,
                           maxLines: 5,
                           required: true,
-                          helperText:
-                              'Minimal 50 karakter untuk penjelasan yang baik',
+                          errorText: alasanError,
                         ),
 
                         // Tombol Hapus (hanya untuk edit)
@@ -438,11 +432,12 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
                 ),
               ],
             ),
-          ),
-        ),
+          );
+        },
       ),
-    );
-  }
+    ),
+  );
+}
 
   IconData _getInterestIcon(String level) {
     switch (level) {
@@ -479,6 +474,7 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
     TextInputType? keyboardType,
     bool required = false,
     String? helperText,
+    String? errorText,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -520,15 +516,30 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
             prefixIcon: Icon(icon, color: Colors.grey.shade600, size: 20),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderSide: BorderSide(
+                color: errorText != null ? Colors.red : Colors.grey.shade300,
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderSide: BorderSide(
+                color: errorText != null ? Colors.red : Colors.grey.shade300,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF113CEE), width: 2),
+              borderSide: BorderSide(
+                color: errorText != null ? Colors.red : const Color(0xFF113CEE),
+                width: 2,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Colors.red, width: 2),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Colors.red, width: 2),
             ),
             filled: true,
             fillColor: Colors.grey.shade50,
@@ -536,7 +547,13 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
               horizontal: 16,
               vertical: 14,
             ),
-            helperText: helperText,
+            errorText: errorText,
+            errorStyle: const TextStyle(
+              fontSize: 12,
+              fontFamily: 'Poppins',
+              color: Colors.red,
+            ),
+            helperText: errorText == null ? helperText : null,
             helperStyle: TextStyle(
               fontSize: 11,
               color: Colors.grey.shade600,
@@ -782,11 +799,11 @@ class _TabMinatKarirState extends State<TabMinatKarir> {
                   topRight: Radius.circular(20),
                 )
               : isLast
-              ? const BorderRadius.only(
-                  bottomLeft: Radius.circular(20),
-                  bottomRight: Radius.circular(20),
-                )
-              : BorderRadius.zero,
+                  ? const BorderRadius.only(
+                      bottomLeft: Radius.circular(20),
+                      bottomRight: Radius.circular(20),
+                    )
+                  : BorderRadius.zero,
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,

@@ -38,16 +38,15 @@ class _HalamanJobfairState extends State<HalamanJobfair> {
           Column(
             children: [
               // PERBAIKI: Tambahkan enableNavigation = true
-              HeaderWidget(
-                showNotification: true,
-                showFilter: false,
-                enableNavigation: true, // INI YANG PERLU DITAMBAHKAN!
-                searchRoute: AppRoutes.cariLoker,
-                onSearch: (query) {
-                  // Real-time search di jobfair jika diperlukan
-                  print("Search di jobfair: $query");
-                },
-              ),
+          HeaderWidget(
+            showNotification: true,
+            showFilter: false,
+            enableNavigation: true,
+            navigationArguments: {'initialTab': 1}, 
+            onSearch: (query) {
+              print("Search di lamaran: $query");
+            },
+          ),
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(
@@ -71,12 +70,6 @@ class _HalamanJobfairState extends State<HalamanJobfair> {
                 ),
               ),
             ],
-          ),
-          const Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: BottomNavBar(currentIndex: 2),
           ),
         ],
       ),

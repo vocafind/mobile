@@ -149,6 +149,136 @@ class _BuatAkunPageState extends State<BuatAkunPage> {
         _confirmPasswordController.text.isNotEmpty;
   }
 
+  // 🎉 FUNGSI DIALOG SUKSES REGISTRASI
+  void _showSuccessDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        // Auto close dan redirect setelah 4 detik
+        Future.delayed(const Duration(seconds: 4), () {
+          if (dialogContext.mounted) {
+            Navigator.of(dialogContext).pop(); // Tutup dialog
+            Navigator.of(dialogContext).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const HalamanLogin()),
+              (route) => false,
+            );
+          }
+        });
+
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Container(
+            width: 320,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(
+                color: const Color(0xFFD4D4D8),
+                width: 1,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icon Checkmark dengan animasi
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1548F5).withOpacity(0.2),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFF1548F5).withOpacity(0.2),
+                      width: 8,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.check,
+                    color: Color(0xFF1548F5),
+                    size: 24,
+                    weight: 700,
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Title
+                const Text(
+                  'Daftar Berhasil',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFF18181B),
+                    fontSize: 24,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w600,
+                    height: 1.2,
+                  ),
+                ),
+
+                const SizedBox(height: 14),
+
+                // Description
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                  child: Text(
+                    'Akun kamu berhasil dibuat!\n\nVerifikasi KTP sedang diproses. \n\nKamu akan mendapatkan pemberitahuan melalui email setelah proses selesai.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Color(0xFF64748B),
+                      fontSize: 14,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w400,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Button Lanjut ke Login
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop(); // Tutup dialog
+                      Navigator.of(dialogContext).pushAndRemoveUntil(
+                        MaterialPageRoute(
+                          builder: (context) => const HalamanLogin(),
+                        ),
+                        (route) => false,
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1548F5),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(45),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Ok',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _registerTalent() async {
     // Validasi dulu
     _validateNama();
@@ -192,16 +322,8 @@ class _BuatAkunPageState extends State<BuatAkunPage> {
       if (!mounted) return; // Pastikan widget masih aktif
 
       if (response.statusCode == 200) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("Registrasi berhasil!")));
-        // kasih jeda 1 detik agar snackbar sempat tampil
-        await Future.delayed(const Duration(seconds: 1));
-        if (!mounted) return;
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HalamanLogin()),
-        );
+        // 🎉 Tampilkan dialog sukses (mengganti SnackBar)
+        _showSuccessDialog(context);
       } else {
         debugPrint("Server error ${response.statusCode}:\n$responseBody");
         ScaffoldMessenger.of(context).showSnackBar(

@@ -807,6 +807,7 @@ class _AnimatedDropdownState extends State<AnimatedDropdown> {
                       fontWeight: isActive ? FontWeight.w500 : FontWeight.w400,
                     ),
                   ),
+                  
                 ],
               ),
             ),

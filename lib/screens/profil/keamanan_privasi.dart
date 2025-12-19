@@ -306,33 +306,33 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
 
   String? _validateOldPassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Password lama harus diisi';
+      return 'Kata Sandi lama harus diisi';
     }
     if (value.length < 8) {
-      return 'Password minimal 8 karakter';
+      return 'Kata Sandi minimal 8 karakter';
     }
     return null;
   }
 
   String? _validateNewPassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Password baru harus diisi';
+      return 'Kata Sandi baru harus diisi';
     }
     if (value.length < 8) {
-      return 'Password minimal 8 karakter';
+      return 'Kata Sandi minimal 8 karakter';
     }
     if (value == _oldPasswordController.text) {
-      return 'Password baru harus berbeda dari password lama';
+      return 'Kata Sandi baru harus berbeda dari Kata Sandi lama';
     }
     return null;
   }
 
   String? _validateConfirmPassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Konfirmasi password harus diisi';
+      return 'Konfirmasi Kata Sandi harus diisi';
     }
     if (value != _newPasswordController.text) {
-      return 'Password tidak sama';
+      return 'Kata Sandi tidak sama';
     }
     return null;
   }
@@ -617,7 +617,7 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                         enabled: !_isLoading,
                         validator: _validateOldPassword,
                         decoration: InputDecoration(
-                          hintText: 'Masukkan password lama',
+                          hintText: 'Masukkan Kata Sandi lama',
                           hintStyle: const TextStyle(
                             fontFamily: 'SF Pro',
                             color: Colors.black38,
@@ -680,7 +680,7 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                         enabled: !_isLoading,
                         validator: _validateNewPassword,
                         decoration: InputDecoration(
-                          hintText: 'Masukkan password baru',
+                          hintText: 'Masukkan Kata Sandi baru',
                           hintStyle: const TextStyle(
                             fontFamily: 'SF Pro',
                             color: Colors.black38,
@@ -743,7 +743,7 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                             SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'Password minimal 8 karakter, mengandung huruf besar, huruf kecil, angka, dan simbol',
+                                'Kata Sandi minimal 8 karakter, mengandung huruf besar, huruf kecil, angka, dan simbol',
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontFamily: 'SF Pro',
@@ -772,7 +772,7 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                         enabled: !_isLoading,
                         validator: _validateConfirmPassword,
                         decoration: InputDecoration(
-                          hintText: 'Masukkan ulang password baru',
+                          hintText: 'Masukkan ulang Kata Sandi baru',
                           hintStyle: const TextStyle(
                             fontFamily: 'SF Pro',
                             color: Colors.black38,

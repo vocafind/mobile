@@ -291,23 +291,24 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
     }
   }
 
-  void _handleSearchSubmitted(String query) {
-    if (query.trim().isNotEmpty) {
-      print("🔍 Search query from home: ${query.trim()}");
+void _handleSearchSubmitted(String query) {
+  if (query.trim().isNotEmpty) {
+    print("🔍 Search query from home: ${query.trim()}");
 
-      // Tunggu frame berikutnya untuk navigasi
-      Future.delayed(Duration.zero, () {
-        Navigator.pushNamed(
-          context,
-          AppRoutes.cariLoker,
-          arguments: {'initialSearchQuery': query.trim()},
-        );
-      });
+    // GANTI: navigate ke MainScreen dengan tab 1 (Cari Loker)
+    Navigator.pushNamed(
+      context,
+      AppRoutes.mainScreen, // <-- GANTI DARI AppRoutes.cariLoker
+      arguments: {
+        'initialSearchQuery': query.trim(),
+        'initialTab': 1, // <-- TAMBAH INI untuk langsung ke tab Cari Loker
+      },
+    );
 
-      _searchController.clear();
-      _searchFocusNode.unfocus();
-    }
+    _searchController.clear();
+    _searchFocusNode.unfocus();
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -317,7 +318,6 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F4F9),
       extendBody: true,
-      bottomNavigationBar: const BottomNavBar(currentIndex: 0),
       body: Stack(
         children: [
           RepaintBoundary(

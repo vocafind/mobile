@@ -716,23 +716,23 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
                         child: CustomScrollView(
                           controller: _scrollController,
                           slivers: [
-                            SliverToBoxAdapter(
-                              child: Column(
-                                children: [
-                                  const SizedBox(height: 17),
-                                  if (displayIsLoading)
-                                    _buildLoadingState()
-                                  else if (displayHasError)
-                                    _buildErrorState()
-                                  else if (displayData.isEmpty)
-                                    _buildEmptyState(
-                                      isSearching: _isSearching && isTabSemua,
-                                      searchQuery: _currentSearchQuery,
-                                      isRekomendasiTab: isTabRekomendasi,
-                                    ),
-                                ],
-                              ),
+                           SliverToBoxAdapter(
+                            child: Column(
+                              children: [
+                                const SizedBox(height: 17),
+                                if (displayIsLoading)
+                                  _buildLoadingState()
+                                else if (displayHasError)
+                                  _buildErrorState()
+                                else if (displayData.isEmpty)
+                                  _buildEmptyState(
+                                    isSearching: _isSearching && isTabSemua,
+                                    searchQuery: _currentSearchQuery,
+                                    isRekomendasiTab: isTabRekomendasi,
+                                  ),
+                              ],
                             ),
+                          ),
 
                             if (!displayIsLoading &&
                                 !displayHasError &&
@@ -883,7 +883,6 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
           ],
         ),
       ),
-      bottomNavigationBar: const BottomNavBar(currentIndex: 1),
     );
   }
 

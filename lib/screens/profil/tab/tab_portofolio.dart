@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:jobfair/api/api_service.dart';
 import 'package:jobfair/models/talent_portofolio_model.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class TabPortofolio extends StatefulWidget {
   const TabPortofolio({super.key});
@@ -13,6 +14,7 @@ class _TabPortofolioState extends State<TabPortofolio> {
   final ApiService _apiService = ApiService();
   List<PortofolioModel> _portofolio = [];
   bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -23,7 +25,11 @@ class _TabPortofolioState extends State<TabPortofolio> {
   Future<void> _loadPortofolio() async {
     if (!mounted) return;
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
     try {
       final portofolio = await _apiService.getPortofolio();
       if (mounted) {
@@ -34,7 +40,10 @@ class _TabPortofolioState extends State<TabPortofolio> {
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Gagal memuat data: ${e.toString()}';
+        });
         _showSnackBar('Gagal memuat data portofolio', isError: true);
       }
       print("Error load portofolio: $e");
@@ -54,7 +63,7 @@ class _TabPortofolioState extends State<TabPortofolio> {
             fontFamily: 'Poppins',
           ),
         ),
-        backgroundColor: isError ? Colors.red[100] : Colors.green,
+        backgroundColor: isError ? Colors.red[700] : Colors.green,
         behavior: SnackBarBehavior.floating,
         elevation: 2,
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -71,9 +80,22 @@ class _TabPortofolioState extends State<TabPortofolio> {
     );
   }
 
-  // ✅ FUNGSI VALIDASI URL
+  Future<void> _launchUrl(String urlString) async {
+    try {
+      final Uri url = Uri.parse(urlString);
+      
+      if (!await launchUrl(
+        url,
+        mode: LaunchMode.externalApplication,
+      )) {
+        _showSnackBar('Tidak dapat membuka link', isError: true);
+      }
+    } catch (e) {
+      _showSnackBar('URL tidak valid', isError: true);
+    }
+  }
+
   bool _isValidUrl(String url) {
-    if (url.isEmpty) return false; // ❌ DIUBAH: sekarang wajib, empty tidak diizinkan
     try {
       final uri = Uri.tryParse(url);
       return uri != null &&
@@ -85,9 +107,71 @@ class _TabPortofolioState extends State<TabPortofolio> {
     }
   }
 
+  Future<void> _addPortofolio(PortofolioModel portofolio) async {
+    try {
+      await _apiService.createPortofolio(portofolio);
+      if (mounted) {
+        await _loadPortofolio();
+        _showSnackBar('Portofolio berhasil ditambahkan');
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnackBar('Gagal menambahkan portofolio', isError: true);
+      }
+    }
+  }
+
+  Future<void> _updatePortofolio(PortofolioModel portofolio) async {
+    if (portofolio.portfolioId == null) {
+      if (mounted) {
+        _showSnackBar('ID portofolio tidak valid', isError: true);
+      }
+      return;
+    }
+
+    try {
+      await _apiService.updatePortofolio(
+        portofolio.portfolioId!,
+        portofolio,
+      );
+      if (mounted) {
+        await _loadPortofolio();
+        _showSnackBar('Portofolio berhasil diperbarui');
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnackBar('Gagal memperbarui portofolio', isError: true);
+      }
+    }
+  }
+
+  Future<void> _deletePortofolio(String portfolioId) async {
+    try {
+      await _apiService.deletePortofolio(portfolioId);
+      if (mounted) {
+        await _loadPortofolio();
+      }
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          _showSnackBar('Portofolio berhasil dihapus');
+        }
+      });
+    } catch (e) {
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          _showSnackBar('Gagal menghapus portofolio', isError: true);
+        }
+      });
+    }
+  }
+
   void _showAddEditModal({PortofolioModel? portofolio}) {
     final isEdit = portofolio != null;
-    bool isSaving = false;
+
+    // Error variables - DI LUAR StatefulBuilder agar bisa diakses
+    String? judulError;
+    String? deskripsiError;
+    String? linkError;
 
     // Controller form
     final _judulController = TextEditingController(
@@ -96,7 +180,7 @@ class _TabPortofolioState extends State<TabPortofolio> {
     final _deskripsiController = TextEditingController(
       text: portofolio?.deskripsi ?? '',
     );
-    final _linkPortofolioController = TextEditingController(
+    final _linkController = TextEditingController(
       text: portofolio?.linkPorotofolio ?? '',
     );
 
@@ -117,7 +201,7 @@ class _TabPortofolioState extends State<TabPortofolio> {
             ),
             child: Column(
               children: [
-                // === HEADER ===
+                // Header
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -129,9 +213,7 @@ class _TabPortofolioState extends State<TabPortofolio> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.close),
-                        onPressed: isSaving
-                            ? null
-                            : () => Navigator.pop(context),
+                        onPressed: () => Navigator.pop(context),
                       ),
                       Expanded(
                         child: Text(
@@ -144,106 +226,78 @@ class _TabPortofolioState extends State<TabPortofolio> {
                         ),
                       ),
                       TextButton(
-                        onPressed: isSaving
-                            ? null
-                            : () async {
-                                final judul = _judulController.text.trim();
-                                final deskripsi = _deskripsiController.text
-                                    .trim();
-                                final linkPortofolio = _linkPortofolioController
-                                    .text
-                                    .trim();
+                        onPressed: () {
+                          // Reset error messages
+                          bool hasError = false;
 
-                                // ✅ VALIDASI: Semua field wajib diisi
-                                if (judul.isEmpty || deskripsi.isEmpty || linkPortofolio.isEmpty) {
-                                  if (mounted) {
-                                    _showSnackBar(
-                                      "Judul, deskripsi, dan link portofolio wajib diisi",
-                                      isError: true,
-                                    );
-                                  }
-                                  return;
-                                }
+                          // Validasi Judul
+                          final judul = _judulController.text.trim();
+                          if (judul.isEmpty) {
+                            judulError = 'Judul harus diisi';
+                            hasError = true;
+                          } else {
+                            judulError = null;
+                          }
 
-                                // ✅ VALIDASI URL
-                                if (!_isValidUrl(linkPortofolio)) {
-                                  _showSnackBar(
-                                    "URL portofolio harus lengkap dengan http:// atau https://",
-                                    isError: true,
-                                  );
-                                  return;
-                                }
+                          // Validasi Deskripsi
+                          final deskripsi = _deskripsiController.text.trim();
+                          if (deskripsi.isEmpty) {
+                            deskripsiError = 'Deskripsi harus diisi';
+                            hasError = true;
+                          } else {
+                            deskripsiError = null;
+                          }
 
-                                setModalState(() => isSaving = true);
+                          // Validasi Link Portofolio
+                          final link = _linkController.text.trim();
+                          if (link.isEmpty) {
+                            linkError = 'Link portofolio harus diisi';
+                            hasError = true;
+                          } else if (!_isValidUrl(link)) {
+                            linkError = 'URL harus lengkap dengan http:// atau https://';
+                            hasError = true;
+                          } else {
+                            linkError = null;
+                          }
 
-                                final portfolio = PortofolioModel(
-                                  portfolioId: portofolio?.portfolioId,
-                                  talentId: portofolio?.talentId,
-                                  judul: judul,
-                                  deskripsi: deskripsi,
-                                  linkPorotofolio: linkPortofolio,
-                                  galeriPortofolio: '', // ✅ DIHAPUS
-                                );
+                          // Update UI untuk menampilkan error
+                          if (hasError) {
+                            setModalState(() {});
+                            return;
+                          }
 
-                                try {
-                                  if (isEdit) {
-                                    await _apiService.updatePortofolio(
-                                      portofolio!.portfolioId!,
-                                      portfolio,
-                                    );
-                                    if (mounted) {
-                                      _showSnackBar(
-                                        'Berhasil memperbarui portofolio',
-                                      );
-                                    }
-                                  } else {
-                                    await _apiService.createPortofolio(
-                                      portfolio,
-                                    );
-                                    if (mounted) {
-                                      _showSnackBar(
-                                        'Berhasil menambah portofolio',
-                                      );
-                                    }
-                                  }
+                          // Jika semua validasi lolos
+                          final newPortofolio = PortofolioModel(
+                            portfolioId: portofolio?.portfolioId,
+                            talentId: portofolio?.talentId,
+                            judul: judul,
+                            deskripsi: deskripsi,
+                            linkPorotofolio: link,
+                            galeriPortofolio: '',
+                          );
 
-                                  if (mounted) {
-                                    await _loadPortofolio();
-                                    Navigator.pop(context);
-                                  }
-                                } catch (e) {
-                                  setModalState(() => isSaving = false);
-                                  if (mounted) {
-                                    _showSnackBar(
-                                      'Gagal menyimpan data',
-                                      isError: true,
-                                    );
-                                  }
-                                  print("❌ Error submit portofolio: $e");
-                                }
-                              },
-                        child: isSaving
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text(
-                                'Simpan',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: 'Poppins',
-                                ),
-                              ),
+                          Navigator.pop(context);
+
+                          if (isEdit) {
+                            _updatePortofolio(newPortofolio);
+                          } else {
+                            _addPortofolio(newPortofolio);
+                          }
+                        },
+                        child: const Text(
+                          'Simpan',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
 
-                // === FORM ===
+                // Form
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(20),
@@ -289,6 +343,7 @@ class _TabPortofolioState extends State<TabPortofolio> {
                           hint: 'Contoh: Sistem Keuangan Negara',
                           icon: Icons.title_outlined,
                           required: true,
+                          errorText: judulError,
                         ),
                         const SizedBox(height: 16),
 
@@ -299,30 +354,28 @@ class _TabPortofolioState extends State<TabPortofolio> {
                           icon: Icons.description_outlined,
                           maxLines: 5,
                           required: true,
+                          errorText: deskripsiError,
                         ),
                         const SizedBox(height: 16),
 
-                        // ✅ FIELD LINK PORTOFOLIO DENGAN VALIDASI VISUAL (WAJIB)
                         _buildUrlTextField(
-                          controller: _linkPortofolioController,
+                          controller: _linkController,
                           label: 'Link Portofolio',
                           hint: 'https://example.com/portfolio',
                           icon: Icons.link_outlined,
-                          required: true, // ✅ DIUBAH: menjadi wajib
-                          // helperText: 'Wajib diisi - Link menuju portofolio online',
+                          required: true,
+                          errorText: linkError,
                         ),
 
-                        // Tombol Hapus (hanya jika edit)
+                        // Tombol Hapus (hanya untuk edit)
                         if (isEdit) ...[
                           const SizedBox(height: 32),
                           Center(
                             child: OutlinedButton.icon(
-                              onPressed: isSaving
-                                  ? null
-                                  : () {
-                                      Navigator.pop(context);
-                                      _showDeleteConfirmation(portofolio!);
-                                    },
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _showDeleteConfirmation(portofolio!);
+                              },
                               icon: const Icon(
                                 Icons.delete_outline,
                                 color: Colors.red,
@@ -360,114 +413,62 @@ class _TabPortofolioState extends State<TabPortofolio> {
     );
   }
 
-  // ✅ WIDGET KHUSUS UNTUK URL TEXTFIELD DENGAN INDIKATOR VISUAL
-  Widget _buildUrlTextField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    required IconData icon,
-    bool required = false,
-    String? helperText,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                fontFamily: 'Poppins',
-                color: Color(0xFF515151),
-              ),
-            ),
-            if (required)
-              const Text(
-                ' *',
-                style: TextStyle(
-                  color: Colors.red,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-          ],
+  void _showDeleteConfirmation(PortofolioModel portofolio) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
         ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          keyboardType: TextInputType.url,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(
-              color: Colors.grey.shade400,
-              fontSize: 14,
-              fontFamily: 'Poppins',
-            ),
-            prefixIcon: Icon(icon, color: Colors.grey.shade600, size: 20),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF113CEE), width: 2),
-            ),
-            filled: true,
-            fillColor: Colors.grey.shade50,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
-            ),
-            helperText: helperText,
-            helperStyle: TextStyle(
-              fontSize: 11,
-              color: Colors.grey.shade600,
-              fontFamily: 'Poppins',
-            ),
-            // ✅ INDIKATOR VALIDASI URL (SAMA SEPERTI HALAMAN SEBELUMNYA)
-            suffixIcon: ValueListenableBuilder<TextEditingValue>(
-              valueListenable: controller,
-              builder: (context, value, child) {
-                if (value.text.isEmpty) return const SizedBox();
-                final isValid = _isValidUrl(value.text.trim());
-                return Icon(
-                  isValid ? Icons.check_circle : Icons.error_outline,
-                  color: isValid ? Colors.green : Colors.red,
-                  size: 20,
-                );
-              },
-            ),
+        backgroundColor: Colors.white,
+        title: const Text(
+          'Hapus Portofolio',
+          style: TextStyle(
+            fontSize: 18,
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.w600,
           ),
         ),
-        // ✅ PESAN VALIDASI HANYA UNTUK FORMAT URL (SAMA SEPERTI HALAMAN SEBELUMNYA)
-        ValueListenableBuilder<TextEditingValue>(
-          valueListenable: controller,
-          builder: (context, value, child) {
-            if (value.text.isEmpty) return const SizedBox(); // ❌ DIHAPUS: tidak tampil pesan wajib diisi
-            final isValid = _isValidUrl(value.text.trim());
-            if (!isValid) {
-              return Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: Text(
-                  'URL harus lengkap dengan http:// atau https://',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.red.shade700,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-              );
-            }
-            return const SizedBox();
-          },
+        content: Text(
+          'Apakah Anda yakin ingin menghapus portofolio "${portofolio.judul}"?',
+          style: const TextStyle(
+            fontSize: 14,
+            fontFamily: 'Poppins',
+            color: Color(0xFF515151),
+          ),
         ),
-      ],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Batal',
+              style: TextStyle(
+                color: Color(0xFF515151),
+                fontSize: 14,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              if (portofolio.portfolioId != null) {
+                _deletePortofolio(portofolio.portfolioId!);
+              }
+            },
+            child: const Text(
+              'Hapus',
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: 14,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -479,7 +480,7 @@ class _TabPortofolioState extends State<TabPortofolio> {
     int maxLines = 1,
     TextInputType? keyboardType,
     bool required = false,
-    String? helperText,
+    String? errorText,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -521,27 +522,42 @@ class _TabPortofolioState extends State<TabPortofolio> {
             prefixIcon: Icon(icon, color: Colors.grey.shade600, size: 20),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderSide: BorderSide(
+                color: errorText != null ? Colors.red : Colors.grey.shade300,
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderSide: BorderSide(
+                color: errorText != null ? Colors.red : Colors.grey.shade300,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF113CEE), width: 2),
+              borderSide: BorderSide(
+                color: errorText != null ? Colors.red : const Color(0xFF113CEE),
+                width: 2,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Colors.red, width: 2),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Colors.red, width: 2),
             ),
             filled: true,
             fillColor: Colors.grey.shade50,
-            contentPadding: const EdgeInsets.symmetric(
+            contentPadding: EdgeInsets.symmetric(
               horizontal: 16,
-              vertical: 14,
+              vertical: maxLines > 1 ? 16 : 14,
             ),
-            helperText: helperText,
-            helperStyle: TextStyle(
-              fontSize: 11,
-              color: Colors.grey.shade600,
+            errorText: errorText,
+            errorStyle: const TextStyle(
+              fontSize: 12,
               fontFamily: 'Poppins',
+              color: Colors.red,
             ),
           ),
         ),
@@ -549,98 +565,171 @@ class _TabPortofolioState extends State<TabPortofolio> {
     );
   }
 
-  void _showDeleteConfirmation(PortofolioModel portofolio) {
-    bool isDeleting = false;
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          backgroundColor: Colors.white,
-          title: const Text(
-            'Hapus Portofolio',
-            style: TextStyle(
-              fontSize: 18,
-              fontFamily: 'Poppins',
-              fontWeight: FontWeight.w600,
+  Widget _buildUrlTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    bool required = false,
+    String? errorText,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                fontFamily: 'Poppins',
+                color: Color(0xFF515151),
+              ),
             ),
-          ),
-          content: Text(
-            'Apakah Anda yakin ingin menghapus portofolio "${portofolio.judul}"?',
-            style: const TextStyle(
-              fontSize: 14,
-              fontFamily: 'Poppins',
-              color: Color(0xFF515151),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: isDeleting ? null : () => Navigator.pop(context),
-              child: const Text(
-                'Batal',
+            if (required)
+              const Text(
+                ' *',
                 style: TextStyle(
-                  color: Color(0xFF515151),
+                  color: Colors.red,
                   fontSize: 14,
-                  fontFamily: 'Poppins',
                   fontWeight: FontWeight.w500,
                 ),
               ),
-            ),
-            TextButton(
-              onPressed: isDeleting
-                  ? null
-                  : () async {
-                      setDialogState(() => isDeleting = true);
-                      try {
-                        await _apiService.deletePortofolio(
-                          portofolio.portfolioId!,
-                        );
-                        if (mounted) {
-                          await _loadPortofolio();
-                          Navigator.pop(context);
-                          _showSnackBar('Portofolio berhasil dihapus');
-                        }
-                      } catch (e) {
-                        setDialogState(() => isDeleting = false);
-                        if (mounted) {
-                          _showSnackBar(
-                            'Gagal menghapus portofolio',
-                            isError: true,
-                          );
-                        }
-                        print("Error delete portofolio: $e");
-                      }
-                    },
-              child: isDeleting
-                  ? const SizedBox(
-                      height: 14,
-                      width: 14,
-                      child: CircularProgressIndicator(
-                        color: Colors.red,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : const Text(
-                      'Hapus',
-                      style: TextStyle(
-                        color: Colors.red,
-                        fontSize: 14,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-            ),
           ],
         ),
-      ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          keyboardType: TextInputType.url,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+              color: Colors.grey.shade400,
+              fontSize: 14,
+              fontFamily: 'Poppins',
+            ),
+            prefixIcon: Icon(icon, color: Colors.grey.shade600, size: 20),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(
+                color: errorText != null ? Colors.red : Colors.grey.shade300,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(
+                color: errorText != null ? Colors.red : Colors.grey.shade300,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(
+                color: errorText != null ? Colors.red : const Color(0xFF113CEE),
+                width: 2,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Colors.red, width: 2),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Colors.red, width: 2),
+            ),
+            filled: true,
+            fillColor: Colors.grey.shade50,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+            errorText: errorText,
+            errorStyle: const TextStyle(
+              fontSize: 12,
+              fontFamily: 'Poppins',
+              color: Colors.red,
+            ),
+            suffixIcon: errorText == null
+                ? ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: controller,
+                    builder: (context, value, child) {
+                      if (value.text.isEmpty) return const SizedBox();
+
+                      final isValid = _isValidUrl(value.text.trim());
+
+                      return Icon(
+                        isValid ? Icons.check_circle : Icons.error_outline,
+                        color: isValid ? Colors.green : Colors.red,
+                        size: 20,
+                      );
+                    },
+                  )
+                : null,
+          ),
+        ),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF1B56FD)),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 60, color: Color(0xFFB8B8B8)),
+            const SizedBox(height: 16),
+            const Text(
+              'Terjadi Kesalahan',
+              style: TextStyle(
+                fontSize: 16,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF515151),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: Text(
+                _errorMessage!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontFamily: 'Poppins',
+                  color: Color(0xFFB8B8B8),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _loadPortofolio,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Coba Lagi'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1B56FD),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return RefreshIndicator(
       onRefresh: _loadPortofolio,
       color: const Color(0xFF113CEE),
@@ -680,15 +769,42 @@ class _TabPortofolioState extends State<TabPortofolio> {
             ),
             const SizedBox(height: 21),
 
-            // Loading Indicator
-            if (_isLoading)
-              const Center(
-                child: CircularProgressIndicator(color: Color(0xFF113CEE)),
-              )
-            else if (_portofolio.isEmpty)
-              const Text(
-                "Belum ada data portofolio",
-                style: TextStyle(fontFamily: 'Poppins'),
+            // List atau Empty State
+            if (_portofolio.isEmpty)
+              Container(
+                padding: const EdgeInsets.all(40),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Column(
+                  children: [
+                    Icon(
+                      Icons.folder_outlined,
+                      size: 60,
+                      color: Color(0xFFB8B8B8),
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      'Belum ada data portofolio',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF515151),
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Tambahkan portofolio karya Anda',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontFamily: 'Poppins',
+                        color: Color(0xFFB8B8B8),
+                      ),
+                    ),
+                  ],
+                ),
               )
             else
               Column(
@@ -741,11 +857,11 @@ class _TabPortofolioState extends State<TabPortofolio> {
                 topRight: Radius.circular(20),
               )
             : isLast
-            ? const BorderRadius.only(
-                bottomLeft: Radius.circular(20),
-                bottomRight: Radius.circular(20),
-              )
-            : BorderRadius.zero,
+                ? const BorderRadius.only(
+                    bottomLeft: Radius.circular(20),
+                    bottomRight: Radius.circular(20),
+                  )
+                : BorderRadius.zero,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -764,24 +880,36 @@ class _TabPortofolioState extends State<TabPortofolio> {
                   ),
                 ),
                 const SizedBox(height: 3),
+                // Link portofolio yang bisa diklik
                 if (link.isNotEmpty)
                   GestureDetector(
-                    onTap: () {
-                      // TODO: Buka link portofolio
-                    },
-                    child: const Text(
-                      'Lihat portofolio',
-                      style: TextStyle(
-                        color: Color(0xFF0E38EB),
-                        fontSize: 14,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w400,
-                      ),
+                    onTap: () => _launchUrl(link),
+                    child: Row(
+                      children: [
+                        Text(
+                          'Lihat portofolio',
+                          style: TextStyle(
+                            color: const Color(0xFF0E38EB),
+                            fontSize: 14,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w400,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.open_in_new,
+                          size: 14,
+                          color: const Color(0xFF0E38EB),
+                        ),
+                      ],
                     ),
                   ),
                 const SizedBox(height: 15),
                 Text(
                   description,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Color(0xFF515151),
                     fontSize: 14,

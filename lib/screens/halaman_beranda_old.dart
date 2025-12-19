@@ -92,13 +92,6 @@ class _HalamanBerandaState extends State<HalamanBeranda> {
               );
             },
           ),
-
-          const Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: BottomNavBar(currentIndex: 0),
-          ),
         ],
       ),
     );
