@@ -109,17 +109,17 @@ class _BuatAkunPageState extends State<BuatAkunPage> {
       String password = _passwordController.text;
 
       if (password.isEmpty) {
-        _passwordError = 'Password tidak boleh kosong';
+        _passwordError = 'kata sandi tidak boleh kosong';
       } else if (password.length < 8) {
-        _passwordError = 'Password minimal 8 karakter';
+        _passwordError = 'kata sandi minimal 8 karakter';
       } else if (!RegExp(r'[A-Z]').hasMatch(password)) {
-        _passwordError = 'Password harus mengandung huruf besar';
+        _passwordError = 'kata sandi harus mengandung huruf besar';
       } else if (!RegExp(r'[a-z]').hasMatch(password)) {
-        _passwordError = 'Password harus mengandung huruf kecil';
+        _passwordError = 'kata sandi harus mengandung huruf kecil';
       } else if (!RegExp(r'[0-9]').hasMatch(password)) {
-        _passwordError = 'Password harus mengandung angka';
+        _passwordError = 'kata sandi harus mengandung angka';
       } else if (!RegExp(r'[!@#\$%^&*(),.?":{}|<>]').hasMatch(password)) {
-        _passwordError = 'Password harus mengandung karakter spesial';
+        _passwordError = 'kata sandi harus mengandung karakter spesial';
       } else {
         _passwordError = null;
       }
@@ -129,9 +129,9 @@ class _BuatAkunPageState extends State<BuatAkunPage> {
   void _validateConfirmPassword() {
     setState(() {
       if (_confirmPasswordController.text.isEmpty) {
-        _confirmPasswordError = 'Konfirmasi password tidak boleh kosong';
+        _confirmPasswordError = 'Konfirmasi kata sandi tidak boleh kosong';
       } else if (_confirmPasswordController.text != _passwordController.text) {
-        _confirmPasswordError = 'Password tidak sama';
+        _confirmPasswordError = 'Kata sandi tidak sama';
       } else {
         _confirmPasswordError = null;
       }

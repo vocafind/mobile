@@ -546,7 +546,7 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                   ),
                   const Expanded(
                     child: Text(
-                      'Ubah Password',
+                      'Ubah Kata Sandi',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
@@ -757,7 +757,7 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                       const SizedBox(height: 20),
 
                       const Text(
-                        'Konfirmasi Password Baru',
+                        'Konfirmasi Kata Sandi Baru',
                         style: TextStyle(
                           fontSize: 14,
                           fontFamily: 'SF Pro',

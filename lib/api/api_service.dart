@@ -87,7 +87,7 @@ class ApiService {
         ApiConfig.loginTalent,
         data: {
           "Email": email,
-          "Password": password,
+          "password": password,
         },
         options: Options(
           contentType: Headers.formUrlEncodedContentType, // ✅ TETAP formUrlEncoded
@@ -148,7 +148,7 @@ class ApiService {
             final serverMessage =
                 responseData?['message'] ??
                 responseData?['error'] ??
-                "Email atau password salah";
+                "Email atau Kata sandi salah";
             return {"message": serverMessage};
 
           case 429:
@@ -430,7 +430,7 @@ class ApiService {
       } else {
         // Jika response bukan Map, kembalikan dengan format yang konsisten
         return {
-          'message': 'Password berhasil diubah',
+          'message': 'Kata Sandi berhasil diubah',
           'success': true,
           'data': response.data,
         };
@@ -455,7 +455,7 @@ class ApiService {
         } else if (responseData is Map<String, dynamic>) {
           errorMessage = responseData['message'] ?? 
                         responseData['error'] ?? 
-                        'Gagal mengubah password';
+                        'Gagal mengubah Kata Sandi';
         }
       }
       
