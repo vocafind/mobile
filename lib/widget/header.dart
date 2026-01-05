@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:jobfair/api/route.dart'; 
-import 'package:jobfair/screens/halaman_notifikasi.dart';
-import 'package:jobfair/screens/halaman_bookmark.dart';
+import 'package:vocafind/api/route.dart'; 
+import 'package:vocafind/screens/halaman_notifikasi.dart';
+import 'package:vocafind/screens/halaman_bookmark.dart';
 
 class HeaderWidget extends StatefulWidget {
   final bool showNotification;

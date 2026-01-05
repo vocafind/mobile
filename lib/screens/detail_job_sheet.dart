@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:jobfair/api/api_service.dart';
-import 'package:jobfair/models/loker_umum_detail_model.dart';
+import 'package:vocafind/api/api_service.dart';
+import 'package:vocafind/models/loker_umum_detail_model.dart';
 
 class JobDetailSheet extends StatefulWidget {
   final LokerUmumDetail? loker;

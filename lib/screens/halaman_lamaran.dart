@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:jobfair/api/route.dart';
-import 'package:jobfair/models/lamar_loker.dart';
-import 'package:jobfair/widget/bottom_navbar.dart';
-import 'package:jobfair/widget/header.dart';
-import 'package:jobfair/screens/detail_lamaran.dart';
-import 'package:jobfair/screens/detail_lamaran_jobfair.dart';
-import 'package:jobfair/api/api_service.dart';
+import 'package:vocafind/api/route.dart';
+import 'package:vocafind/models/lamar_loker.dart';
+import 'package:vocafind/widget/bottom_navbar.dart';
+import 'package:vocafind/widget/header.dart';
+import 'package:vocafind/screens/detail_lamaran.dart';
+import 'package:vocafind/screens/detail_lamaran_jobfair.dart';
+import 'package:vocafind/api/api_service.dart';
 
 class HalamanLamaran extends StatefulWidget {
   final String? applyIdToOpen; // Parameter untuk auto open lamaran

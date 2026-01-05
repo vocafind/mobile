@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:jobfair/api/api_service.dart';
-import 'package:jobfair/models/talent_workhistory_model.dart';
+import 'package:vocafind/api/api_service.dart';
+import 'package:vocafind/models/talent_workhistory_model.dart';
 import 'package:intl/intl.dart';
 
 class TabRiwayatPekerjaan extends StatefulWidget {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:jobfair/api/api_service.dart';
-import 'package:jobfair/screens/halaman_login.dart';
+import 'package:vocafind/api/api_service.dart';
+import 'package:vocafind/screens/halaman_login.dart';
 
 class BuatAkunPage extends StatefulWidget {
   final String nik;

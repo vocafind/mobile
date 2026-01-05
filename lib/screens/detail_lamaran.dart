@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:jobfair/models/lamar_loker.dart';
+import 'package:vocafind/models/lamar_loker.dart';
 
 class DetailLamaran extends StatefulWidget {
   final LamaranSaya lamaran;

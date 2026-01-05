@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:jobfair/api/api_service.dart';
-import 'package:jobfair/models/talent_education_model.dart';
+import 'package:vocafind/api/api_service.dart';
+import 'package:vocafind/models/talent_education_model.dart';
 
 class TabPendidikan extends StatefulWidget {
   const TabPendidikan({super.key});

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:jobfair/api/api_service.dart';
-import 'package:jobfair/models/company_model.dart';
-import 'package:jobfair/models/jobfair_model.dart';
-import 'package:jobfair/models/loker_umum_model.dart';
-import 'package:jobfair/models/loker_rekomendasi_model.dart'; // Model baru untuk LokerRekomendasi
-import 'package:jobfair/screens/detail_job_sheet.dart';
+import 'package:vocafind/api/api_service.dart';
+import 'package:vocafind/models/company_model.dart';
+import 'package:vocafind/models/jobfair_model.dart';
+import 'package:vocafind/models/loker_umum_model.dart';
+import 'package:vocafind/models/loker_rekomendasi_model.dart'; // Model baru untuk LokerRekomendasi
+import 'package:vocafind/screens/detail_job_sheet.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '/widget/bottom_navbar.dart';
-import 'package:jobfair/api/route.dart';
+import 'package:vocafind/api/route.dart';
 
 class HalamanBeranda extends StatefulWidget {
   const HalamanBeranda({super.key});

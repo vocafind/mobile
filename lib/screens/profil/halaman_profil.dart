@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:jobfair/screens/profil/widget/profil_header.dart';
-import 'package:jobfair/screens/profil/tab/tab_profile.dart';
-import 'package:jobfair/screens/profil/tab/tab_akademik.dart';
-import 'package:jobfair/widget/bottom_navbar.dart'; 
-import 'package:jobfair/screens/profil/tab/tab_kompetensi.dart';
-import 'package:jobfair/screens/profil/tab/tab_pengalaman.dart';
+import 'package:vocafind/screens/profil/widget/profil_header.dart';
+import 'package:vocafind/screens/profil/tab/tab_profile.dart';
+import 'package:vocafind/screens/profil/tab/tab_akademik.dart';
+import 'package:vocafind/widget/bottom_navbar.dart'; 
+import 'package:vocafind/screens/profil/tab/tab_kompetensi.dart';
+import 'package:vocafind/screens/profil/tab/tab_pengalaman.dart';
 
 class HalamanProfil extends StatefulWidget {
   const HalamanProfil({super.key});

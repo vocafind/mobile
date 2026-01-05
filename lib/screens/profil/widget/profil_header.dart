@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:jobfair/screens/halaman_login.dart';
-import 'package:jobfair/screens/profil/keamanan_privasi.dart';
-import 'package:jobfair/api/api_service.dart';
+import 'package:vocafind/screens/halaman_login.dart';
+import 'package:vocafind/screens/profil/keamanan_privasi.dart';
+import 'package:vocafind/api/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:jobfair/models/talent_profile_model.dart';
+import 'package:vocafind/models/talent_profile_model.dart';
 import 'dart:convert';
 
 class ProfileHeader extends StatefulWidget {

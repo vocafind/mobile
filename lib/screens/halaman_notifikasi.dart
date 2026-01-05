@@ -1,11 +1,10 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:jobfair/api/api_service.dart';
-import 'package:jobfair/screens/halaman_lamaran.dart'; // Import halaman lamaran
-import 'package:jobfair/screens/detail_lamaran.dart';
-import 'package:jobfair/screens/detail_lamaran_jobfair.dart';
+import 'package:vocafind/api/api_service.dart';
+import 'package:vocafind/screens/halaman_lamaran.dart'; // Import halaman lamaran
+import 'package:vocafind/screens/detail_lamaran.dart';
+import 'package:vocafind/screens/detail_lamaran_jobfair.dart';
 import '../models/notification_model.dart';
 
 class NotificationPage extends StatefulWidget {

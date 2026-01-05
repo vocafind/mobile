@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:jobfair/api/api_service.dart';
+import 'package:vocafind/api/api_service.dart';
 
 class SecurityPrivacyPage extends StatefulWidget {
   const SecurityPrivacyPage({super.key});

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:jobfair/api/api_service.dart';
-import 'package:jobfair/models/loker_umum_model.dart';
-import 'package:jobfair/models/saved_job_model.dart';
+import 'package:vocafind/api/api_service.dart';
+import 'package:vocafind/models/loker_umum_model.dart';
+import 'package:vocafind/models/saved_job_model.dart';
 import 'detail_job_sheet.dart';
 
 class HalamanBookmark extends StatefulWidget {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:jobfair/api/api_service.dart';
+import 'package:vocafind/api/api_service.dart';
 import 'package:intl/intl.dart';
-import 'package:jobfair/models/talent_project_model.dart';
+import 'package:vocafind/models/talent_project_model.dart';
 
 class TabProyek extends StatefulWidget {
   const TabProyek({super.key});

@@ -1,13 +1,13 @@
 // halaman_jobfair_detail.dart
 import 'package:flutter/material.dart';
-import 'package:jobfair/api/endpoints.dart';
-import 'package:jobfair/models/lamar_jobfair_model.dart';
-import 'package:jobfair/models/loker_umum_model.dart';
-import 'package:jobfair/screens/detail_job_sheet_jobfair.dart';
-import 'package:jobfair/widget/bottom_navbar.dart';
-import 'package:jobfair/api/api_service.dart';
-import 'package:jobfair/models/jobfair_detail_model.dart';
-import 'package:jobfair/api/route.dart';
+import 'package:vocafind/api/endpoints.dart';
+import 'package:vocafind/models/lamar_jobfair_model.dart';
+import 'package:vocafind/models/loker_umum_model.dart';
+import 'package:vocafind/screens/detail_job_sheet_jobfair.dart';
+import 'package:vocafind/widget/bottom_navbar.dart';
+import 'package:vocafind/api/api_service.dart';
+import 'package:vocafind/models/jobfair_detail_model.dart';
+import 'package:vocafind/api/route.dart';
 
 class HalamanJobfairDetail extends StatefulWidget {
   final int jobfairId;

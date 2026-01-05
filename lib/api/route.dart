@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 
-import 'package:jobfair/screens/halaman_1.dart';
-import 'package:jobfair/screens/halaman_beranda.dart';
-import 'package:jobfair/screens/halaman_bookmark.dart';
-import 'package:jobfair/screens/halaman_cari_loker.dart';
-import 'package:jobfair/screens/halaman_jobfair_detail.dart';
-import 'package:jobfair/screens/halaman_jobfair.dart';
-import 'package:jobfair/screens/halaman_lamaran.dart';
-import 'package:jobfair/screens/halaman_login.dart';
-import 'package:jobfair/screens/halaman_notifikasi.dart';
-import 'package:jobfair/screens/halaman_register.dart';
-import 'package:jobfair/screens/profil/halaman_profil.dart';
-import 'package:jobfair/screens/detail_lamaran.dart';
-import 'package:jobfair/screens/detail_lamaran_jobfair.dart';
-import 'package:jobfair/screens/main_screen.dart'; // TAMBAHKAN INI
+import 'package:vocafind/screens/halaman_1.dart';
+import 'package:vocafind/screens/halaman_beranda.dart';
+import 'package:vocafind/screens/halaman_bookmark.dart';
+import 'package:vocafind/screens/halaman_cari_loker.dart';
+import 'package:vocafind/screens/halaman_jobfair_detail.dart';
+import 'package:vocafind/screens/halaman_jobfair.dart';
+import 'package:vocafind/screens/halaman_lamaran.dart';
+import 'package:vocafind/screens/halaman_login.dart';
+import 'package:vocafind/screens/halaman_notifikasi.dart';
+import 'package:vocafind/screens/halaman_register.dart';
+import 'package:vocafind/screens/profil/halaman_profil.dart';
+import 'package:vocafind/screens/detail_lamaran.dart';
+import 'package:vocafind/screens/detail_lamaran_jobfair.dart';
+import 'package:vocafind/screens/main_screen.dart'; // TAMBAHKAN INI
 
 class AppRoutes {
   // ==================== ROUTE NAMES CONSTANTS ====================

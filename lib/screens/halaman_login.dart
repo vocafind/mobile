@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:jobfair/api/api_service.dart';
-import 'package:jobfair/api/fcm_service.dart';
+import 'package:vocafind/api/api_service.dart';
+import 'package:vocafind/api/fcm_service.dart';
 import 'halaman_register.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:jobfair/api/route.dart';
+import 'package:vocafind/api/route.dart';
 
 class HalamanLogin extends StatefulWidget {
   const HalamanLogin({super.key});

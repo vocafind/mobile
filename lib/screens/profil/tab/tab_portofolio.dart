@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:jobfair/api/api_service.dart';
-import 'package:jobfair/models/talent_portofolio_model.dart';
+import 'package:vocafind/api/api_service.dart';
+import 'package:vocafind/models/talent_portofolio_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class TabPortofolio extends StatefulWidget {

@@ -1,5 +1,5 @@
 // models/saved_job_model.dart
-import 'package:jobfair/models/loker_umum_model.dart';
+import 'package:vocafind/models/loker_umum_model.dart';
 
 class SavedJob {
   final String savedJobId;

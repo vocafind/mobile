@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:jobfair/api/api_service.dart';
+import 'package:vocafind/api/api_service.dart';
 import '/widget/header.dart';
-import 'package:jobfair/widget/bottom_navbar.dart';
-import 'package:jobfair/models/jobfair_model.dart';
-import 'package:jobfair/api/route.dart';
+import 'package:vocafind/widget/bottom_navbar.dart';
+import 'package:vocafind/models/jobfair_model.dart';
+import 'package:vocafind/api/route.dart';
 
 class HalamanJobfair extends StatefulWidget {
   const HalamanJobfair({super.key});

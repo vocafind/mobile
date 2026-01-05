@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:jobfair/api/endpoints.dart';
+import 'package:vocafind/api/endpoints.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiClient {

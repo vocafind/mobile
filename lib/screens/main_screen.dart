@@ -1,12 +1,12 @@
 // lib/screens/main_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // <-- TAMBAHKAN INI
-import 'package:jobfair/screens/halaman_beranda.dart';
-import 'package:jobfair/screens/halaman_cari_loker.dart';
-import 'package:jobfair/screens/halaman_jobfair.dart';
-import 'package:jobfair/screens/halaman_lamaran.dart';
-import 'package:jobfair/screens/profil/halaman_profil.dart';
-import 'package:jobfair/widget/bottom_navbar.dart';
+import 'package:vocafind/screens/halaman_beranda.dart';
+import 'package:vocafind/screens/halaman_cari_loker.dart';
+import 'package:vocafind/screens/halaman_jobfair.dart';
+import 'package:vocafind/screens/halaman_lamaran.dart';
+import 'package:vocafind/screens/profil/halaman_profil.dart';
+import 'package:vocafind/widget/bottom_navbar.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});

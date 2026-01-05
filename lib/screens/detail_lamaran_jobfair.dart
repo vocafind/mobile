@@ -2,7 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
-import 'package:jobfair/models/lamar_loker.dart';
+import 'package:vocafind/models/lamar_loker.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class DetailLamaranJobfair extends StatefulWidget {

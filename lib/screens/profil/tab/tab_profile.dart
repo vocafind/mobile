@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:jobfair/api/endpoints.dart';
-import 'package:jobfair/models/talent_profile_model.dart';
+import 'package:vocafind/api/endpoints.dart';
+import 'package:vocafind/models/talent_profile_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'tab_media_sosial.dart';
 import 'tab_minat_karir.dart';
 import 'tab_referensi.dart';
-import 'package:jobfair/api/api_service.dart';
+import 'package:vocafind/api/api_service.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 

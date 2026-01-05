@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:jobfair/models/loker_rekomendasi_model.dart';
-import 'package:jobfair/models/saved_job_model.dart';
-import 'package:jobfair/widget/bottom_navbar.dart';
-import 'package:jobfair/widget/header.dart';
+import 'package:vocafind/models/loker_rekomendasi_model.dart';
+import 'package:vocafind/models/saved_job_model.dart';
+import 'package:vocafind/widget/bottom_navbar.dart';
+import 'package:vocafind/widget/header.dart';
 import 'detail_job_sheet.dart';
-import 'package:jobfair/api/api_service.dart';
-import 'package:jobfair/models/loker_umum_model.dart';
+import 'package:vocafind/api/api_service.dart';
+import 'package:vocafind/models/loker_umum_model.dart';
 
 class HalamanCariLoker extends StatefulWidget {
   final String? initialSearchQuery;
@@ -881,7 +881,7 @@ class _HalamanCariLokerState extends State<HalamanCariLoker> {
               ),
             ),
           ],
-        ),
+        )
       ),
     );
   }

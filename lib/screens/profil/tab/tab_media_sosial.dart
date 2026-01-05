@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:jobfair/models/talent_social_media_model.dart';
-import 'package:jobfair/api/api_service.dart';
+import 'package:vocafind/models/talent_social_media_model.dart';
+import 'package:vocafind/api/api_service.dart';
 import 'package:url_launcher/url_launcher.dart'; // ✅ Import url_launcher
 
 class TabMediaSosial extends StatefulWidget {
